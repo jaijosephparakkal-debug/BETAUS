@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Swap to "postgresql" and point DATABASE_URL at a hosted database for production.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String
+  signature   String? // drawn digital signature, stored as a PNG data URL
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  otpCodes    OtpCode[]
+}
+
+model Company {
+  id        String            @id @default(cuid())
+  name      String
+  slug      String            @unique
+  memberships Membership[]
+  messages  DirectorMessage[]
+  createdAt DateTime          @default(now())
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  userId     String
+  companyId  String
+  title      String
+  department String?
+  isDirector Boolean  @default(false)
+  managerId  String?
+  createdAt  DateTime @default(now())
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  manager Membership? @relation("ManagerReports", fields: [managerId], references: [id])
+  reports Membership[] @relation("ManagerReports")
+
+  tasksAssigned Task[]        @relation("AssignedTo")
+  tasksCreated  Task[]        @relation("AssignedBy")
+  comments      TaskComment[]
+  kpis          Kpi[]
+  messages      DirectorMessage[]
+
+  approvalsRequested ApprovalRequest[] @relation("Requester")
+  approvalsToDecide  ApprovalRequest[] @relation("Approver")
+  attachmentsUploaded Attachment[]
+  approvalComments    ApprovalComment[]
+
+  @@unique([userId, companyId])
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  companyId    String
+  title        String
+  description  String?
+  assignedToId String
+  assignedById String
+  deadline     DateTime?
+  status       String     @default("NOT_STARTED")
+  progress     Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  assignedTo Membership    @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedBy Membership    @relation("AssignedBy", fields: [assignedById], references: [id])
+  comments   TaskComment[]
+  attachments Attachment[]
+}
+
+model TaskComment {
+  id         String   @id @default(cuid())
+  taskId     String
+  authorId   String
+  body       String
+  progressAt Int
+  createdAt  DateTime @default(now())
+
+  task   Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author Membership @relation(fields: [authorId], references: [id])
+}
+
+model Kpi {
+  id           String   @id @default(cuid())
+  membershipId String
+  name         String
+  target       Float
+  current      Float    @default(0)
+  unit         String?
+  period       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+}
+
+model DirectorMessage {
+  id        String   @id @default(cuid())
+  companyId String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  company Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  Membership @relation(fields: [authorId], references: [id])
+}
+
+model ApprovalRequest {
+  id           String    @id @default(cuid())
+  companyId    String
+  requestedById String
+  approverId   String
+  title        String
+  description  String?
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  decisionNote String?
+  requestSignature  String? // requester's signature, snapshotted at submission
+  decisionSignature String? // approver's signature, snapshotted at decision
+  createdAt    DateTime  @default(now())
+  decidedAt    DateTime?
+
+  requestedBy Membership @relation("Requester", fields: [requestedById], references: [id], onDelete: Cascade)
+  approver    Membership @relation("Approver", fields: [approverId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  comments    ApprovalComment[]
+}
+
+// A discussion comment on an approval request — lets the approver ask
+// questions or leave feedback without having to decide yet, and lets the
+// requester reply (e.g. after uploading a revised document).
+model ApprovalComment {
+  id                String   @id @default(cuid())
+  approvalRequestId String
+  authorId          String
+  body              String
+  createdAt         DateTime @default(now())
+
+  approvalRequest ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  author          Membership      @relation(fields: [authorId], references: [id])
+}
+
+// A file attached to a Task or an ApprovalRequest — a quotation, drawing, site
+// map, letter, etc. Stored on local disk for now (storagePath is relative to
+// the uploads/ dir); see src/lib/storage.ts for the swappable storage layer
+// this is designed to move to OneDrive/SharePoint behind without a schema change.
+model Attachment {
+  id              String   @id @default(cuid())
+  filename        String
+  mimetype        String
+  size            Int
+  storagePath     String
+  uploadedById    String
+  taskId          String?
+  approvalRequestId String?
+  createdAt       DateTime @default(now())
+
+  uploadedBy      Membership       @relation(fields: [uploadedById], references: [id])
+  task            Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  approvalRequest ApprovalRequest? @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -34,7 +34,7 @@ export async function GET(
   if (!allowed) return new NextResponse("Forbidden", { status: 403 });
 
   const buffer = await readFile(attachment.storagePath);
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": attachment.mimetype,
       "Content-Disposition": `attachment; filename="${encodeURIComponent(attachment.filename)}"`,

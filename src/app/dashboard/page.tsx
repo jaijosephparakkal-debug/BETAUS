@@ -5,18 +5,21 @@ import {
   getTasksFor,
   getKpisFor,
   getLatestDirectorMessage,
+  getOrgTree,
   kpiScore,
 } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
+import { OrgChart } from "@/components/OrgChart";
 
 export default async function DashboardOverviewPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, kpis, message] = await Promise.all([
+  const [tasks, kpis, message, orgTree] = await Promise.all([
     getTasksFor(membership.id),
     getKpisFor(membership.id),
     getLatestDirectorMessage(membership.companyId),
+    getOrgTree(membership.companyId),
   ]);
 
   const activeTasks = tasks.filter((t) => t.status !== "COMPLETED");
@@ -125,6 +128,11 @@ export default async function DashboardOverviewPage() {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <h2 className="mb-3 font-semibold text-slate-900">Team hierarchy</h2>
+        <OrgChart orgTree={orgTree} />
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
@@ -43,9 +44,15 @@ function LoginForm() {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center px-4"
+      className="relative flex min-h-screen items-center justify-center px-4"
       style={{ ...theme.vars, background: theme.pageBackground }}
     >
+      <Link
+        href="/"
+        className="absolute left-4 top-4 rounded-lg border border-brand-300 bg-surface/80 px-3 py-1.5 text-sm text-slate-600 backdrop-blur transition hover:text-slate-900"
+      >
+        ← Home
+      </Link>
       <div className="w-full max-w-sm rounded-2xl border border-brand-300 bg-surface p-8 shadow-sm">
         <div className="flex justify-center">
           <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-4">

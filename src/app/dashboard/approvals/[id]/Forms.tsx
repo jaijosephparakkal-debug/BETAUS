@@ -12,7 +12,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? pendingLabel : label}
     </button>
@@ -29,9 +29,9 @@ export function CommentForm({ requestId }: { requestId: string }) {
         rows={2}
         required
         placeholder="Leave a comment or ask a question…"
-        className="w-full rounded-lg border border-brand-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        className="w-full rounded-lg border border-brand-300 px-3 py-2 text-[17px] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
       />
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="text-[17px] text-red-600">{state.error}</p>}
       <SubmitButton label="Comment" pendingLabel="Posting…" />
     </form>
   );
@@ -46,10 +46,10 @@ export function UploadForm({ requestId }: { requestId: string }) {
         type="file"
         name="file"
         required
-        className="text-sm text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+        className="text-[17px] text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-[17px] file:font-medium file:text-slate-700 hover:file:bg-slate-200"
       />
       <SubmitButton label="Upload" pendingLabel="Uploading…" />
-      {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="w-full text-[17px] text-red-600">{state.error}</p>}
     </form>
   );
 }

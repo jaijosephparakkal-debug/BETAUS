@@ -26,7 +26,7 @@ export default async function MyTasksPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">My Tasks</h1>
+      <h1 className="text-[21px] font-semibold text-slate-900">My Tasks</h1>
       <AssignToColleagueForm
         colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
         projects={projects}
@@ -40,19 +40,19 @@ export default async function MyTasksPage() {
                 <StatusBadge status={task.status} />
               </div>
               {task.project && (
-                <span className="mt-1 inline-block text-xs text-brand-600">
+                <span className="mt-1 inline-block text-[15px] text-brand-600">
                   {task.project.number
                     ? `${task.project.number} — ${task.project.name}`
                     : task.project.name}
                 </span>
               )}
               {task.description && (
-                <p className="mt-1 text-sm text-slate-600">{task.description}</p>
+                <p className="mt-1 text-[17px] text-slate-600">{task.description}</p>
               )}
               <div className="mt-3">
                 <ProgressBar value={task.progress} />
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+              <div className="mt-2 flex items-center justify-between text-[15px] text-slate-500">
                 <span>Assigned by {task.assignedBy.user.name}</span>
                 <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
                   Due {formatDate(task.deadline)}
@@ -61,7 +61,7 @@ export default async function MyTasksPage() {
             </Link>
             {task.subtasks.length > 0 && (
               <div className="mt-3 space-y-1.5 border-t border-brand-100 pt-3">
-                <div className="text-xs font-medium text-slate-500">
+                <div className="text-[15px] font-medium text-slate-500">
                   Daily tasks —{" "}
                   {task.subtasks.filter((s) => s.status === "COMPLETED").length}/
                   {task.subtasks.length} done
@@ -70,7 +70,7 @@ export default async function MyTasksPage() {
                   <Link
                     key={sub.id}
                     href={`/dashboard/tasks/${sub.id}`}
-                    className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-brand-50/40"
+                    className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-[17px] hover:bg-brand-50/40"
                   >
                     <span className="text-slate-800">{sub.title}</span>
                     <StatusBadge status={sub.status} />
@@ -81,7 +81,7 @@ export default async function MyTasksPage() {
           </Card>
         ))}
         {tasks.length === 0 && (
-          <p className="text-sm text-slate-500">No tasks assigned yet.</p>
+          <p className="text-[17px] text-slate-500">No tasks assigned yet.</p>
         )}
       </div>
     </div>

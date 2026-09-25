@@ -21,12 +21,12 @@ export default async function SelectCompanyPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 text-center">
-      <h1 className="text-2xl font-semibold text-slate-900">
+      <h1 className="text-[27px] font-semibold text-slate-900">
         WELCOME!
       </h1>
-      <p className="mt-1 text-base text-slate-900">
+      <p className="mt-1 text-[19px] text-slate-900">
         Mr. {user.name}{" "}
-        <span className="text-sm italic text-slate-500">
+        <span className="text-[17px] italic text-slate-500">
           ({title.toUpperCase()})
         </span>
       </p>

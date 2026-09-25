@@ -13,7 +13,7 @@ export default async function DirectorMessagePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold text-slate-900">
+      <h1 className="text-[21px] font-semibold text-slate-900">
         Message to {membership.company.name}
       </h1>
       <Card>
@@ -21,13 +21,13 @@ export default async function DirectorMessagePage() {
       </Card>
       {latest && (
         <Card>
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="text-[15px] font-semibold uppercase tracking-wide text-slate-500">
             Currently showing on everyone&rsquo;s dashboard
           </div>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">
+          <p className="mt-2 whitespace-pre-wrap text-[17px] text-slate-800">
             {latest.body}
           </p>
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-[15px] text-slate-500">
             {latest.author.user.name} · {formatDate(latest.createdAt)}
           </div>
         </Card>

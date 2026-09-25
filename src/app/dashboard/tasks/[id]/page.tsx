@@ -84,19 +84,19 @@ export default async function TaskDetailPage({
         {task.parentTask && (
           <Link
             href={`/dashboard/tasks/${task.parentTask.id}`}
-            className="text-xs text-brand-600 hover:underline"
+            className="text-[15px] text-brand-600 hover:underline"
           >
             ← Part of {task.parentTask.title}
           </Link>
         )}
         <div className="mt-1 flex items-center gap-2">
-          <h1 className="text-lg font-semibold text-slate-900">{task.title}</h1>
+          <h1 className="text-[21px] font-semibold text-slate-900">{task.title}</h1>
           <StatusBadge status={task.status} />
         </div>
         {task.project && (
           <Link
             href={`/dashboard/projects/${task.project.id}`}
-            className="mt-1 inline-block text-xs text-brand-600 hover:underline"
+            className="mt-1 inline-block text-[15px] text-brand-600 hover:underline"
           >
             {task.project.number
               ? `${task.project.number} — ${task.project.name}`
@@ -104,9 +104,9 @@ export default async function TaskDetailPage({
           </Link>
         )}
         {task.description && (
-          <p className="mt-1 text-sm text-slate-600">{task.description}</p>
+          <p className="mt-1 text-[17px] text-slate-600">{task.description}</p>
         )}
-        <div className="mt-2 text-xs text-slate-500">
+        <div className="mt-2 text-[15px] text-slate-500">
           Assigned to {task.assignedTo.user.name} by {task.assignedBy.user.name} ·{" "}
           <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
             Due {formatDate(task.deadline)}
@@ -141,13 +141,13 @@ export default async function TaskDetailPage({
       )}
 
       <Card>
-        <div className="mb-2 flex items-center justify-between text-sm">
+        <div className="mb-2 flex items-center justify-between text-[17px]">
           <span className="font-medium text-slate-900">Overall progress</span>
           <span className="text-slate-500">{task.progress}%</span>
         </div>
         <ProgressBar value={task.progress} />
         {task.subtasks.length > 0 && (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-[15px] text-slate-500">
             Auto-calculated from {task.subtasks.length} daily task
             {task.subtasks.length === 1 ? "" : "s"}.
           </p>
@@ -164,7 +164,7 @@ export default async function TaskDetailPage({
               <Link key={sub.id} href={`/dashboard/tasks/${sub.id}`}>
                 <div className="rounded-lg border border-slate-100 p-3 transition hover:border-brand-200">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-slate-900">
+                    <span className="text-[17px] font-medium text-slate-900">
                       {sub.title}
                     </span>
                     <StatusBadge status={sub.status} />
@@ -172,14 +172,14 @@ export default async function TaskDetailPage({
                   <div className="mt-2">
                     <ProgressBar value={sub.progress} />
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-[15px] text-slate-500">
                     {sub.assignedTo.user.name} · Due {formatDate(sub.deadline)}
                   </div>
                 </div>
               </Link>
             ))}
             {task.subtasks.length === 0 && (
-              <p className="text-sm text-slate-500">No daily tasks yet.</p>
+              <p className="text-[17px] text-slate-500">No daily tasks yet.</p>
             )}
           </div>
           {canManage && (
@@ -212,18 +212,18 @@ export default async function TaskDetailPage({
         <div className="space-y-4">
           {task.comments.map((c) => (
             <div key={c.id} className="border-l-2 border-brand-200 pl-3">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2 text-[15px] text-slate-500">
                 <span className="font-medium text-slate-700">
                   {c.author.user.name}
                 </span>
                 <span>{formatDate(c.createdAt)}</span>
                 <span>· set progress to {c.progressAt}%</span>
               </div>
-              <p className="mt-1 text-sm text-slate-800">{c.body}</p>
+              <p className="mt-1 text-[17px] text-slate-800">{c.body}</p>
             </div>
           ))}
           {task.comments.length === 0 && (
-            <p className="text-sm text-slate-500">No updates logged yet.</p>
+            <p className="text-[17px] text-slate-500">No updates logged yet.</p>
           )}
         </div>
       </Card>

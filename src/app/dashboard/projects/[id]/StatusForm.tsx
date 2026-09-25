@@ -9,7 +9,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? "Saving…" : "Update status"}
     </button>
@@ -31,14 +31,14 @@ export function UpdateProjectStatusForm({
       <select
         name="status"
         defaultValue={currentStatus}
-        className="rounded-md border border-brand-300 px-2 py-1.5 text-sm"
+        className="rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
       >
         <option value="ACTIVE">Active</option>
         <option value="ON_HOLD">On hold</option>
         <option value="COMPLETED">Completed</option>
       </select>
       <SubmitButton />
-      {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="w-full text-[17px] text-red-600">{state.error}</p>}
     </form>
   );
 }

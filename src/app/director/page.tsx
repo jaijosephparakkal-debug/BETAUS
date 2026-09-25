@@ -19,10 +19,10 @@ export default async function DirectorPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">
+        <h1 className="text-[21px] font-semibold text-slate-900">
           {membership.company.name} — Company Dashboard
         </h1>
-        <div className="flex gap-3 text-sm">
+        <div className="flex gap-3 text-[17px]">
           <Link href="/director/approvals" className="text-brand-600 hover:underline">
             Company approvals
           </Link>
@@ -37,24 +37,24 @@ export default async function DirectorPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
-          <div className="text-2xl font-semibold">{rollup.headcount}</div>
-          <div className="text-sm text-slate-500">Employees</div>
+          <div className="text-[27px] font-semibold">{rollup.headcount}</div>
+          <div className="text-[17px] text-slate-500">Employees</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold">
+          <div className="text-[27px] font-semibold">
             {rollup.completedTasks}/{rollup.totalTasks}
           </div>
-          <div className="text-sm text-slate-500">Tasks completed</div>
+          <div className="text-[17px] text-slate-500">Tasks completed</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold text-red-600">
+          <div className="text-[27px] font-semibold text-red-600">
             {rollup.overdueTasks}
           </div>
-          <div className="text-sm text-slate-500">Overdue tasks</div>
+          <div className="text-[17px] text-slate-500">Overdue tasks</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold">{rollup.avgKpiScore}%</div>
-          <div className="text-sm text-slate-500">Avg. company KPI</div>
+          <div className="text-[27px] font-semibold">{rollup.avgKpiScore}%</div>
+          <div className="text-[17px] text-slate-500">Avg. company KPI</div>
         </Card>
       </div>
 
@@ -64,7 +64,7 @@ export default async function DirectorPage() {
             Overall task progress
           </h2>
           <DonutChart value={rollup.avgTaskProgress} />
-          <div className="mt-2 text-sm text-slate-500">
+          <div className="mt-2 text-[17px] text-slate-500">
             average across {rollup.totalTasks} tasks
           </div>
         </Card>
@@ -73,7 +73,7 @@ export default async function DirectorPage() {
             Overall KPI achievement
           </h2>
           <DonutChart value={rollup.avgKpiScore} />
-          <div className="mt-2 text-sm text-slate-500">
+          <div className="mt-2 text-[17px] text-slate-500">
             average across {rollup.kpiCount} KPIs
           </div>
         </Card>
@@ -109,7 +109,7 @@ export default async function DirectorPage() {
           {atRiskTasks.length === 1 ? "" : "s"}
         </h2>
         {atRiskTasks.length === 0 ? (
-          <p className="text-sm text-slate-500">Nothing overdue right now.</p>
+          <p className="text-[17px] text-slate-500">Nothing overdue right now.</p>
         ) : (
           <div className="divide-y divide-brand-100">
             {atRiskTasks.map((t) => (
@@ -119,14 +119,14 @@ export default async function DirectorPage() {
                 className="flex items-center justify-between gap-3 py-2.5 hover:bg-brand-50/40"
               >
                 <div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-[17px] font-medium text-slate-900">
                     {t.title}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-[15px] text-slate-500">
                     {t.assigneeName} · {t.progress}% done
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-medium text-red-400">
+                <span className="shrink-0 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[15px] font-medium text-red-400">
                   {t.daysOverdue}d overdue
                 </span>
               </Link>

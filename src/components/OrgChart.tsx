@@ -10,12 +10,12 @@ function OrgNodeCard({ node }: { node: OrgNode }) {
           : "border-brand-200 bg-surface hover:border-brand-200"
       }`}
     >
-      <div className="truncate text-sm font-semibold text-slate-900">
+      <div className="truncate text-[17px] font-semibold text-slate-900">
         {node.name}
       </div>
-      <div className="truncate text-xs text-slate-500">{node.title}</div>
+      <div className="truncate text-[15px] text-slate-500">{node.title}</div>
       {node.department && (
-        <div className="mt-1 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-700">
+        <div className="mt-1 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[13px] font-medium uppercase tracking-wide text-brand-700">
           {node.department}
         </div>
       )}
@@ -53,7 +53,7 @@ export function OrgChart({
   linkable?: boolean;
 }) {
   if (!orgTree) {
-    return <p className="text-sm text-slate-500">No org chart yet.</p>;
+    return <p className="text-[17px] text-slate-500">No org chart yet.</p>;
   }
   return (
     <div className="overflow-x-auto pb-2">

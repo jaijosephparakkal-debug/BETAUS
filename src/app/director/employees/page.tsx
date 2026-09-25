@@ -18,18 +18,18 @@ export default async function EmployeesPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">
+        <h1 className="text-[21px] font-semibold text-slate-900">
           Employees — {membership.company.name}
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-[17px] text-slate-500">
           Sign-in codes are sent to these addresses — update any placeholder
           emails to the real ones before employees try to sign in.
         </p>
       </div>
       <Card className="!p-0">
-        <table className="w-full text-sm">
+        <table className="w-full text-[17px]">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-slate-200 text-left text-[15px] uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Title</th>
               <th className="px-4 py-3">Manager</th>
@@ -42,7 +42,7 @@ export default async function EmployeesPage() {
                 <td className="px-4 py-3 font-medium text-slate-900">
                   {e.user.name}
                   {e.isDirector && (
-                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
+                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[15px] text-brand-700">
                       Director
                     </span>
                   )}

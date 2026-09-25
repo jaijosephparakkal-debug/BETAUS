@@ -33,11 +33,11 @@ export default async function DashboardOverviewPage() {
     <div className="space-y-6">
       {message && (
         <Card className="border-brand-200 bg-brand-50">
-          <div className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+          <div className="text-[15px] font-semibold uppercase tracking-wide text-brand-700">
             Message from {message.author.user.name}
           </div>
-          <p className="mt-1 text-sm text-slate-800">{message.body}</p>
-          <div className="mt-2 text-xs text-slate-500">
+          <p className="mt-1 text-[17px] text-slate-800">{message.body}</p>
+          <div className="mt-2 text-[15px] text-slate-500">
             {formatDate(message.createdAt)}
           </div>
         </Card>
@@ -45,20 +45,20 @@ export default async function DashboardOverviewPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
-          <div className="text-2xl font-semibold">{tasks.length}</div>
-          <div className="text-sm text-slate-500">Total tasks</div>
+          <div className="text-[27px] font-semibold">{tasks.length}</div>
+          <div className="text-[17px] text-slate-500">Total tasks</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold">{inProgressTasks.length}</div>
-          <div className="text-sm text-slate-500">In progress</div>
+          <div className="text-[27px] font-semibold">{inProgressTasks.length}</div>
+          <div className="text-[17px] text-slate-500">In progress</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold">{completedTasks.length}</div>
-          <div className="text-sm text-slate-500">Completed</div>
+          <div className="text-[27px] font-semibold">{completedTasks.length}</div>
+          <div className="text-[17px] text-slate-500">Completed</div>
         </Card>
         <Card>
-          <div className="text-2xl font-semibold">{avgProgress}%</div>
-          <div className="text-sm text-slate-500">Avg. progress</div>
+          <div className="text-[27px] font-semibold">{avgProgress}%</div>
+          <div className="text-[17px] text-slate-500">Avg. progress</div>
         </Card>
       </div>
 
@@ -66,7 +66,7 @@ export default async function DashboardOverviewPage() {
         <Card>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900">My tasks</h2>
-            <Link href="/dashboard/tasks" className="text-sm text-brand-600 hover:underline">
+            <Link href="/dashboard/tasks" className="text-[17px] text-brand-600 hover:underline">
               View all
             </Link>
           </div>
@@ -78,7 +78,7 @@ export default async function DashboardOverviewPage() {
                 className="block rounded-lg border border-slate-100 p-3 hover:border-brand-200 hover:bg-brand-50/40"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-slate-900">
+                  <span className="text-[17px] font-medium text-slate-900">
                     {task.title}
                   </span>
                   <StatusBadge status={task.status} />
@@ -86,7 +86,7 @@ export default async function DashboardOverviewPage() {
                 <div className="mt-2">
                   <ProgressBar value={task.progress} />
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-[15px] text-slate-500">
                   <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
                     Due {formatDate(task.deadline)}
                   </span>
@@ -94,7 +94,7 @@ export default async function DashboardOverviewPage() {
               </Link>
             ))}
             {activeTasks.length === 0 && (
-              <p className="text-sm text-slate-500">No tasks assigned yet.</p>
+              <p className="text-[17px] text-slate-500">No tasks assigned yet.</p>
             )}
           </div>
         </Card>
@@ -102,14 +102,14 @@ export default async function DashboardOverviewPage() {
         <Card>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900">My KPIs</h2>
-            <Link href="/dashboard/kpis" className="text-sm text-brand-600 hover:underline">
+            <Link href="/dashboard/kpis" className="text-[17px] text-brand-600 hover:underline">
               View all
             </Link>
           </div>
           <div className="space-y-3">
             {kpis.map((kpi) => (
               <div key={kpi.id}>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[17px]">
                   <span className="font-medium text-slate-900">{kpi.name}</span>
                   <span className="text-slate-500">
                     {kpi.current}
@@ -123,7 +123,7 @@ export default async function DashboardOverviewPage() {
               </div>
             ))}
             {kpis.length === 0 && (
-              <p className="text-sm text-slate-500">No KPIs set yet.</p>
+              <p className="text-[17px] text-slate-500">No KPIs set yet.</p>
             )}
           </div>
         </Card>

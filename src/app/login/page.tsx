@@ -49,7 +49,7 @@ function LoginForm() {
     >
       <Link
         href="/"
-        className="absolute left-4 top-4 rounded-lg border border-brand-300 bg-surface/80 px-3 py-1.5 text-sm text-slate-600 backdrop-blur transition hover:text-slate-900"
+        className="absolute left-4 top-4 rounded-lg border border-brand-300 bg-surface/80 px-3 py-1.5 text-[17px] text-slate-600 backdrop-blur transition hover:text-slate-900"
       >
         ← Home
       </Link>
@@ -75,11 +75,11 @@ function LoginForm() {
                 type="email"
                 required
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-brand-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-brand-300 px-3 py-2 text-[17px] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {requestState.error && (
-              <p className="text-sm text-red-600">{requestState.error}</p>
+              <p className="text-[17px] text-red-600">{requestState.error}</p>
             )}
             <SubmitButton label="Send me a code" />
           </form>
@@ -88,13 +88,13 @@ function LoginForm() {
         {step === "code" && (
           <form action={verifyAction} className="mt-6 space-y-4">
             <input type="hidden" name="email" value={email} />
-            <p className="text-sm text-slate-600">
+            <p className="text-[17px] text-slate-600">
               We sent a 6-digit code to <strong>{email}</strong>. Check the
               server console if this is running locally without email
               configured.
             </p>
             <div>
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-[17px] font-medium text-slate-700">
                 Sign-in code
               </label>
               <input
@@ -103,17 +103,17 @@ function LoginForm() {
                 maxLength={6}
                 required
                 placeholder="123456"
-                className="mt-1 w-full rounded-lg border border-brand-300 px-3 py-2 text-center text-lg tracking-[0.5em] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="mt-1 w-full rounded-lg border border-brand-300 px-3 py-2 text-center text-[21px] tracking-[0.5em] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {verifyState.error && (
-              <p className="text-sm text-red-600">{verifyState.error}</p>
+              <p className="text-[17px] text-red-600">{verifyState.error}</p>
             )}
             <SubmitButton label="Verify & sign in" />
             <button
               type="button"
               onClick={() => setStep("email")}
-              className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
+              className="w-full text-center text-[17px] text-slate-500 hover:text-slate-700"
             >
               Use a different email
             </button>

@@ -14,8 +14,8 @@ export default async function ProjectsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">Projects</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-[21px] font-semibold text-slate-900">Projects</h1>
+        <p className="mt-1 text-[17px] text-slate-500">
           Every project at {membership.company.name}, and how far along it is
           based on the tasks linked to it.
         </p>
@@ -32,19 +32,19 @@ export default async function ProjectsPage() {
                 <StatusBadge status={p.status} />
               </div>
               {p.number && (
-                <div className="text-xs text-slate-500">{p.number}</div>
+                <div className="text-[15px] text-slate-500">{p.number}</div>
               )}
               <div className="mt-3">
                 <ProgressBar value={p.avgProgress} />
               </div>
-              <div className="mt-2 text-xs text-slate-500">
+              <div className="mt-2 text-[15px] text-slate-500">
                 {p.completedTasks}/{p.taskCount} task{p.taskCount === 1 ? "" : "s"} completed
               </div>
             </Card>
           </Link>
         ))}
         {projects.length === 0 && (
-          <p className="text-sm text-slate-500">No projects yet.</p>
+          <p className="text-[17px] text-slate-500">No projects yet.</p>
         )}
       </div>
     </div>

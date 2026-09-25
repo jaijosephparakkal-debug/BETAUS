@@ -49,7 +49,7 @@ export function AppHeader({
             <div className="font-semibold text-slate-900">
               {membership.company.name}
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-[15px] text-slate-500">
               {membership.user.name} · {membership.title}
             </div>
           </div>
@@ -58,13 +58,13 @@ export function AppHeader({
           {membershipCount > 1 && (
             <Link
               href="/select-company"
-              className="text-sm text-brand-600 hover:underline"
+              className="text-[17px] text-brand-600 hover:underline"
             >
               Switch company
             </Link>
           )}
           <form action={logoutAction}>
-            <button className="text-sm text-slate-500 hover:text-slate-700">
+            <button className="text-[17px] text-slate-500 hover:text-slate-700">
               Sign out
             </button>
           </form>
@@ -75,11 +75,11 @@ export function AppHeader({
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[17px] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700"
           >
             {item.label}
             {!!item.badge && (
-              <span className="rounded-full bg-brand-600 px-1.5 text-xs font-semibold text-white">
+              <span className="rounded-full bg-brand-600 px-1.5 text-[15px] font-semibold text-white">
                 {item.badge}
               </span>
             )}

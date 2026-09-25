@@ -43,8 +43,8 @@ export default async function TeamMemberPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">{target.user.name}</h1>
-        <div className="text-sm text-slate-500">{target.title}</div>
+        <h1 className="text-[21px] font-semibold text-slate-900">{target.user.name}</h1>
+        <div className="text-[17px] text-slate-500">{target.title}</div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -56,7 +56,7 @@ export default async function TeamMemberPage({
             {tasks.map((task) => (
               <div key={task.id} className="rounded-lg border border-slate-100 p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-slate-900">
+                  <span className="text-[17px] font-medium text-slate-900">
                     {task.title}
                   </span>
                   <StatusBadge status={task.status} />
@@ -64,7 +64,7 @@ export default async function TeamMemberPage({
                 {task.project && (
                   <Link
                     href={`/dashboard/projects/${task.project.id}`}
-                    className="mt-1 inline-block text-xs text-brand-600 hover:underline"
+                    className="mt-1 inline-block text-[15px] text-brand-600 hover:underline"
                   >
                     {task.project.number
                       ? `${task.project.number} — ${task.project.name}`
@@ -74,13 +74,13 @@ export default async function TeamMemberPage({
                 <div className="mt-2">
                   <ProgressBar value={task.progress} />
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-[15px] text-slate-500">
                   Due {formatDate(task.deadline)}
                 </div>
               </div>
             ))}
             {tasks.length === 0 && (
-              <p className="text-sm text-slate-500">No tasks assigned yet.</p>
+              <p className="text-[17px] text-slate-500">No tasks assigned yet.</p>
             )}
           </div>
           <div className="mt-4 border-t border-brand-100 pt-4">
@@ -93,7 +93,7 @@ export default async function TeamMemberPage({
           <div className="space-y-3">
             {kpis.map((kpi) => (
               <div key={kpi.id}>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[17px]">
                   <span className="font-medium text-slate-900">{kpi.name}</span>
                   <span className="text-slate-500">
                     {kpi.current}
@@ -107,7 +107,7 @@ export default async function TeamMemberPage({
               </div>
             ))}
             {kpis.length === 0 && (
-              <p className="text-sm text-slate-500">No KPIs set yet.</p>
+              <p className="text-[17px] text-slate-500">No KPIs set yet.</p>
             )}
           </div>
           <div className="mt-4 border-t border-brand-100 pt-4">
@@ -126,10 +126,10 @@ export default async function TeamMemberPage({
                 href={`/dashboard/team/${r.id}`}
                 className="block rounded-lg border border-slate-100 p-3 hover:border-brand-200 hover:bg-brand-50/40"
               >
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-[17px] font-medium text-slate-900">
                   {r.user.name}
                 </span>
-                <span className="ml-2 text-xs text-slate-500">{r.title}</span>
+                <span className="ml-2 text-[15px] text-slate-500">{r.title}</span>
               </Link>
             ))}
           </div>
@@ -141,7 +141,7 @@ export default async function TeamMemberPage({
         <div className="space-y-4">
           {timeline.map((entry) => (
             <div key={entry.id} className="border-l-2 border-brand-200 pl-3">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2 text-[15px] text-slate-500">
                 <Link
                   href={`/dashboard/tasks/${entry.taskId}`}
                   className="font-medium text-brand-700 hover:underline"
@@ -151,11 +151,11 @@ export default async function TeamMemberPage({
                 <span>{formatDate(entry.at)}</span>
                 <span>· set progress to {entry.progressAt}%</span>
               </div>
-              <p className="mt-1 text-sm text-slate-800">{entry.body}</p>
+              <p className="mt-1 text-[17px] text-slate-800">{entry.body}</p>
             </div>
           ))}
           {timeline.length === 0 && (
-            <p className="text-sm text-slate-500">No updates logged yet.</p>
+            <p className="text-[17px] text-slate-500">No updates logged yet.</p>
           )}
         </div>
       </Card>

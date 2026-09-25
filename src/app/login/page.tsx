@@ -48,14 +48,16 @@ function LoginForm() {
     >
       <div className="w-full max-w-sm rounded-2xl border border-brand-300 bg-surface p-8 shadow-sm">
         <div className="flex justify-center">
-          <Image
-            src={theme.logo}
-            alt={theme.displayName}
-            width={theme.logoWidth}
-            height={theme.logoHeight}
-            className="h-16 w-auto"
-            priority
-          />
+          <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-4">
+            <Image
+              src={theme.logo}
+              alt={theme.displayName}
+              width={theme.logoWidth}
+              height={theme.logoHeight}
+              className="h-16 w-auto"
+              priority
+            />
+          </div>
         </div>
 
         {step === "email" && (

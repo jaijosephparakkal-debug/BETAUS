@@ -23,7 +23,10 @@ export default async function DashboardLayout({
   const theme = getCompanyTheme(membership.company.slug);
 
   return (
-    <div className="min-h-screen" style={theme.vars}>
+    <div
+      className="min-h-screen"
+      style={{ ...theme.vars, background: theme.pageBackground }}
+    >
       <AppHeader
         membership={membership}
         reportCount={reportCount}

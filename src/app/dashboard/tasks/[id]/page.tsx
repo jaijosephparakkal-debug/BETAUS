@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
@@ -11,6 +12,12 @@ import {
 } from "@/components/ui";
 import ProgressForm from "./ProgressForm";
 import { UploadAttachmentForm } from "./UploadAttachmentForm";
+import {
+  AddDailyTaskForm,
+  DeleteTaskButton,
+  EditTaskForm,
+  ReassignTaskForm,
+} from "./ManageTaskForms";
 
 export default async function TaskDetailPage({
   params,
@@ -25,6 +32,11 @@ export default async function TaskDetailPage({
     include: {
       assignedTo: { include: { user: true } },
       assignedBy: { include: { user: true } },
+      parentTask: true,
+      subtasks: {
+        include: { assignedTo: { include: { user: true } } },
+        orderBy: { createdAt: "asc" },
+      },
       comments: {
         include: { author: { include: { user: true } } },
         orderBy: { createdAt: "desc" },
@@ -39,15 +51,35 @@ export default async function TaskDetailPage({
 
   const isOwner = task.assignedToId === membership.id;
   const canManage =
-    membership.isDirector || (await isManagerOf(membership.id, task.assignedToId));
+    membership.isDirector ||
+    task.assignedById === membership.id ||
+    (await isManagerOf(membership.id, task.assignedToId));
   if (!isOwner && !canManage) {
     redirect("/dashboard/tasks");
   }
 
+  const employees = canManage
+    ? await prisma.membership.findMany({
+        where: { companyId: membership.companyId, isDirector: false },
+        include: { user: true },
+        orderBy: { title: "asc" },
+      })
+    : [];
+
+  const deadlineValue = task.deadline ? task.deadline.toISOString().slice(0, 10) : "";
+
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2">
+        {task.parentTask && (
+          <Link
+            href={`/dashboard/tasks/${task.parentTask.id}`}
+            className="text-xs text-brand-600 hover:underline"
+          >
+            ← Part of {task.parentTask.title}
+          </Link>
+        )}
+        <div className="mt-1 flex items-center gap-2">
           <h1 className="text-lg font-semibold text-slate-900">{task.title}</h1>
           <StatusBadge status={task.status} />
         </div>
@@ -62,15 +94,81 @@ export default async function TaskDetailPage({
         </div>
       </div>
 
+      {canManage && (
+        <Card>
+          <h2 className="mb-3 font-semibold text-slate-900">Manage</h2>
+          <div className="flex flex-wrap gap-4">
+            <EditTaskForm
+              taskId={task.id}
+              initialTitle={task.title}
+              initialDescription={task.description ?? ""}
+              initialDeadline={deadlineValue}
+            />
+            <ReassignTaskForm
+              taskId={task.id}
+              currentAssigneeId={task.assignedToId}
+              employees={employees.map((e) => ({
+                id: e.id,
+                name: e.user.name,
+                title: e.title,
+              }))}
+            />
+            <DeleteTaskButton taskId={task.id} />
+          </div>
+        </Card>
+      )}
+
       <Card>
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="font-medium text-slate-900">Overall progress</span>
           <span className="text-slate-500">{task.progress}%</span>
         </div>
         <ProgressBar value={task.progress} />
+        {task.subtasks.length > 0 && (
+          <p className="mt-2 text-xs text-slate-500">
+            Auto-calculated from {task.subtasks.length} daily task
+            {task.subtasks.length === 1 ? "" : "s"}.
+          </p>
+        )}
       </Card>
 
-      {isOwner && (
+      {!task.parentTask && (
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900">Daily tasks</h2>
+          </div>
+          <div className="space-y-3">
+            {task.subtasks.map((sub) => (
+              <Link key={sub.id} href={`/dashboard/tasks/${sub.id}`}>
+                <div className="rounded-lg border border-slate-100 p-3 transition hover:border-brand-200">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-slate-900">
+                      {sub.title}
+                    </span>
+                    <StatusBadge status={sub.status} />
+                  </div>
+                  <div className="mt-2">
+                    <ProgressBar value={sub.progress} />
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {sub.assignedTo.user.name} · Due {formatDate(sub.deadline)}
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {task.subtasks.length === 0 && (
+              <p className="text-sm text-slate-500">No daily tasks yet.</p>
+            )}
+          </div>
+          {canManage && (
+            <div className="mt-4 border-t border-brand-100 pt-4">
+              <AddDailyTaskForm parentTaskId={task.id} />
+            </div>
+          )}
+        </Card>
+      )}
+
+      {isOwner && task.subtasks.length === 0 && (
         <Card>
           <h2 className="mb-3 font-semibold text-slate-900">Log an update</h2>
           <ProgressForm taskId={task.id} initialProgress={task.progress} />

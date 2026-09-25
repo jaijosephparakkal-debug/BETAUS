@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
+import { recomputeTaskProgress } from "@/lib/tasks";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const BLOCKED_EXTENSIONS = /\.(exe|sh|bat|cmd|msi|app|dll)$/i;
@@ -49,6 +51,10 @@ export async function logProgressAction(
     }),
   ]);
 
+  if (task.parentTaskId) {
+    await recomputeTaskProgress(task.parentTaskId);
+    revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  }
   revalidatePath(`/dashboard/tasks/${taskId}`);
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
@@ -101,4 +107,159 @@ export async function uploadTaskAttachmentAction(
 
   revalidatePath(`/dashboard/tasks/${taskId}`);
   return {};
+}
+
+async function canManageTask(
+  membership: { id: string; isDirector: boolean },
+  task: { assignedToId: string; assignedById: string }
+) {
+  if (membership.isDirector) return true;
+  if (task.assignedById === membership.id) return true;
+  return isManagerOf(membership.id, task.assignedToId);
+}
+
+export async function addDailyTaskAction(
+  parentTaskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const parent = await prisma.task.findUnique({ where: { id: parentTaskId } });
+  if (!parent || parent.companyId !== membership.companyId) {
+    return { error: "Task not found." };
+  }
+  if (parent.parentTaskId) {
+    return { error: "Daily tasks can't have their own daily tasks." };
+  }
+  if (!(await canManageTask(membership, parent))) {
+    return { error: "You don't manage this task." };
+  }
+
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const deadlineRaw = String(formData.get("deadline") || "");
+  if (!title) return { error: "Give the daily task a title." };
+
+  await prisma.task.create({
+    data: {
+      companyId: parent.companyId,
+      title,
+      description: description || null,
+      assignedToId: parent.assignedToId,
+      assignedById: membership.id,
+      parentTaskId: parent.id,
+      deadline: deadlineRaw ? new Date(deadlineRaw) : null,
+    },
+  });
+  await recomputeTaskProgress(parent.id);
+
+  revalidatePath(`/dashboard/tasks/${parentTaskId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function updateTaskAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.companyId !== membership.companyId) {
+    return { error: "Task not found." };
+  }
+  if (!(await canManageTask(membership, task))) {
+    return { error: "You don't manage this task." };
+  }
+
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const deadlineRaw = String(formData.get("deadline") || "");
+  if (!title) return { error: "Give the task a title." };
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: {
+      title,
+      description: description || null,
+      deadline: deadlineRaw ? new Date(deadlineRaw) : null,
+    },
+  });
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
+  if (task.parentTaskId) revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  return {};
+}
+
+export async function reassignTaskAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.companyId !== membership.companyId) {
+    return { error: "Task not found." };
+  }
+  if (!(await canManageTask(membership, task))) {
+    return { error: "You don't manage this task." };
+  }
+
+  const newAssigneeId = String(formData.get("assigneeId") || "");
+  const newAssignee = await prisma.membership.findUnique({ where: { id: newAssigneeId } });
+  if (!newAssignee || newAssignee.companyId !== membership.companyId || newAssignee.isDirector) {
+    return { error: "Choose a valid employee to reassign to." };
+  }
+
+  await prisma.task.update({ where: { id: taskId }, data: { assignedToId: newAssigneeId } });
+  if (!task.parentTaskId) {
+    // Keep daily subtasks with their weekly/monthly parent's new owner.
+    await prisma.task.updateMany({
+      where: { parentTaskId: taskId },
+      data: { assignedToId: newAssigneeId },
+    });
+  }
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath(`/dashboard/team/${task.assignedToId}`);
+  revalidatePath(`/dashboard/team/${newAssigneeId}`);
+  if (task.parentTaskId) revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  return {};
+}
+
+export async function deleteTaskAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  _formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.companyId !== membership.companyId) {
+    return { error: "Task not found." };
+  }
+  if (!(await canManageTask(membership, task))) {
+    return { error: "You don't manage this task." };
+  }
+
+  await prisma.task.delete({ where: { id: taskId } });
+  if (task.parentTaskId) {
+    await recomputeTaskProgress(task.parentTaskId);
+    revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  }
+
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/team/${task.assignedToId}`);
+  redirect(task.parentTaskId ? `/dashboard/tasks/${task.parentTaskId}` : "/dashboard/tasks");
 }

@@ -62,6 +62,7 @@ model Task {
   description  String?
   assignedToId String
   assignedById String
+  parentTaskId String? // set for a daily task that rolls up into a weekly/monthly one
   deadline     DateTime?
   status       String     @default("NOT_STARTED")
   progress     Int        @default(0)
@@ -70,6 +71,8 @@ model Task {
 
   assignedTo Membership    @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: Cascade)
   assignedBy Membership    @relation("AssignedBy", fields: [assignedById], references: [id])
+  parentTask Task?         @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks   Task[]        @relation("TaskSubtasks")
   comments   TaskComment[]
   attachments Attachment[]
 }

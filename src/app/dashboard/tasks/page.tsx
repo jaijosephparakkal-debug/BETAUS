@@ -28,7 +28,11 @@ export default async function MyTasksPage() {
                 <ProgressBar value={task.progress} />
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                <span>Assigned by {task.assignedBy.user.name}</span>
+                <span>
+                  Assigned by {task.assignedBy.user.name}
+                  {task.subtasks.length > 0 &&
+                    ` · ${task.subtasks.filter((s) => s.status === "COMPLETED").length}/${task.subtasks.length} daily tasks done`}
+                </span>
                 <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
                   Due {formatDate(task.deadline)}
                 </span>

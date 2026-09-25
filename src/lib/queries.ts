@@ -8,11 +8,15 @@ export function getLatestDirectorMessage(companyId: string) {
   });
 }
 
+/** Top-level tasks only — daily subtasks are reached via their parent's detail page. */
 export function getTasksFor(membershipId: string) {
   return prisma.task.findMany({
-    where: { assignedToId: membershipId },
+    where: { assignedToId: membershipId, parentTaskId: null },
     orderBy: [{ status: "asc" }, { deadline: "asc" }],
-    include: { assignedBy: { include: { user: true } } },
+    include: {
+      assignedBy: { include: { user: true } },
+      subtasks: { select: { status: true } },
+    },
   });
 }
 
@@ -49,7 +53,7 @@ export function kpiScore(kpi: { target: number; current: number }) {
 
 export async function getCompanyRollup(companyId: string) {
   const [tasks, kpis, memberships] = await Promise.all([
-    prisma.task.findMany({ where: { companyId } }),
+    prisma.task.findMany({ where: { companyId, parentTaskId: null } }),
     prisma.kpi.findMany({ where: { membership: { companyId } } }),
     prisma.membership.findMany({
       where: { companyId },
@@ -94,6 +98,7 @@ export async function getAtRiskTasks(companyId: string) {
   const tasks = await prisma.task.findMany({
     where: {
       companyId,
+      parentTaskId: null,
       status: { not: "COMPLETED" },
       deadline: { lt: new Date() },
     },

@@ -49,9 +49,6 @@ function LoginForm() {
         <h1 className="text-xl font-semibold text-slate-900">
           {theme ? theme.displayName : "Team Portal"}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Sign in with your work email — no password needed.
-        </p>
 
         {step === "email" && (
           <form action={requestAction} className="mt-6 space-y-4">

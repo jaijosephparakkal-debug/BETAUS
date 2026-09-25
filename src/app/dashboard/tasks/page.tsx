@@ -15,8 +15,8 @@ export default async function MyTasksPage() {
       <h1 className="text-lg font-semibold text-slate-900">My Tasks</h1>
       <div className="space-y-3">
         {tasks.map((task) => (
-          <Link key={task.id} href={`/dashboard/tasks/${task.id}`}>
-            <Card className="transition hover:border-brand-200">
+          <Card key={task.id}>
+            <Link href={`/dashboard/tasks/${task.id}`} className="block hover:opacity-90">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-slate-900">{task.title}</span>
                 <StatusBadge status={task.status} />
@@ -28,17 +28,32 @@ export default async function MyTasksPage() {
                 <ProgressBar value={task.progress} />
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  Assigned by {task.assignedBy.user.name}
-                  {task.subtasks.length > 0 &&
-                    ` · ${task.subtasks.filter((s) => s.status === "COMPLETED").length}/${task.subtasks.length} daily tasks done`}
-                </span>
+                <span>Assigned by {task.assignedBy.user.name}</span>
                 <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
                   Due {formatDate(task.deadline)}
                 </span>
               </div>
-            </Card>
-          </Link>
+            </Link>
+            {task.subtasks.length > 0 && (
+              <div className="mt-3 space-y-1.5 border-t border-brand-100 pt-3">
+                <div className="text-xs font-medium text-slate-500">
+                  Daily tasks —{" "}
+                  {task.subtasks.filter((s) => s.status === "COMPLETED").length}/
+                  {task.subtasks.length} done
+                </div>
+                {task.subtasks.map((sub) => (
+                  <Link
+                    key={sub.id}
+                    href={`/dashboard/tasks/${sub.id}`}
+                    className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-brand-50/40"
+                  >
+                    <span className="text-slate-800">{sub.title}</span>
+                    <StatusBadge status={sub.status} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
         ))}
         {tasks.length === 0 && (
           <p className="text-sm text-slate-500">No tasks assigned yet.</p>

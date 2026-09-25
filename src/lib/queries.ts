@@ -15,7 +15,10 @@ export function getTasksFor(membershipId: string) {
     orderBy: [{ status: "asc" }, { deadline: "asc" }],
     include: {
       assignedBy: { include: { user: true } },
-      subtasks: { select: { status: true } },
+      subtasks: {
+        select: { id: true, title: true, status: true, progress: true },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 }

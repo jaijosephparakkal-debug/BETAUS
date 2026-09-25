@@ -47,12 +47,13 @@ export default async function Home() {
 
       <main className="mx-auto max-w-5xl px-6">
         <section className="py-16 text-center sm:py-24">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            One portal for Flare Technical &amp; Gas Needs
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
+            Welcome!
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            Track tasks, log progress, and see KPIs in real time — for
-            employees, managers, and the director, all in one place.
+            One portal for Flare Technical &amp; Gas Needs — track tasks, log
+            progress, and see KPIs in real time, for employees, managers, and
+            the director alike.
           </p>
           <div className="mt-8 flex justify-center gap-3">
             <Link
@@ -66,21 +67,25 @@ export default async function Home() {
             No password needed — we&apos;ll email you a 6-digit code.
           </p>
 
-          <div className="mt-12 flex items-center justify-center gap-10">
-            <Image
-              src={flaretech.logo}
-              alt={flaretech.displayName}
-              width={flaretech.logoWidth}
-              height={flaretech.logoHeight}
-              className="h-12 w-auto opacity-90"
-            />
-            <Image
-              src={gasneeds.logo}
-              alt={gasneeds.displayName}
-              width={gasneeds.logoWidth}
-              height={gasneeds.logoHeight}
-              className="h-8 w-auto opacity-90"
-            />
+          <div className="mt-12 flex items-center justify-center gap-6">
+            <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-6 shadow-sm">
+              <Image
+                src={flaretech.logo}
+                alt={flaretech.displayName}
+                width={flaretech.logoWidth}
+                height={flaretech.logoHeight}
+                className="h-16 w-auto"
+              />
+            </div>
+            <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-6 shadow-sm">
+              <Image
+                src={gasneeds.logo}
+                alt={gasneeds.displayName}
+                width={gasneeds.logoWidth}
+                height={gasneeds.logoHeight}
+                className="h-16 w-auto"
+              />
+            </div>
           </div>
         </section>
 

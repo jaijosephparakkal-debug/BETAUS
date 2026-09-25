@@ -41,8 +41,12 @@ const THEMES: Record<string, CompanyTheme> = {
       "--brand-700": "89 171 219",
       "--brand-900": "0 57 90",
     } as CSSProperties,
+    // Blue (top-left) and orange (bottom-right) glow, echoing the logo's own
+    // diagonal flame-to-drop split, over a near-black base.
     pageBackground:
-      "radial-gradient(circle at 30% 20%, #003a63 0%, #050a10 55%, #050a10 100%)",
+      "radial-gradient(circle at 22% 18%, rgba(0,126,200,0.65) 0%, transparent 45%), " +
+      "radial-gradient(circle at 78% 82%, rgba(245,136,31,0.55) 0%, transparent 45%), " +
+      "#05070a",
   },
   gasneeds: {
     displayName: "Gasneeds Trading LLC",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
@@ -22,10 +23,10 @@ function SubmitButton({ label }: { label: string }) {
 function LoginForm() {
   const searchParams = useSearchParams();
   const companySlug = searchParams.get("company");
-  const theme = companySlug ? getCompanyTheme(companySlug) : null;
-  const placeholder = theme
-    ? `you@${theme.displayName === "GASNEEDS" ? "gasneeds.com" : "flaretechnical.com"}`
-    : "you@flaretechnical.com";
+  const theme = getCompanyTheme(companySlug ?? "flaretechnical");
+  const placeholder = `you@${
+    theme.displayName === "GASNEEDS" ? "gasneeds.com" : "flaretechnical.com"
+  }`;
 
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -43,12 +44,19 @@ function LoginForm() {
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-slate-50 px-4"
-      style={theme?.vars}
+      style={theme.vars}
     >
       <div className="w-full max-w-sm rounded-2xl border border-brand-300 bg-surface p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">
-          {theme ? theme.displayName : "Team Portal"}
-        </h1>
+        <div className="flex justify-center">
+          <Image
+            src={theme.logo}
+            alt={theme.displayName}
+            width={theme.logoWidth}
+            height={theme.logoHeight}
+            className="h-16 w-auto"
+            priority
+          />
+        </div>
 
         {step === "email" && (
           <form action={requestAction} className="mt-6 space-y-4">

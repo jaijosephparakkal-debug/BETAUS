@@ -8,6 +8,8 @@ export type CompanyTheme = {
   tagline: string;
   /** --brand-* CSS custom properties, "R G B" triples matching each company's guideline colour. */
   vars: CSSProperties;
+  /** Full-page background (a subtle glow toward the primary colour) — used on the per-company login screen. */
+  pageBackground: string;
 };
 
 // Colour ramps are derived from each company's own brand guideline hex.
@@ -39,6 +41,8 @@ const THEMES: Record<string, CompanyTheme> = {
       "--brand-700": "89 171 219",
       "--brand-900": "0 57 90",
     } as CSSProperties,
+    pageBackground:
+      "radial-gradient(circle at 30% 20%, #003a63 0%, #050a10 55%, #050a10 100%)",
   },
   gasneeds: {
     displayName: "Gasneeds Trading LLC",
@@ -56,6 +60,8 @@ const THEMES: Record<string, CompanyTheme> = {
       "--brand-700": "226 96 96",
       "--brand-900": "95 4 4",
     } as CSSProperties,
+    pageBackground:
+      "radial-gradient(circle at 30% 20%, #4a0808 0%, #0a0505 55%, #0a0505 100%)",
   },
 };
 

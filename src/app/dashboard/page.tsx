@@ -130,7 +130,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Team hierarchy</h2>
+        <h2 className="mb-3 font-semibold text-slate-900">Organisational structure</h2>
         <OrgChart orgTree={orgTree} />
       </Card>
     </div>

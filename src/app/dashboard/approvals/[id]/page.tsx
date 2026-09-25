@@ -19,7 +19,9 @@ export default async function ApprovalDetailPage({
 
   const isRequester = request.requestedById === membership.id;
   const isApprover = request.approverId === membership.id;
-  if (!isRequester && !isApprover) redirect("/dashboard/approvals");
+  const isParty = isRequester || isApprover;
+  if (!isParty && !membership.isDirector) redirect("/dashboard/approvals");
+  const isAuditing = !isParty && membership.isDirector;
 
   return (
     <div className="space-y-6">
@@ -43,6 +45,12 @@ export default async function ApprovalDetailPage({
         </div>
         {request.description && (
           <p className="mt-2 text-sm text-slate-600">{request.description}</p>
+        )}
+        {isAuditing && (
+          <p className="mt-2 text-xs text-slate-400">
+            You&rsquo;re viewing this as the director — it wasn&rsquo;t sent
+            to you, so it&rsquo;s read-only.
+          </p>
         )}
         {request.requestSignature && (
           <div className="mt-3">
@@ -98,9 +106,11 @@ export default async function ApprovalDetailPage({
           Documents — quotations, drawings, site maps, submission plans
         </h2>
         <AttachmentList attachments={request.attachments} />
-        <div className="mt-3 border-t border-brand-100 pt-3">
-          <UploadForm requestId={request.id} />
-        </div>
+        {isParty && (
+          <div className="mt-3 border-t border-brand-100 pt-3">
+            <UploadForm requestId={request.id} />
+          </div>
+        )}
       </Card>
 
       <Card>
@@ -123,9 +133,11 @@ export default async function ApprovalDetailPage({
             <p className="text-sm text-slate-500">No comments yet.</p>
           )}
         </div>
-        <div className="mt-4 border-t border-brand-100 pt-4">
-          <CommentForm requestId={request.id} />
-        </div>
+        {isParty && (
+          <div className="mt-4 border-t border-brand-100 pt-4">
+            <CommentForm requestId={request.id} />
+          </div>
+        )}
       </Card>
     </div>
   );

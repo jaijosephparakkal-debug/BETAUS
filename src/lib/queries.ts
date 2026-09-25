@@ -153,6 +153,19 @@ export function getApprovalRequestDetail(id: string) {
   });
 }
 
+/** Every approval request company-wide — audit view for the director, not just requests addressed to them. */
+export function getCompanyApprovals(companyId: string) {
+  return prisma.approvalRequest.findMany({
+    where: { companyId },
+    include: {
+      requestedBy: { include: { user: true } },
+      approver: { include: { user: true } },
+      _count: { select: { attachments: true, comments: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export function getDirectReports(managerId: string) {
   return prisma.membership.findMany({
     where: { managerId },

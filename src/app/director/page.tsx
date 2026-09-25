@@ -70,6 +70,9 @@ export default async function DirectorPage() {
           {membership.company.name} — Company Dashboard
         </h1>
         <div className="flex gap-3 text-sm">
+          <Link href="/director/approvals" className="text-brand-600 hover:underline">
+            Company approvals
+          </Link>
           <Link href="/director/message" className="text-brand-600 hover:underline">
             Post message
           </Link>

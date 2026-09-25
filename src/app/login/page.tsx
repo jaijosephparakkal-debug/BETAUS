@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
 import { requestCodeAction, verifyCodeAction } from "./actions";
+import { getCompanyTheme } from "@/lib/theme";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -17,7 +19,14 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const companySlug = searchParams.get("company");
+  const theme = companySlug ? getCompanyTheme(companySlug) : null;
+  const placeholder = theme
+    ? `you@${theme.displayName === "GASNEEDS" ? "gasneeds.com" : "flaretechnical.com"}`
+    : "you@flaretechnical.com";
+
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
 
@@ -32,9 +41,14 @@ export default function LoginPage() {
   }, [requestState]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-surface p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Team Portal</h1>
+    <div
+      className="flex min-h-screen items-center justify-center bg-slate-50 px-4"
+      style={theme?.vars}
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-brand-300 bg-surface p-8 shadow-sm">
+        <h1 className="text-xl font-semibold text-slate-900">
+          {theme ? theme.displayName : "Team Portal"}
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           Sign in with your work email — no password needed.
         </p>
@@ -49,7 +63,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
-                placeholder="you@flaretechnical.com"
+                placeholder={placeholder}
                 className="mt-1 w-full rounded-lg border border-brand-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
@@ -96,5 +110,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

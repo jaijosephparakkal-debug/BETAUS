@@ -21,7 +21,7 @@ export type CompanyTheme = {
 // GASNEEDS_Brand_Guidelines.pdf and FLARETECH-UAE.pdf for the source hex.
 const THEMES: Record<string, CompanyTheme> = {
   flaretechnical: {
-    displayName: "Flaretech",
+    displayName: "Flaretechnical Trading LLC",
     logo: "/logos/flaretech.png",
     logoWidth: 1197,
     logoHeight: 1147,
@@ -41,7 +41,7 @@ const THEMES: Record<string, CompanyTheme> = {
     } as CSSProperties,
   },
   gasneeds: {
-    displayName: "GASNEEDS",
+    displayName: "Gasneeds Trading LLC",
     logo: "/logos/gasneeds.png",
     logoWidth: 630,
     logoHeight: 373,

@@ -22,10 +22,10 @@ function SubmitButton({ label }: { label: string }) {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const companySlug = searchParams.get("company");
-  const theme = getCompanyTheme(companySlug ?? "flaretechnical");
+  const companySlug = searchParams.get("company") ?? "flaretechnical";
+  const theme = getCompanyTheme(companySlug);
   const placeholder = `you@${
-    theme.displayName === "GASNEEDS" ? "gasneeds.com" : "flaretechnical.com"
+    companySlug === "gasneeds" ? "gasneeds.com" : "flaretechnical.com"
   }`;
 
   const [step, setStep] = useState<"email" | "code">("email");

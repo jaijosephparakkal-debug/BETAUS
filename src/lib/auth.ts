@@ -78,7 +78,14 @@ export async function getCurrentMembership(): Promise<FullMembership | null> {
     memberships.find((m) => m.companyId === activeCompanyId) ?? memberships[0];
 
   if (!activeCompanyId || activeCompanyId !== active.companyId) {
-    setActiveCompanyCookie(active.companyId);
+    // Best-effort: this corrects a stale/missing company cookie. Next.js only
+    // allows cookie writes from a Server Action or Route Handler, so calling
+    // this from a page/layout render (as we do here) throws — swallow it.
+    try {
+      setActiveCompanyCookie(active.companyId);
+    } catch {
+      // Ignored — the correct membership is still returned below.
+    }
   }
 
   return active as FullMembership;

@@ -19,7 +19,7 @@ export default async function MyKpisPage() {
             <Card key={kpi.id} className="flex items-center gap-4">
               <DonutChart value={score} size={72} strokeWidth={8} />
               <div>
-                <h2 className="font-medium text-slate-900">{kpi.name}</h2>
+                <h2 className="text-[21px] font-medium text-slate-900">{kpi.name}</h2>
                 {kpi.period && (
                   <div className="text-[17px] text-slate-500">{kpi.period}</div>
                 )}

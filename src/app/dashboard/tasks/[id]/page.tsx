@@ -116,7 +116,7 @@ export default async function TaskDetailPage({
 
       {canManage && (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">Manage</h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Manage</h2>
           <div className="flex flex-wrap gap-4">
             <EditTaskForm
               taskId={task.id}
@@ -142,7 +142,7 @@ export default async function TaskDetailPage({
 
       <Card>
         <div className="mb-2 flex items-center justify-between text-[19px]">
-          <span className="font-medium text-slate-900">Overall progress</span>
+          <span className="text-[21px] font-medium text-slate-900">Overall progress</span>
           <span className="text-slate-500">{task.progress}%</span>
         </div>
         <ProgressBar value={task.progress} />
@@ -157,7 +157,7 @@ export default async function TaskDetailPage({
       {!task.parentTask && (
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Daily tasks</h2>
+            <h2 className="text-[21px] font-semibold text-slate-900">Daily tasks</h2>
           </div>
           <div className="space-y-3">
             {task.subtasks.map((sub) => (
@@ -192,13 +192,13 @@ export default async function TaskDetailPage({
 
       {isOwner && task.subtasks.length === 0 && (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">Log an update</h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Log an update</h2>
           <ProgressForm taskId={task.id} initialProgress={task.progress} />
         </Card>
       )}
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           Attachments — quotations, drawings, site maps, letters
         </h2>
         <AttachmentList attachments={task.attachments} />
@@ -208,7 +208,7 @@ export default async function TaskDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Timeline</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Timeline</h2>
         <div className="space-y-4">
           {task.comments.map((c) => (
             <div key={c.id} className="border-l-2 border-brand-200 pl-3">

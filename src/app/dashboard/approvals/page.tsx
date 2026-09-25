@@ -20,7 +20,7 @@ export default async function ApprovalsPage() {
       <h1 className="text-[23px] font-semibold text-slate-900">Approvals</h1>
 
       <Card>
-        <h2 className="mb-1 font-semibold text-slate-900">Your signature</h2>
+        <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Your signature</h2>
         <p className="mb-3 text-[19px] text-slate-500">
           Draw it once — it&rsquo;s attached automatically whenever you send
           or decide a request, like signing a document.
@@ -30,7 +30,7 @@ export default async function ApprovalsPage() {
 
       {pending.length > 0 && (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
             Waiting on you — {pending.length}
           </h2>
           <div className="divide-y divide-brand-100">
@@ -61,7 +61,7 @@ export default async function ApprovalsPage() {
 
       {membership.managerId ? (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
             Send a new request
           </h2>
           <p className="mb-3 text-[19px] text-slate-500">
@@ -72,7 +72,7 @@ export default async function ApprovalsPage() {
       ) : null}
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">My requests</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My requests</h2>
         {myRequests.length === 0 ? (
           <p className="text-[19px] text-slate-500">
             Nothing sent for approval yet.

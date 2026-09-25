@@ -69,14 +69,14 @@ export default async function ApprovalDetailPage({
 
       {request.status === "PENDING" && isApprover && (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">Your decision</h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Your decision</h2>
           <DecideApprovalForm id={request.id} />
         </Card>
       )}
 
       {request.status !== "PENDING" && (
         <Card>
-          <h2 className="mb-2 font-semibold text-slate-900">Decision</h2>
+          <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Decision</h2>
           {request.decisionNote && (
             <p className="text-[19px] text-slate-600">
               &ldquo;{request.decisionNote}&rdquo;
@@ -102,7 +102,7 @@ export default async function ApprovalDetailPage({
       )}
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           Documents — quotations, drawings, site maps, submission plans
         </h2>
         <AttachmentList attachments={request.attachments} />
@@ -114,7 +114,7 @@ export default async function ApprovalDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Comments</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Comments</h2>
         <div className="space-y-4">
           {request.comments.map((c) => (
             <div key={c.id} className="border-l-2 border-brand-200 pl-3">

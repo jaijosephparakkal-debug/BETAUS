@@ -22,7 +22,7 @@ export default async function MyTeamPage() {
           return (
             <Link key={report.id} href={`/dashboard/team/${report.id}`}>
               <Card className="transition hover:border-brand-200">
-                <div className="font-medium text-slate-900">
+                <div className="text-[21px] font-medium text-slate-900">
                   {report.user.name}
                 </div>
                 <div className="text-[17px] text-slate-500">{report.title}</div>

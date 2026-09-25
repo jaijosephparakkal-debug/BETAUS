@@ -27,7 +27,7 @@ export default async function CompanyApprovalsPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           Pending — {pending.length}
         </h2>
         {pending.length === 0 ? (
@@ -61,7 +61,7 @@ export default async function CompanyApprovalsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           Decided — {decided.length}
         </h2>
         {decided.length === 0 ? (

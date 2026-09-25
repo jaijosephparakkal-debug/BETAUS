@@ -36,7 +36,7 @@ export default async function MyTasksPage() {
           <Card key={task.id}>
             <Link href={`/dashboard/tasks/${task.id}`} className="block hover:opacity-90">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-slate-900">{task.title}</span>
+                <span className="text-[21px] font-medium text-slate-900">{task.title}</span>
                 <StatusBadge status={task.status} />
               </div>
               {task.project && (

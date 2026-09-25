@@ -36,7 +36,7 @@ export default async function ProjectDetailPage({
 
       <Card>
         <div className="mb-2 flex items-center justify-between text-[19px]">
-          <span className="font-medium text-slate-900">Overall progress</span>
+          <span className="text-[21px] font-medium text-slate-900">Overall progress</span>
           <span className="text-slate-500">{project.avgProgress}%</span>
         </div>
         <ProgressBar value={project.avgProgress} />
@@ -51,7 +51,7 @@ export default async function ProjectDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           Tasks on this project — what's been done so far
         </h2>
         <div className="divide-y divide-brand-100">

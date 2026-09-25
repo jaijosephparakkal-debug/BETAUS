@@ -28,7 +28,7 @@ export default async function ProjectsPage() {
           <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
             <Card className="transition hover:border-brand-200">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-slate-900">{p.name}</span>
+                <span className="text-[21px] font-medium text-slate-900">{p.name}</span>
                 <StatusBadge status={p.status} />
               </div>
               {p.number && (

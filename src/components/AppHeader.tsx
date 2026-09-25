@@ -46,7 +46,7 @@ export function AppHeader({
             />
           </div>
           <div>
-            <div className="font-semibold text-slate-900">
+            <div className="text-[21px] font-semibold text-slate-900">
               {membership.company.name}
             </div>
             <div className="text-[17px] text-slate-500">

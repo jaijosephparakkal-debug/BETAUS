@@ -65,7 +65,7 @@ export default async function DashboardOverviewPage() {
       <div className="grid gap-6 sm:grid-cols-2">
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">My tasks</h2>
+            <h2 className="text-[21px] font-semibold text-slate-900">My tasks</h2>
             <Link href="/dashboard/tasks" className="text-[19px] text-brand-600 hover:underline">
               View all
             </Link>
@@ -101,7 +101,7 @@ export default async function DashboardOverviewPage() {
 
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">My KPIs</h2>
+            <h2 className="text-[21px] font-semibold text-slate-900">My KPIs</h2>
             <Link href="/dashboard/kpis" className="text-[19px] text-brand-600 hover:underline">
               View all
             </Link>
@@ -110,7 +110,7 @@ export default async function DashboardOverviewPage() {
             {kpis.map((kpi) => (
               <div key={kpi.id}>
                 <div className="flex items-center justify-between text-[19px]">
-                  <span className="font-medium text-slate-900">{kpi.name}</span>
+                  <span className="text-[21px] font-medium text-slate-900">{kpi.name}</span>
                   <span className="text-slate-500">
                     {kpi.current}
                     {kpi.unit ?? ""} / {kpi.target}
@@ -130,7 +130,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Organisational structure</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Organisational structure</h2>
         <OrgChart orgTree={orgTree} />
       </Card>
     </div>

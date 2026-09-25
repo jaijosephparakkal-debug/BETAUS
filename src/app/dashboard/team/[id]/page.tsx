@@ -50,7 +50,7 @@ export default async function TeamMemberPage({
       <div className="grid gap-6 sm:grid-cols-2">
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Tasks</h2>
+            <h2 className="text-[21px] font-semibold text-slate-900">Tasks</h2>
           </div>
           <div className="space-y-3">
             {tasks.map((task) => (
@@ -89,12 +89,12 @@ export default async function TeamMemberPage({
         </Card>
 
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">KPIs</h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">KPIs</h2>
           <div className="space-y-3">
             {kpis.map((kpi) => (
               <div key={kpi.id}>
                 <div className="flex items-center justify-between text-[19px]">
-                  <span className="font-medium text-slate-900">{kpi.name}</span>
+                  <span className="text-[21px] font-medium text-slate-900">{kpi.name}</span>
                   <span className="text-slate-500">
                     {kpi.current}
                     {kpi.unit ?? ""} / {kpi.target}
@@ -118,7 +118,7 @@ export default async function TeamMemberPage({
 
       {target.reports.length > 0 && (
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">Direct reports</h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Direct reports</h2>
           <div className="space-y-2">
             {target.reports.map((r) => (
               <Link
@@ -137,7 +137,7 @@ export default async function TeamMemberPage({
       )}
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Timeline</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Timeline</h2>
         <div className="space-y-4">
           {timeline.map((entry) => (
             <div key={entry.id} className="border-l-2 border-brand-200 pl-3">

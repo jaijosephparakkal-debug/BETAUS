@@ -60,7 +60,7 @@ export default async function DirectorPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="flex flex-col items-center text-center">
-          <h2 className="mb-3 self-start font-semibold text-slate-900">
+          <h2 className="mb-3 self-start text-[21px] font-semibold text-slate-900">
             Overall task progress
           </h2>
           <DonutChart value={rollup.avgTaskProgress} />
@@ -69,7 +69,7 @@ export default async function DirectorPage() {
           </div>
         </Card>
         <Card className="flex flex-col items-center text-center">
-          <h2 className="mb-3 self-start font-semibold text-slate-900">
+          <h2 className="mb-3 self-start text-[21px] font-semibold text-slate-900">
             Overall KPI achievement
           </h2>
           <DonutChart value={rollup.avgKpiScore} />
@@ -78,7 +78,7 @@ export default async function DirectorPage() {
           </div>
         </Card>
         <Card>
-          <h2 className="mb-3 font-semibold text-slate-900">
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
             Task status breakdown
           </h2>
           <BarChart
@@ -104,7 +104,7 @@ export default async function DirectorPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           At risk — {atRiskTasks.length} overdue task
           {atRiskTasks.length === 1 ? "" : "s"}
         </h2>
@@ -136,7 +136,7 @@ export default async function DirectorPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900">Org chart</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Org chart</h2>
         <OrgChart orgTree={orgTree} linkable />
       </Card>
     </div>

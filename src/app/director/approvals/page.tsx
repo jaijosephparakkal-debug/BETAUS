@@ -16,10 +16,10 @@ export default async function CompanyApprovalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[21px] font-semibold text-slate-900">
+        <h1 className="text-[23px] font-semibold text-slate-900">
           Company Approvals — {membership.company.name}
         </h1>
-        <p className="mt-1 text-[17px] text-slate-500">
+        <p className="mt-1 text-[19px] text-slate-500">
           Every request company-wide, not just the ones addressed to you —
           an audit view. Decisions still happen between the requester and
           their own manager.
@@ -31,7 +31,7 @@ export default async function CompanyApprovalsPage() {
           Pending — {pending.length}
         </h2>
         {pending.length === 0 ? (
-          <p className="text-[17px] text-slate-500">Nothing pending right now.</p>
+          <p className="text-[19px] text-slate-500">Nothing pending right now.</p>
         ) : (
           <div className="divide-y divide-brand-100">
             {pending.map((r) => (
@@ -41,10 +41,10 @@ export default async function CompanyApprovalsPage() {
                 className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:bg-brand-50/40"
               >
                 <div>
-                  <div className="text-[17px] font-medium text-slate-900">
+                  <div className="text-[19px] font-medium text-slate-900">
                     {r.title}
                   </div>
-                  <div className="text-[15px] text-slate-500">
+                  <div className="text-[17px] text-slate-500">
                     {r.requestedBy.user.name} → {r.approver.user.name} ·{" "}
                     {formatDate(r.createdAt)}
                     {r._count.attachments > 0 &&
@@ -65,7 +65,7 @@ export default async function CompanyApprovalsPage() {
           Decided — {decided.length}
         </h2>
         {decided.length === 0 ? (
-          <p className="text-[17px] text-slate-500">
+          <p className="text-[19px] text-slate-500">
             Nothing decided yet.
           </p>
         ) : (
@@ -77,10 +77,10 @@ export default async function CompanyApprovalsPage() {
                 className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:bg-brand-50/40"
               >
                 <div>
-                  <div className="text-[17px] font-medium text-slate-900">
+                  <div className="text-[19px] font-medium text-slate-900">
                     {r.title}
                   </div>
-                  <div className="text-[15px] text-slate-500">
+                  <div className="text-[17px] text-slate-500">
                     {r.requestedBy.user.name} → {r.approver.user.name} ·{" "}
                     {formatDate(r.decidedAt ?? r.createdAt)}
                   </div>

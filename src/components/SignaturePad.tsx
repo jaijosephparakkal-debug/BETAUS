@@ -90,7 +90,7 @@ export function SignaturePad({ existing }: { existing: string | null }) {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="text-[17px] text-brand-600 hover:underline"
+          className="text-[19px] text-brand-600 hover:underline"
         >
           Redraw
         </button>
@@ -98,7 +98,7 @@ export function SignaturePad({ existing }: { existing: string | null }) {
           type="button"
           onClick={handleRemove}
           disabled={pending}
-          className="text-[17px] text-slate-500 hover:text-slate-700"
+          className="text-[19px] text-slate-500 hover:text-slate-700"
         >
           Remove
         </button>
@@ -119,20 +119,20 @@ export function SignaturePad({ existing }: { existing: string | null }) {
         className="w-full max-w-[400px] touch-none rounded-lg border border-brand-300 bg-white"
         style={{ height: 150 }}
       />
-      {error && <p className="mt-1 text-[17px] text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-[19px] text-red-600">{error}</p>}
       <div className="mt-2 flex gap-2">
         <button
           type="button"
           onClick={handleSave}
           disabled={pending}
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-[19px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save signature"}
         </button>
         <button
           type="button"
           onClick={clearCanvas}
-          className="rounded-lg border border-brand-300 px-3 py-1.5 text-[17px] text-slate-600 hover:bg-slate-50"
+          className="rounded-lg border border-brand-300 px-3 py-1.5 text-[19px] text-slate-600 hover:bg-slate-50"
         >
           Clear
         </button>
@@ -140,7 +140,7 @@ export function SignaturePad({ existing }: { existing: string | null }) {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="rounded-lg px-3 py-1.5 text-[17px] text-slate-500 hover:text-slate-700"
+            className="rounded-lg px-3 py-1.5 text-[19px] text-slate-500 hover:text-slate-700"
           >
             Cancel
           </button>

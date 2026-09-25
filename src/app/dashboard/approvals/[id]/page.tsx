@@ -28,7 +28,7 @@ export default async function ApprovalDetailPage({
       <div>
         <Link
           href="/dashboard/approvals"
-          className="text-[17px] text-brand-600 hover:underline"
+          className="text-[19px] text-brand-600 hover:underline"
         >
           ← Back to Approvals
         </Link>
@@ -36,25 +36,25 @@ export default async function ApprovalDetailPage({
 
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[21px] font-semibold text-slate-900">{request.title}</h1>
+          <h1 className="text-[23px] font-semibold text-slate-900">{request.title}</h1>
           <StatusBadge status={request.status} />
         </div>
-        <div className="mt-1 text-[15px] text-slate-500">
+        <div className="mt-1 text-[17px] text-slate-500">
           {request.requestedBy.user.name} → {request.approver.user.name} ·{" "}
           {formatDate(request.createdAt)}
         </div>
         {request.description && (
-          <p className="mt-2 text-[17px] text-slate-600">{request.description}</p>
+          <p className="mt-2 text-[19px] text-slate-600">{request.description}</p>
         )}
         {isAuditing && (
-          <p className="mt-2 text-[15px] text-slate-400">
+          <p className="mt-2 text-[17px] text-slate-400">
             You&rsquo;re viewing this as the director — it wasn&rsquo;t sent
             to you, so it&rsquo;s read-only.
           </p>
         )}
         {request.requestSignature && (
           <div className="mt-3">
-            <div className="text-[15px] text-slate-400">
+            <div className="text-[17px] text-slate-400">
               Signed by {request.requestedBy.user.name}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,16 +78,16 @@ export default async function ApprovalDetailPage({
         <Card>
           <h2 className="mb-2 font-semibold text-slate-900">Decision</h2>
           {request.decisionNote && (
-            <p className="text-[17px] text-slate-600">
+            <p className="text-[19px] text-slate-600">
               &ldquo;{request.decisionNote}&rdquo;
             </p>
           )}
-          <div className="mt-1 text-[15px] text-slate-500">
+          <div className="mt-1 text-[17px] text-slate-500">
             {formatDate(request.decidedAt)}
           </div>
           {request.decisionSignature && (
             <div className="mt-3">
-              <div className="text-[15px] text-slate-400">
+              <div className="text-[17px] text-slate-400">
                 Signed by {request.approver.user.name}
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,19 +118,19 @@ export default async function ApprovalDetailPage({
         <div className="space-y-4">
           {request.comments.map((c) => (
             <div key={c.id} className="border-l-2 border-brand-200 pl-3">
-              <div className="flex items-center gap-2 text-[15px] text-slate-500">
+              <div className="flex items-center gap-2 text-[17px] text-slate-500">
                 <span className="font-medium text-slate-700">
                   {c.author.user.name}
                 </span>
                 <span>{formatDate(c.createdAt)}</span>
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-[17px] text-slate-800">
+              <p className="mt-1 whitespace-pre-wrap text-[19px] text-slate-800">
                 {c.body}
               </p>
             </div>
           ))}
           {request.comments.length === 0 && (
-            <p className="text-[17px] text-slate-500">No comments yet.</p>
+            <p className="text-[19px] text-slate-500">No comments yet.</p>
           )}
         </div>
         {isParty && (

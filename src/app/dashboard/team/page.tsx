@@ -15,7 +15,7 @@ export default async function MyTeamPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[21px] font-semibold text-slate-900">My Team</h1>
+      <h1 className="text-[23px] font-semibold text-slate-900">My Team</h1>
       <div className="grid gap-4 sm:grid-cols-2">
         {reports.map((report, i) => {
           const summary = summaries[i];
@@ -25,17 +25,17 @@ export default async function MyTeamPage() {
                 <div className="font-medium text-slate-900">
                   {report.user.name}
                 </div>
-                <div className="text-[15px] text-slate-500">{report.title}</div>
+                <div className="text-[17px] text-slate-500">{report.title}</div>
                 <div className="mt-3 space-y-2">
                   <div>
-                    <div className="flex items-center justify-between text-[15px] text-slate-500">
+                    <div className="flex items-center justify-between text-[17px] text-slate-500">
                       <span>Task progress</span>
                       <span>{summary.avgTaskProgress}%</span>
                     </div>
                     <ProgressBar value={summary.avgTaskProgress} />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-[15px] text-slate-500">
+                    <div className="flex items-center justify-between text-[17px] text-slate-500">
                       <span>KPI achievement</span>
                       <span>{summary.avgKpiScore}%</span>
                     </div>
@@ -47,7 +47,7 @@ export default async function MyTeamPage() {
           );
         })}
         {reports.length === 0 && (
-          <p className="text-[17px] text-slate-500">No direct reports yet.</p>
+          <p className="text-[19px] text-slate-500">No direct reports yet.</p>
         )}
       </div>
     </div>

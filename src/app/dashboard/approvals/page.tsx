@@ -17,11 +17,11 @@ export default async function ApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-[21px] font-semibold text-slate-900">Approvals</h1>
+      <h1 className="text-[23px] font-semibold text-slate-900">Approvals</h1>
 
       <Card>
         <h2 className="mb-1 font-semibold text-slate-900">Your signature</h2>
-        <p className="mb-3 text-[17px] text-slate-500">
+        <p className="mb-3 text-[19px] text-slate-500">
           Draw it once — it&rsquo;s attached automatically whenever you send
           or decide a request, like signing a document.
         </p>
@@ -41,10 +41,10 @@ export default async function ApprovalsPage() {
                 className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:bg-brand-50/40"
               >
                 <div>
-                  <div className="text-[17px] font-medium text-slate-900">
+                  <div className="text-[19px] font-medium text-slate-900">
                     {r.title}
                   </div>
-                  <div className="text-[15px] text-slate-500">
+                  <div className="text-[17px] text-slate-500">
                     From {r.requestedBy.user.name} · {formatDate(r.createdAt)}
                     {r._count.attachments > 0 &&
                       ` · ${r._count.attachments} file${r._count.attachments === 1 ? "" : "s"}`}
@@ -64,7 +64,7 @@ export default async function ApprovalsPage() {
           <h2 className="mb-3 font-semibold text-slate-900">
             Send a new request
           </h2>
-          <p className="mb-3 text-[17px] text-slate-500">
+          <p className="mb-3 text-[19px] text-slate-500">
             Goes to your manager for approval — sign-off, a read, a decision.
           </p>
           <NewApprovalRequestForm />
@@ -74,7 +74,7 @@ export default async function ApprovalsPage() {
       <Card>
         <h2 className="mb-3 font-semibold text-slate-900">My requests</h2>
         {myRequests.length === 0 ? (
-          <p className="text-[17px] text-slate-500">
+          <p className="text-[19px] text-slate-500">
             Nothing sent for approval yet.
           </p>
         ) : (
@@ -86,10 +86,10 @@ export default async function ApprovalsPage() {
                 className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:bg-brand-50/40"
               >
                 <div>
-                  <div className="text-[17px] font-medium text-slate-900">
+                  <div className="text-[19px] font-medium text-slate-900">
                     {r.title}
                   </div>
-                  <div className="text-[15px] text-slate-500">
+                  <div className="text-[17px] text-slate-500">
                     To {r.approver.user.name} · {formatDate(r.createdAt)}
                     {r._count.attachments > 0 &&
                       ` · ${r._count.attachments} file${r._count.attachments === 1 ? "" : "s"}`}

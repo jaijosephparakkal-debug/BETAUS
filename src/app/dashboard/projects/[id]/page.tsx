@@ -19,28 +19,28 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/dashboard/projects" className="text-[17px] text-brand-600 hover:underline">
+        <Link href="/dashboard/projects" className="text-[19px] text-brand-600 hover:underline">
           ← Back to Projects
         </Link>
       </div>
 
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[21px] font-semibold text-slate-900">{project.name}</h1>
+          <h1 className="text-[23px] font-semibold text-slate-900">{project.name}</h1>
           <StatusBadge status={project.status} />
         </div>
         {project.number && (
-          <div className="mt-1 text-[15px] text-slate-500">{project.number}</div>
+          <div className="mt-1 text-[17px] text-slate-500">{project.number}</div>
         )}
       </div>
 
       <Card>
-        <div className="mb-2 flex items-center justify-between text-[17px]">
+        <div className="mb-2 flex items-center justify-between text-[19px]">
           <span className="font-medium text-slate-900">Overall progress</span>
           <span className="text-slate-500">{project.avgProgress}%</span>
         </div>
         <ProgressBar value={project.avgProgress} />
-        <div className="mt-2 text-[15px] text-slate-500">
+        <div className="mt-2 text-[17px] text-slate-500">
           {project.completedTasks}/{project.tasks.length} task
           {project.tasks.length === 1 ? "" : "s"} completed — average across every
           task linked to this project.
@@ -62,13 +62,13 @@ export default async function ProjectDetailPage({
               className="block py-3 first:pt-0 last:pb-0 hover:bg-brand-50/40"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[17px] font-medium text-slate-900">{task.title}</span>
+                <span className="text-[19px] font-medium text-slate-900">{task.title}</span>
                 <StatusBadge status={task.status} />
               </div>
               <div className="mt-2">
                 <ProgressBar value={task.progress} />
               </div>
-              <div className="mt-1 flex items-center justify-between text-[15px] text-slate-500">
+              <div className="mt-1 flex items-center justify-between text-[17px] text-slate-500">
                 <span>
                   {task.assignedTo.user.name}
                   {task.subtasks.length > 0 &&
@@ -79,7 +79,7 @@ export default async function ProjectDetailPage({
             </Link>
           ))}
           {project.tasks.length === 0 && (
-            <p className="text-[17px] text-slate-500">
+            <p className="text-[19px] text-slate-500">
               No tasks linked to this project yet — link one when assigning a task.
             </p>
           )}

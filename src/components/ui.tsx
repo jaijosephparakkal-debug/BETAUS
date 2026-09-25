@@ -14,19 +14,19 @@ export type AttachmentItem = {
 
 export function AttachmentList({ attachments }: { attachments: AttachmentItem[] }) {
   if (attachments.length === 0) {
-    return <p className="text-[17px] text-slate-500">No files attached yet.</p>;
+    return <p className="text-[19px] text-slate-500">No files attached yet.</p>;
   }
   return (
     <ul className="space-y-1.5">
       {attachments.map((a) => (
-        <li key={a.id} className="flex items-center justify-between gap-3 text-[17px]">
+        <li key={a.id} className="flex items-center justify-between gap-3 text-[19px]">
           <a
             href={`/api/files/${a.id}`}
             className="truncate font-medium text-brand-600 hover:underline"
           >
             {a.filename}
           </a>
-          <span className="shrink-0 text-[15px] text-slate-500">
+          <span className="shrink-0 text-[17px] text-slate-500">
             {formatFileSize(a.size)} · {a.uploadedBy.user.name}
           </span>
         </li>
@@ -98,12 +98,12 @@ export function DonutChart({
           y="50%"
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-slate-900 text-[17px] font-semibold"
+          className="fill-slate-900 text-[19px] font-semibold"
         >
           {pct}%
         </text>
       </svg>
-      {label && <div className="mt-1 text-[15px] text-slate-500">{label}</div>}
+      {label && <div className="mt-1 text-[17px] text-slate-500">{label}</div>}
     </div>
   );
 }
@@ -119,14 +119,14 @@ export function BarChart({
     <div className="space-y-2.5">
       {data.map((d) => (
         <div key={d.label} className="flex items-center gap-3">
-          <div className="w-28 shrink-0 text-[15px] text-slate-600">{d.label}</div>
+          <div className="w-28 shrink-0 text-[17px] text-slate-600">{d.label}</div>
           <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
             <div
               className={`h-full rounded-full ${d.colorClass ?? "bg-brand-600"}`}
               style={{ width: `${(d.value / max) * 100}%` }}
             />
           </div>
-          <div className="w-6 shrink-0 text-right text-[15px] font-medium text-slate-700">
+          <div className="w-6 shrink-0 text-right text-[17px] font-medium text-slate-700">
             {d.value}
           </div>
         </div>
@@ -174,7 +174,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`rounded-full px-2.5 py-0.5 text-[15px] font-medium ${
+      className={`rounded-full px-2.5 py-0.5 text-[17px] font-medium ${
         STATUS_STYLES[status] ?? "bg-slate-100 text-slate-600"
       }`}
     >

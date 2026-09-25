@@ -9,7 +9,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-brand-600 px-2.5 py-1 text-[15px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-md bg-brand-600 px-2.5 py-1 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? "Saving…" : "Save"}
     </button>
@@ -32,11 +32,11 @@ export default function EmailForm({
         name="email"
         type="email"
         defaultValue={currentEmail}
-        className="w-56 rounded-md border border-brand-300 px-2 py-1 text-[15px]"
+        className="w-56 rounded-md border border-brand-300 px-2 py-1 text-[17px]"
       />
       <SubmitButton />
-      {state.error && <span className="text-[15px] text-red-600">{state.error}</span>}
-      {state.ok && <span className="text-[15px] text-emerald-600">Saved</span>}
+      {state.error && <span className="text-[17px] text-red-600">{state.error}</span>}
+      {state.ok && <span className="text-[17px] text-emerald-600">Saved</span>}
     </form>
   );
 }

@@ -10,7 +10,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-lg bg-brand-600 px-3 py-1.5 text-[19px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? "Saving…" : label}
     </button>
@@ -35,7 +35,7 @@ export function AssignTaskForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-[17px] text-brand-600 hover:underline"
+        className="text-[19px] text-brand-600 hover:underline"
       >
         + Assign a task
       </button>
@@ -48,19 +48,19 @@ export function AssignTaskForm({
         name="title"
         required
         placeholder="Task title"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
       <textarea
         name="description"
         rows={2}
         placeholder="Description (optional)"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
       {projects.length > 0 && (
         <select
           name="projectId"
           defaultValue=""
-          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
         >
           <option value="">No project</option>
           {projects.map((p) => (
@@ -73,15 +73,15 @@ export function AssignTaskForm({
       <input
         name="deadline"
         type="date"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
-      {state.error && <p className="text-[17px] text-red-600">{state.error}</p>}
+      {state.error && <p className="text-[19px] text-red-600">{state.error}</p>}
       <div className="flex gap-2">
         <SubmitButton label="Assign task" />
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[17px] text-slate-500 hover:text-slate-700"
+          className="text-[19px] text-slate-500 hover:text-slate-700"
         >
           Cancel
         </button>
@@ -100,7 +100,7 @@ export function SetKpiForm({ membershipId }: { membershipId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-[17px] text-brand-600 hover:underline"
+        className="text-[19px] text-brand-600 hover:underline"
       >
         + Set a KPI
       </button>
@@ -113,35 +113,35 @@ export function SetKpiForm({ membershipId }: { membershipId: string }) {
         name="name"
         required
         placeholder="KPI name"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
       <div className="flex gap-2">
         <input
           name="current"
           type="number"
           placeholder="Current"
-          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
         />
         <input
           name="target"
           type="number"
           required
           placeholder="Target"
-          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
         />
       </div>
       <input
         name="unit"
         placeholder="Unit (optional, e.g. % or hrs)"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
-      {state.error && <p className="text-[17px] text-red-600">{state.error}</p>}
+      {state.error && <p className="text-[19px] text-red-600">{state.error}</p>}
       <div className="flex gap-2">
         <SubmitButton label="Set KPI" />
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[17px] text-slate-500 hover:text-slate-700"
+          className="text-[19px] text-slate-500 hover:text-slate-700"
         >
           Cancel
         </button>

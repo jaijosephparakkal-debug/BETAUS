@@ -20,7 +20,7 @@ type CompanySpec = {
 const companies: CompanySpec[] = [
   {
     slug: "flaretechnical",
-    name: "Flare Technical",
+    name: "Flaretech",
     root: {
       name: "Abraham Mathew",
       email: "abraham@flaretechnical.com",
@@ -102,7 +102,7 @@ const companies: CompanySpec[] = [
     slug: "gasneeds",
     name: "Gas Needs",
     root: {
-      // Same person as the Flare Technical director — director of both companies.
+      // Same person as the Flaretech director — director of both companies.
       name: "Abraham Mathew",
       email: "abraham@flaretechnical.com",
       title: "Managing Director",

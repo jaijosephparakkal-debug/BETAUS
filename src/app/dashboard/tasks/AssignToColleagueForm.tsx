@@ -19,8 +19,10 @@ function SubmitButton() {
 
 export function AssignToColleagueForm({
   colleagues,
+  projects = [],
 }: {
   colleagues: { id: string; name: string; title: string }[];
+  projects?: { id: string; name: string; number: string | null }[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
@@ -66,6 +68,20 @@ export function AssignToColleagueForm({
         placeholder="Description (optional)"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
       />
+      {projects.length > 0 && (
+        <select
+          name="projectId"
+          defaultValue=""
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
+        >
+          <option value="">No project</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.number ? `${p.number} — ${p.name}` : p.name}
+            </option>
+          ))}
+        </select>
+      )}
       <input
         name="deadline"
         type="date"

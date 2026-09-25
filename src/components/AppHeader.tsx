@@ -21,6 +21,7 @@ export function AppHeader({
     { href: "/dashboard", label: "Overview" },
     { href: "/dashboard/tasks", label: "My Tasks" },
     { href: "/dashboard/kpis", label: "My KPIs" },
+    { href: "/dashboard/projects", label: "Projects" },
     ...(reportCount > 0
       ? [{ href: "/dashboard/team", label: "My Team" }]
       : []),

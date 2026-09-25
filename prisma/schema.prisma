@@ -23,7 +23,21 @@ model Company {
   slug      String            @unique
   memberships Membership[]
   messages  DirectorMessage[]
+  projects  Project[]
   createdAt DateTime          @default(now())
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  companyId String
+  number    String? // e.g. "P672-2021", the site's own project number
+  name      String
+  status    String   @default("ACTIVE") // ACTIVE | ON_HOLD | COMPLETED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks   Task[]
 }
 
 model Membership {
@@ -63,6 +77,7 @@ model Task {
   assignedToId String
   assignedById String
   parentTaskId String? // set for a daily task that rolls up into a weekly/monthly one
+  projectId    String? // which real project this task belongs to, if any
   deadline     DateTime?
   status       String     @default("NOT_STARTED")
   progress     Int        @default(0)
@@ -73,6 +88,7 @@ model Task {
   assignedBy Membership    @relation("AssignedBy", fields: [assignedById], references: [id])
   parentTask Task?         @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
   subtasks   Task[]        @relation("TaskSubtasks")
+  project    Project?      @relation(fields: [projectId], references: [id])
   comments   TaskComment[]
   attachments Attachment[]
 }

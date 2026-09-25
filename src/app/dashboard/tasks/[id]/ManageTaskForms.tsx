@@ -73,16 +73,22 @@ export function AddDailyTaskForm({ parentTaskId }: { parentTaskId: string }) {
   );
 }
 
+type ProjectOption = { id: string; name: string; number: string | null };
+
 export function EditTaskForm({
   taskId,
   initialTitle,
   initialDescription,
   initialDeadline,
+  initialProjectId,
+  projects = [],
 }: {
   taskId: string;
   initialTitle: string;
   initialDescription: string;
   initialDeadline: string; // yyyy-mm-dd or ""
+  initialProjectId?: string;
+  projects?: ProjectOption[];
 }) {
   const [open, setOpen] = useState(false);
   const boundAction = updateTaskAction.bind(null, taskId);
@@ -115,6 +121,20 @@ export function EditTaskForm({
         placeholder="Description (optional)"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
       />
+      {projects.length > 0 && (
+        <select
+          name="projectId"
+          defaultValue={initialProjectId ?? ""}
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
+        >
+          <option value="">No project</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.number ? `${p.number} — ${p.name}` : p.name}
+            </option>
+          ))}
+        </select>
+      )}
       <input
         name="deadline"
         type="date"

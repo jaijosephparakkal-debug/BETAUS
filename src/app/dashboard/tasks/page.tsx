@@ -10,12 +10,17 @@ export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, colleagues] = await Promise.all([
+  const [tasks, colleagues, projects] = await Promise.all([
     getTasksFor(membership.id),
     prisma.membership.findMany({
       where: { companyId: membership.companyId, isDirector: false, id: { not: membership.id } },
       include: { user: true },
       orderBy: { title: "asc" },
+    }),
+    prisma.project.findMany({
+      where: { companyId: membership.companyId },
+      select: { id: true, name: true, number: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
@@ -24,6 +29,7 @@ export default async function MyTasksPage() {
       <h1 className="text-lg font-semibold text-slate-900">My Tasks</h1>
       <AssignToColleagueForm
         colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
+        projects={projects}
       />
       <div className="space-y-3">
         {tasks.map((task) => (
@@ -33,6 +39,13 @@ export default async function MyTasksPage() {
                 <span className="font-medium text-slate-900">{task.title}</span>
                 <StatusBadge status={task.status} />
               </div>
+              {task.project && (
+                <span className="mt-1 inline-block text-xs text-brand-600">
+                  {task.project.number
+                    ? `${task.project.number} — ${task.project.name}`
+                    : task.project.name}
+                </span>
+              )}
               {task.description && (
                 <p className="mt-1 text-sm text-slate-600">{task.description}</p>
               )}

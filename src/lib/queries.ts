@@ -15,12 +15,64 @@ export function getTasksFor(membershipId: string) {
     orderBy: [{ status: "asc" }, { deadline: "asc" }],
     include: {
       assignedBy: { include: { user: true } },
+      project: { select: { id: true, name: true, number: true } },
       subtasks: {
         select: { id: true, title: true, status: true, progress: true },
         orderBy: { createdAt: "asc" },
       },
     },
   });
+}
+
+/** Every project at a company, with a computed progress rollup from its linked top-level tasks. */
+export async function getProjectsFor(companyId: string) {
+  const projects = await prisma.project.findMany({
+    where: { companyId },
+    include: {
+      tasks: {
+        where: { parentTaskId: null },
+        select: { status: true, progress: true },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return projects.map((p) => ({
+    id: p.id,
+    number: p.number,
+    name: p.name,
+    status: p.status,
+    taskCount: p.tasks.length,
+    completedTasks: p.tasks.filter((t) => t.status === "COMPLETED").length,
+    avgProgress: p.tasks.length
+      ? Math.round(p.tasks.reduce((s, t) => s + t.progress, 0) / p.tasks.length)
+      : 0,
+  }));
+}
+
+export async function getProjectDetail(id: string) {
+  const project = await prisma.project.findUnique({
+    where: { id },
+    include: {
+      tasks: {
+        where: { parentTaskId: null },
+        include: {
+          assignedTo: { include: { user: true } },
+          assignedBy: { include: { user: true } },
+          subtasks: { select: { id: true, status: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!project) return null;
+
+  const avgProgress = project.tasks.length
+    ? Math.round(project.tasks.reduce((s, t) => s + t.progress, 0) / project.tasks.length)
+    : 0;
+  const completedTasks = project.tasks.filter((t) => t.status === "COMPLETED").length;
+
+  return { ...project, avgProgress, completedTasks };
 }
 
 export function getKpisFor(membershipId: string) {

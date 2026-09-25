@@ -24,6 +24,7 @@ export async function assignTaskAction(
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const deadlineRaw = String(formData.get("deadline") || "");
+  const projectId = String(formData.get("projectId") || "");
   if (!title) return { error: "Give the task a title." };
 
   const target = await prisma.membership.findUnique({ where: { id: membershipId } });
@@ -36,6 +37,7 @@ export async function assignTaskAction(
       description: description || null,
       assignedToId: membershipId,
       assignedById: access.membership.id,
+      projectId: projectId || null,
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     },
   });

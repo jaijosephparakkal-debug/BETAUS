@@ -156,6 +156,8 @@ const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-500/15 text-amber-400",
   APPROVED: "bg-emerald-500/15 text-emerald-400",
   REJECTED: "bg-red-500/15 text-red-400",
+  ACTIVE: "bg-brand-50 text-brand-700",
+  ON_HOLD: "bg-amber-500/15 text-amber-400",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -165,6 +167,8 @@ const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+  ACTIVE: "Active",
+  ON_HOLD: "On hold",
 };
 
 export function StatusBadge({ status }: { status: string }) {

@@ -29,10 +29,15 @@ export default async function TeamMemberPage({
     membership.isDirector || (await isManagerOf(membership.id, target.id));
   if (!canManage) redirect("/dashboard/team");
 
-  const [tasks, kpis, timeline] = await Promise.all([
+  const [tasks, kpis, timeline, projects] = await Promise.all([
     getTasksFor(target.id),
     getKpisFor(target.id),
     getTimelineFor(target.id),
+    prisma.project.findMany({
+      where: { companyId: membership.companyId },
+      select: { id: true, name: true, number: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   return (
@@ -56,6 +61,16 @@ export default async function TeamMemberPage({
                   </span>
                   <StatusBadge status={task.status} />
                 </div>
+                {task.project && (
+                  <Link
+                    href={`/dashboard/projects/${task.project.id}`}
+                    className="mt-1 inline-block text-xs text-brand-600 hover:underline"
+                  >
+                    {task.project.number
+                      ? `${task.project.number} — ${task.project.name}`
+                      : task.project.name}
+                  </Link>
+                )}
                 <div className="mt-2">
                   <ProgressBar value={task.progress} />
                 </div>
@@ -69,7 +84,7 @@ export default async function TeamMemberPage({
             )}
           </div>
           <div className="mt-4 border-t border-brand-100 pt-4">
-            <AssignTaskForm membershipId={target.id} />
+            <AssignTaskForm membershipId={target.id} projects={projects} />
           </div>
         </Card>
 

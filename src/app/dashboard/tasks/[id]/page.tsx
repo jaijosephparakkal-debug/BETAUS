@@ -33,6 +33,7 @@ export default async function TaskDetailPage({
       assignedTo: { include: { user: true } },
       assignedBy: { include: { user: true } },
       parentTask: true,
+      project: { select: { id: true, name: true, number: true } },
       subtasks: {
         include: { assignedTo: { include: { user: true } } },
         orderBy: { createdAt: "asc" },
@@ -58,13 +59,22 @@ export default async function TaskDetailPage({
     redirect("/dashboard/tasks");
   }
 
-  const employees = canManage
-    ? await prisma.membership.findMany({
-        where: { companyId: membership.companyId, isDirector: false },
-        include: { user: true },
-        orderBy: { title: "asc" },
-      })
-    : [];
+  const [employees, projects] = await Promise.all([
+    canManage
+      ? prisma.membership.findMany({
+          where: { companyId: membership.companyId, isDirector: false },
+          include: { user: true },
+          orderBy: { title: "asc" },
+        })
+      : Promise.resolve([]),
+    canManage
+      ? prisma.project.findMany({
+          where: { companyId: membership.companyId },
+          select: { id: true, name: true, number: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
 
   const deadlineValue = task.deadline ? task.deadline.toISOString().slice(0, 10) : "";
 
@@ -83,6 +93,16 @@ export default async function TaskDetailPage({
           <h1 className="text-lg font-semibold text-slate-900">{task.title}</h1>
           <StatusBadge status={task.status} />
         </div>
+        {task.project && (
+          <Link
+            href={`/dashboard/projects/${task.project.id}`}
+            className="mt-1 inline-block text-xs text-brand-600 hover:underline"
+          >
+            {task.project.number
+              ? `${task.project.number} — ${task.project.name}`
+              : task.project.name}
+          </Link>
+        )}
         {task.description && (
           <p className="mt-1 text-sm text-slate-600">{task.description}</p>
         )}
@@ -103,6 +123,8 @@ export default async function TaskDetailPage({
               initialTitle={task.title}
               initialDescription={task.description ?? ""}
               initialDeadline={deadlineValue}
+              initialProjectId={task.projectId ?? ""}
+              projects={projects}
             />
             <ReassignTaskForm
               taskId={task.id}

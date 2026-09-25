@@ -17,7 +17,15 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function AssignTaskForm({ membershipId }: { membershipId: string }) {
+type ProjectOption = { id: string; name: string; number: string | null };
+
+export function AssignTaskForm({
+  membershipId,
+  projects = [],
+}: {
+  membershipId: string;
+  projects?: ProjectOption[];
+}) {
   const [open, setOpen] = useState(false);
   const boundAction = assignTaskAction.bind(null, membershipId);
   const [state, formAction] = useFormState(boundAction, {});
@@ -48,6 +56,20 @@ export function AssignTaskForm({ membershipId }: { membershipId: string }) {
         placeholder="Description (optional)"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
       />
+      {projects.length > 0 && (
+        <select
+          name="projectId"
+          defaultValue=""
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-sm"
+        >
+          <option value="">No project</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.number ? `${p.number} — ${p.name}` : p.name}
+            </option>
+          ))}
+        </select>
+      )}
       <input
         name="deadline"
         type="date"

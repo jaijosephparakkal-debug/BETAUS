@@ -180,6 +180,7 @@ export async function updateTaskAction(
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const deadlineRaw = String(formData.get("deadline") || "");
+  const projectId = String(formData.get("projectId") || "");
   if (!title) return { error: "Give the task a title." };
 
   await prisma.task.update({
@@ -187,6 +188,7 @@ export async function updateTaskAction(
     data: {
       title,
       description: description || null,
+      projectId: projectId || null,
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     },
   });

@@ -55,16 +55,14 @@ function LoginForm() {
       </Link>
       <div className="card-themed w-full max-w-sm rounded-2xl border border-brand-300 p-8 shadow-sm">
         <div className="flex justify-center">
-          <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-4">
-            <Image
-              src={theme.logo}
-              alt={theme.displayName}
-              width={theme.logoWidth}
-              height={theme.logoHeight}
-              className="h-16 w-auto"
-              priority
-            />
-          </div>
+          <Image
+            src={theme.logo}
+            alt={theme.displayName}
+            width={theme.logoWidth}
+            height={theme.logoHeight}
+            className="h-16 w-auto"
+            priority
+          />
         </div>
 
         {step === "email" && (
@@ -75,7 +73,7 @@ function LoginForm() {
                 type="email"
                 required
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-brand-300 px-3 py-2 text-[19px] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-brand-300 bg-[rgb(var(--card-text))] px-3 py-2 text-[19px] text-[rgb(var(--button-bg))] placeholder:text-[rgb(var(--button-bg))] placeholder:opacity-80 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {requestState.error && (
@@ -103,7 +101,7 @@ function LoginForm() {
                 maxLength={6}
                 required
                 placeholder="123456"
-                className="mt-1 w-full rounded-lg border border-brand-300 px-3 py-2 text-center text-[23px] tracking-[0.5em] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="mt-1 w-full rounded-lg border border-brand-300 bg-[rgb(var(--card-text))] px-3 py-2 text-center text-[23px] tracking-[0.5em] text-[rgb(var(--button-bg))] placeholder:text-[rgb(var(--button-bg))] placeholder:opacity-80 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {verifyState.error && (

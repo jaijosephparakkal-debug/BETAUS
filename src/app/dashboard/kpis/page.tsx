@@ -1,13 +1,21 @@
 import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
-import { getKpisFor, kpiScore } from "@/lib/queries";
+import { getKpisFor, getCompletionsFor, kpiScore } from "@/lib/queries";
+import { buildCompletionRollup } from "@/lib/completions";
 import { Card, DonutChart } from "@/components/ui";
+import { CompletionRollup } from "@/components/CompletionRollup";
 
 export default async function MyKpisPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const kpis = await getKpisFor(membership.id);
+  const [kpis, completions] = await Promise.all([
+    getKpisFor(membership.id),
+    getCompletionsFor(membership.id),
+  ]);
+  const months = buildCompletionRollup(
+    completions.map((c) => ({ id: c.id, title: c.title, completedAt: c.completedAt! }))
+  );
 
   return (
     <div className="space-y-4">
@@ -44,6 +52,13 @@ export default async function MyKpisPage() {
           <p className="text-[19px] text-slate-500">No KPIs set yet.</p>
         )}
       </div>
+
+      <Card>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+          Completed tasks — by week, by month
+        </h2>
+        <CompletionRollup months={months} />
+      </Card>
     </div>
   );
 }

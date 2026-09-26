@@ -74,10 +74,16 @@ const QUICK_STATUS_LABELS: Record<(typeof QUICK_STATUSES)[number], string> = {
  * progress / not started" flip. Still logs an auto-generated comment so
  * the change shows up with a timestamp in the person's activity/KPI
  * report, same as a normal progress update would.
+ *
+ * `completedAtInput` (datetime-local string, e.g. "2026-09-20T14:30") lets
+ * the person backdate when a stage was actually finished — most of this
+ * pipeline is being logged retroactively as the app rolls out, so "now" is
+ * often wrong. Defaults to the current time when omitted.
  */
 export async function quickToggleTaskStatusAction(
   taskId: string,
-  targetStatus: (typeof QUICK_STATUSES)[number]
+  targetStatus: (typeof QUICK_STATUSES)[number],
+  completedAtInput?: string | null
 ): Promise<{ error?: string }> {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." };
@@ -104,8 +110,15 @@ export async function quickToggleTaskStatusAction(
           ? task.progress
           : 50;
 
+  let completedAt: Date | null = null;
+  if (targetStatus === "COMPLETED") {
+    const parsed = completedAtInput ? new Date(completedAtInput) : new Date();
+    if (isNaN(parsed.getTime())) return { error: "Invalid completion date." };
+    completedAt = parsed;
+  }
+
   await prisma.$transaction([
-    prisma.task.update({ where: { id: taskId }, data: { status: targetStatus, progress } }),
+    prisma.task.update({ where: { id: taskId }, data: { status: targetStatus, progress, completedAt } }),
     prisma.taskComment.create({
       data: {
         taskId,
@@ -127,6 +140,32 @@ export async function quickToggleTaskStatusAction(
   revalidatePath(`/dashboard/tasks/${taskId}`);
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
+  return {};
+}
+
+/** Correct a completed task's finish date/time without re-toggling its status. */
+export async function setCompletedDateAction(
+  taskId: string,
+  completedAtInput: string
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.assignedToId !== membership.id) {
+    return { error: "You can only update your own tasks." };
+  }
+  if (task.status !== "COMPLETED") {
+    return { error: "Only a completed task has a finish date to set." };
+  }
+  const parsed = new Date(completedAtInput);
+  if (isNaN(parsed.getTime())) return { error: "Invalid date." };
+
+  await prisma.task.update({ where: { id: taskId }, data: { completedAt: parsed } });
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  if (task.parentTaskId) revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  if (task.projectId) revalidatePath(`/dashboard/projects/${task.projectId}`);
   return {};
 }
 

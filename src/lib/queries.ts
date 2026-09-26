@@ -93,6 +93,15 @@ export async function getProjectDetail(id: string) {
   };
 }
 
+/** Every task this person has ever finished, most recent first — feeds the weekly/monthly completion rollup. */
+export function getCompletionsFor(membershipId: string) {
+  return prisma.task.findMany({
+    where: { assignedToId: membershipId, completedAt: { not: null } },
+    orderBy: { completedAt: "desc" },
+    select: { id: true, title: true, completedAt: true },
+  });
+}
+
 export function getKpisFor(membershipId: string) {
   return prisma.kpi.findMany({
     where: { membershipId },

@@ -239,7 +239,11 @@ export default async function TaskDetailPage({
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
             {task.parentTask ? "Mark today’s status" : "Mark status"}
           </h2>
-          <QuickStatusToggle taskId={task.id} initialStatus={task.status} />
+          <QuickStatusToggle
+            taskId={task.id}
+            initialStatus={task.status}
+            initialCompletedAt={task.completedAt ? task.completedAt.toISOString() : null}
+          />
         </Card>
       )}
 

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { getProjectDetail } from "@/lib/queries";
+import { buildCompletionRollup } from "@/lib/completions";
 import { Card, ProgressBar, StatusBadge, formatDate } from "@/components/ui";
+import { CompletionRollup } from "@/components/CompletionRollup";
 import { UpdateProjectStatusForm } from "./StatusForm";
 
 export default async function ProjectDetailPage({
@@ -15,6 +17,17 @@ export default async function ProjectDetailPage({
 
   const project = await getProjectDetail(params.id);
   if (!project || project.companyId !== membership.companyId) notFound();
+
+  const completionMonths = buildCompletionRollup(
+    project.tasks
+      .filter((t) => t.completedAt)
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        completedAt: t.completedAt!,
+        assigneeName: t.assignedTo.user.name,
+      }))
+  );
 
   return (
     <div className="space-y-6">
@@ -97,6 +110,13 @@ export default async function ProjectDetailPage({
             </p>
           )}
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+          Completed stages — by week, by month
+        </h2>
+        <CompletionRollup months={completionMonths} showAssignee />
       </Card>
     </div>
   );

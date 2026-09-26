@@ -99,6 +99,7 @@ model Task {
   deadline     DateTime?
   status       String     @default("NOT_STARTED")
   progress     Int        @default(0)
+  completedAt  DateTime? // the date picked as "finished on" — may be backdated, feeds weekly/monthly completion rollups
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

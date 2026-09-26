@@ -6,9 +6,12 @@ import {
   getTasksFor,
   getKpisFor,
   getTimelineFor,
+  getCompletionsFor,
   kpiScore,
 } from "@/lib/queries";
+import { buildCompletionRollup } from "@/lib/completions";
 import { Card, ProgressBar, StatusBadge, formatDate } from "@/components/ui";
+import { CompletionRollup } from "@/components/CompletionRollup";
 import { AssignTaskForm, SetKpiForm } from "./ManageForms";
 
 export default async function TeamMemberPage({
@@ -29,16 +32,20 @@ export default async function TeamMemberPage({
     membership.isDirector || (await isManagerOf(membership.id, target.id));
   if (!canManage) redirect("/dashboard/team");
 
-  const [tasks, kpis, timeline, projects] = await Promise.all([
+  const [tasks, kpis, timeline, completions, projects] = await Promise.all([
     getTasksFor(target.id),
     getKpisFor(target.id),
     getTimelineFor(target.id),
+    getCompletionsFor(target.id),
     prisma.project.findMany({
       where: { companyId: membership.companyId },
       select: { id: true, name: true, number: true },
       orderBy: { name: "asc" },
     }),
   ]);
+  const completionMonths = buildCompletionRollup(
+    completions.map((c) => ({ id: c.id, title: c.title, completedAt: c.completedAt! }))
+  );
 
   return (
     <div className="space-y-6">
@@ -143,6 +150,13 @@ export default async function TeamMemberPage({
           </div>
         </Card>
       )}
+
+      <Card>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+          Completed tasks — by week, by month
+        </h2>
+        <CompletionRollup months={completionMonths} />
+      </Card>
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Timeline</h2>

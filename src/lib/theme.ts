@@ -33,10 +33,14 @@ const THEMES: Record<string, CompanyTheme> = {
     logoHeight: 1147,
     tagline: "Everything For Gas",
     vars: {
-      "--brand-50": "239 248 254",
-      "--brand-100": "217 238 252",
-      "--brand-200": "174 219 248",
-      "--brand-300": "122 194 242",
+      // 50/100/200/300 (borders, dividers, subtle background tints, used
+      // app-wide) run the flame orange from the logo — every border-brand-*/
+      // divide-brand-* line in the app picks this up automatically. 500/600/
+      // 700/900 (primary text, links, buttons) stay the guideline blue.
+      "--brand-50": "254 243 231",
+      "--brand-100": "252 227 196",
+      "--brand-200": "249 200 141",
+      "--brand-300": "245 170 85",
       "--brand-500": "31 141 207",
       "--brand-600": "0 126 200",
       "--brand-700": "0 93 147",

@@ -11,7 +11,15 @@ export default async function MyKpisPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[23px] font-semibold text-slate-900">My KPIs</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-[23px] font-semibold text-slate-900">My KPIs</h1>
+        <a
+          href="/api/reports/my-kpi"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700"
+        >
+          Download my report (PDF)
+        </a>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {kpis.map((kpi) => {
           const score = kpiScore(kpi);

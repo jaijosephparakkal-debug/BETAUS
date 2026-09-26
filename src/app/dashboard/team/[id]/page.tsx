@@ -42,9 +42,17 @@ export default async function TeamMemberPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[23px] font-semibold text-slate-900">{target.user.name}</h1>
-        <div className="text-[19px] text-slate-500">{target.title}</div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[23px] font-semibold text-slate-900">{target.user.name}</h1>
+          <div className="text-[19px] text-slate-500">{target.title}</div>
+        </div>
+        <a
+          href={`/api/reports/my-kpi?membershipId=${target.id}`}
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700"
+        >
+          Download report (PDF)
+        </a>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { getApprovalRequestDetail } from "@/lib/queries";
 import { Card, StatusBadge, AttachmentList, formatDate } from "@/components/ui";
 import { DecideApprovalForm } from "../ApprovalForms";
@@ -22,6 +23,14 @@ export default async function ApprovalDetailPage({
   const isParty = isRequester || isApprover;
   if (!isParty && !membership.isDirector) redirect("/dashboard/approvals");
   const isAuditing = !isParty && membership.isDirector;
+
+  if (isApprover && !request.viewedAt) {
+    await prisma.approvalRequest.update({
+      where: { id: request.id },
+      data: { viewedAt: new Date() },
+    });
+    request.viewedAt = new Date();
+  }
 
   return (
     <div className="space-y-6">

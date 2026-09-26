@@ -158,6 +158,7 @@ model ApprovalRequest {
   requestSignature  String? // requester's signature, snapshotted at submission
   decisionSignature String? // approver's signature, snapshotted at decision
   createdAt    DateTime  @default(now())
+  viewedAt     DateTime? // when the approver first opened this request
   decidedAt    DateTime?
 
   requestedBy Membership @relation("Requester", fields: [requestedById], references: [id], onDelete: Cascade)

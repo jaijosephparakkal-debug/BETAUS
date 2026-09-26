@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from "next/server";
+import { renderToBuffer } from "@react-pdf/renderer";
+import { getCurrentMembership, isManagerOf } from "@/lib/auth";
+import { getActivityReport } from "@/lib/kpiReport";
+import { KpiReportDocument } from "@/lib/pdf/KpiReportDocument";
+
+export async function GET(request: NextRequest) {
+  const membership = await getCurrentMembership();
+  if (!membership) {
+    return new NextResponse("Not signed in", { status: 401 });
+  }
+
+  const targetId = request.nextUrl.searchParams.get("membershipId") || membership.id;
+  if (targetId !== membership.id) {
+    const canManage =
+      membership.isDirector || (await isManagerOf(membership.id, targetId));
+    if (!canManage) {
+      return new NextResponse("You don't have access to this report", { status: 403 });
+    }
+  }
+
+  const report = await getActivityReport(targetId);
+  if (!report || report.membership.companyId !== membership.companyId) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  const buffer = await renderToBuffer(KpiReportDocument({ report }));
+  const filename = `${report.membership.user.name.replace(/\s+/g, "_")}_KPI_Report.pdf`;
+
+  return new NextResponse(new Uint8Array(buffer), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
+}

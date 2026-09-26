@@ -61,7 +61,7 @@ export async function getProjectDetail(id: string) {
           assignedBy: { include: { user: true } },
           subtasks: { select: { id: true, status: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ stageOrder: "asc" }, { createdAt: "desc" }],
       },
     },
   });
@@ -72,7 +72,25 @@ export async function getProjectDetail(id: string) {
     : 0;
   const completedTasks = project.tasks.filter((t) => t.status === "COMPLETED").length;
 
-  return { ...project, avgProgress, completedTasks };
+  // Once the Projects Manager has assigned milestone weights to a project's
+  // stages, overall completion is the weighted sum (each stage's progress ×
+  // its weight) rather than a flat average across tasks.
+  const weightedTasks = project.tasks.filter((t) => t.milestoneWeight != null);
+  const totalWeightAssigned = weightedTasks.reduce((s, t) => s + (t.milestoneWeight ?? 0), 0);
+  const weightedProgress = weightedTasks.length
+    ? Math.round(
+        project.tasks.reduce((s, t) => s + (t.progress / 100) * (t.milestoneWeight ?? 0), 0)
+      )
+    : avgProgress;
+
+  return {
+    ...project,
+    avgProgress,
+    completedTasks,
+    weightedProgress,
+    totalWeightAssigned,
+    hasWeights: weightedTasks.length > 0,
+  };
 }
 
 export function getKpisFor(membershipId: string) {

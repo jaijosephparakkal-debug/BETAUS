@@ -94,6 +94,8 @@ model Task {
   assignedById String
   parentTaskId String? // set for a daily task that rolls up into a weekly/monthly one
   projectId    String? // which real project this task belongs to, if any
+  stageOrder   Int? // position in a project's fixed pipeline of stages, if this task is one
+  milestoneWeight Int? // this stage's percentage share of the project's overall completion; only the Projects Manager sets it
   deadline     DateTime?
   status       String     @default("NOT_STARTED")
   progress     Int        @default(0)

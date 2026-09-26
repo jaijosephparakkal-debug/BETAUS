@@ -23,7 +23,8 @@ export default async function Home() {
       <div className="mt-12 flex items-center justify-center gap-6">
         <Link
           href="/login?company=flaretechnical"
-          className="rounded-xl border border-amber-300 bg-amber-400/40 p-6 shadow-sm transition hover:border-amber-200 hover:shadow-md"
+          style={flaretech.vars}
+          className="rounded-xl border border-brand-200 bg-brand-50 p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
           aria-label={flaretech.displayName}
         >
           <Image
@@ -36,7 +37,8 @@ export default async function Home() {
         </Link>
         <Link
           href="/login?company=gasneeds"
-          className="rounded-xl border border-amber-300 bg-amber-400/40 p-6 shadow-sm transition hover:border-amber-200 hover:shadow-md"
+          style={gasneeds.vars}
+          className="rounded-xl border border-brand-200 bg-brand-50 p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
           aria-label={gasneeds.displayName}
         >
           <Image

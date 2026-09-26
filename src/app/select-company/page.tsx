@@ -35,10 +35,10 @@ export default async function SelectCompanyPage() {
         {memberships.map((m) => {
           const theme = getCompanyTheme(m.company.slug);
           return (
-            <form action={selectCompanyAction} key={m.id}>
+            <form action={selectCompanyAction} key={m.id} style={theme.vars}>
               <input type="hidden" name="companyId" value={m.companyId} />
               <button
-                className="rounded-xl border border-amber-300 bg-amber-400/40 p-6 shadow-sm transition hover:border-amber-200 hover:shadow-md"
+                className="rounded-xl border border-brand-200 bg-brand-50 p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
                 aria-label={m.company.name}
               >
                 <Image

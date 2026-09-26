@@ -122,6 +122,41 @@ export async function quickToggleTaskStatusAction(
   return {};
 }
 
+/**
+ * A project's fixed pipeline stages each carry a percentage weight toward the
+ * project's overall completion. Only the Projects Manager (Ram) sets these,
+ * so the weights across a project stay a single person's call rather than
+ * drifting as different stage owners each guess their own share.
+ */
+export async function setMilestoneWeightAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+  if (membership.user.email !== "ram@flaretechnical.com") {
+    return { error: "Only the Projects Manager can set milestone weights." };
+  }
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.companyId !== membership.companyId) {
+    return { error: "Task not found." };
+  }
+
+  const raw = String(formData.get("weight") || "").trim();
+  const weight = raw === "" ? null : Number(raw);
+  if (weight !== null && (!Number.isInteger(weight) || weight < 0 || weight > 100)) {
+    return { error: "Weight must be a whole number between 0 and 100." };
+  }
+
+  await prisma.task.update({ where: { id: taskId }, data: { milestoneWeight: weight } });
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  if (task.projectId) revalidatePath(`/dashboard/projects/${task.projectId}`);
+  return {};
+}
+
 export async function uploadTaskAttachmentAction(
   taskId: string,
   _prev: { error?: string } | undefined,

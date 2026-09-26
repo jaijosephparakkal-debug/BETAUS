@@ -18,9 +18,9 @@ const config: Config = {
           700: "rgb(var(--brand-700) / <alpha-value>)",
           900: "rgb(var(--brand-900) / <alpha-value>)",
         },
-        // Elevated panel background (cards, header) — sits one step lighter
-        // than the page background below for a subtle dark-theme lift.
-        surface: "#121722",
+        // Elevated panel background (cards, header) — plain white on the
+        // light theme.
+        surface: "#ffffff",
         // Dialog/card boxes: white background with brand-coloured text and
         // buttons (see src/lib/theme.ts and the .card-themed rules in
         // globals.css that apply these on top of the existing slate/brand
@@ -28,24 +28,8 @@ const config: Config = {
         "card-text": "rgb(var(--card-text) / <alpha-value>)",
         "button-bg": "rgb(var(--button-bg) / <alpha-value>)",
         "button-bg-hover": "rgb(var(--button-bg-hover) / <alpha-value>)",
-        // App-wide dark theme: re-pointing the neutral scale here means every
-        // existing bg-slate-50 / text-slate-900 / border-slate-200 / etc.
-        // across the app (used as page bg / primary text / borders) becomes
-        // dark-theme-correct without editing each of those call sites. The
-        // ramp is inverted on purpose — slate-50 is now the darkest value
-        // (page background) and slate-900 the lightest (primary text).
-        slate: {
-          50: "#0a0e15",
-          100: "#1c2430",
-          200: "#2a3444",
-          300: "#3a4557",
-          400: "#5b6576",
-          500: "#7c8797",
-          600: "#a0aabb",
-          700: "#c3cbd6",
-          800: "#dde3ea",
-          900: "#f2f5f8",
-        },
+        // Standard Tailwind slate scale (light theme) — no override needed;
+        // bg-slate-50 is a light page background, text-slate-900 is dark text.
       },
     },
   },

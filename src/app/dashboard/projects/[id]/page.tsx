@@ -37,13 +37,24 @@ export default async function ProjectDetailPage({
       <Card>
         <div className="mb-2 flex items-center justify-between text-[19px]">
           <span className="text-[21px] font-medium text-slate-900">Overall progress</span>
-          <span className="text-slate-500">{project.avgProgress}%</span>
+          <span className="text-slate-500">
+            {project.hasWeights ? project.weightedProgress : project.avgProgress}%
+          </span>
         </div>
-        <ProgressBar value={project.avgProgress} />
+        <ProgressBar value={project.hasWeights ? project.weightedProgress : project.avgProgress} />
         <div className="mt-2 text-[17px] text-slate-500">
-          {project.completedTasks}/{project.tasks.length} task
-          {project.tasks.length === 1 ? "" : "s"} completed — average across every
-          task linked to this project.
+          {project.hasWeights ? (
+            <>
+              Weighted by each stage&rsquo;s milestone share — {project.totalWeightAssigned}% of
+              the 100% milestone weight has been assigned so far.
+            </>
+          ) : (
+            <>
+              {project.completedTasks}/{project.tasks.length} task
+              {project.tasks.length === 1 ? "" : "s"} completed — average across every
+              task linked to this project.
+            </>
+          )}
         </div>
         <div className="mt-4 border-t border-brand-100 pt-3">
           <UpdateProjectStatusForm projectId={project.id} currentStatus={project.status} />
@@ -73,6 +84,8 @@ export default async function ProjectDetailPage({
                   {task.assignedTo.user.name}
                   {task.subtasks.length > 0 &&
                     ` · ${task.subtasks.filter((s) => s.status === "COMPLETED").length}/${task.subtasks.length} daily tasks done`}
+                  {task.stageOrder != null &&
+                    ` · ${task.milestoneWeight != null ? `${task.milestoneWeight}% weight` : "not yet weighted"}`}
                 </span>
                 <span>Due {formatDate(task.deadline)}</span>
               </div>

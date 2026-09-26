@@ -37,7 +37,7 @@ export function AppHeader({
     <header className="border-b border-brand-200 bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg border border-amber-300 bg-amber-400/40 p-1.5">
+          <div className="rounded-lg border border-brand-200 bg-brand-50 p-1.5">
             <Image
               src={theme.logo}
               alt={theme.displayName}

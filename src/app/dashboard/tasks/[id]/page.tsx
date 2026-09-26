@@ -11,6 +11,7 @@ import {
   isOverdue,
 } from "@/components/ui";
 import ProgressForm from "./ProgressForm";
+import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
 import { UploadAttachmentForm } from "./UploadAttachmentForm";
 import {
@@ -52,6 +53,7 @@ export default async function TaskDetailPage({
   if (!task || task.companyId !== membership.companyId) notFound();
 
   const isOwner = task.assignedToId === membership.id;
+  const isRam = membership.user.email === "ram@flaretechnical.com";
   const canManage =
     membership.isDirector ||
     task.assignedById === membership.id ||
@@ -174,6 +176,26 @@ export default async function TaskDetailPage({
           </p>
         )}
       </Card>
+
+      {task.projectId && task.stageOrder != null && (
+        <Card>
+          <h2 className="mb-1 text-[21px] font-semibold text-slate-900">
+            Milestone weight
+          </h2>
+          <p className="mb-3 text-[17px] text-slate-500">
+            {task.milestoneWeight != null
+              ? `This stage contributes ${task.milestoneWeight}% to the project's overall completion.`
+              : "Not yet weighted by the Projects Manager."}
+          </p>
+          {isRam ? (
+            <MilestoneWeightForm taskId={task.id} initialWeight={task.milestoneWeight} />
+          ) : (
+            <p className="text-[17px] text-slate-500">
+              Only the Projects Manager can set this.
+            </p>
+          )}
+        </Card>
+      )}
 
       {!task.parentTask && (
         <Card>

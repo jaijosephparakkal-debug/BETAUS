@@ -60,7 +60,7 @@ export default async function TaskDetailPage({
   }
 
   const [employees, projects] = await Promise.all([
-    canManage
+    canManage || isOwner
       ? prisma.membership.findMany({
           where: { companyId: membership.companyId, isDirector: false },
           include: { user: true },
@@ -137,6 +137,26 @@ export default async function TaskDetailPage({
             />
             <DeleteTaskButton taskId={task.id} />
           </div>
+        </Card>
+      )}
+
+      {!canManage && isOwner && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+            Reassign / reallocate
+          </h2>
+          <p className="mb-3 text-[17px] text-slate-500">
+            Not the right person for this? Hand it off to someone else.
+          </p>
+          <ReassignTaskForm
+            taskId={task.id}
+            currentAssigneeId={task.assignedToId}
+            employees={employees.map((e) => ({
+              id: e.id,
+              name: e.user.name,
+              title: e.title,
+            }))}
+          />
         </Card>
       )}
 

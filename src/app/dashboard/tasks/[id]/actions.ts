@@ -118,6 +118,15 @@ async function canManageTask(
   return isManagerOf(membership.id, task.assignedToId);
 }
 
+/** Reassign/reallocate rights: management rights, or being the person the task was actually given to. */
+async function canReassignTask(
+  membership: { id: string; isDirector: boolean },
+  task: { assignedToId: string; assignedById: string }
+) {
+  if (task.assignedToId === membership.id) return true;
+  return canManageTask(membership, task);
+}
+
 export async function addDailyTaskAction(
   parentTaskId: string,
   _prev: { error?: string } | undefined,
@@ -211,8 +220,8 @@ export async function reassignTaskAction(
   if (!task || task.companyId !== membership.companyId) {
     return { error: "Task not found." };
   }
-  if (!(await canManageTask(membership, task))) {
-    return { error: "You don't manage this task." };
+  if (!(await canReassignTask(membership, task))) {
+    return { error: "You don't have access to reassign this task." };
   }
 
   const newAssigneeId = String(formData.get("assigneeId") || "");

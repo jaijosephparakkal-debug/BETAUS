@@ -153,7 +153,9 @@ model ApprovalRequest {
   approverId   String
   title        String
   description  String?
-  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  requestType  String    @default("APPROVAL") // REVIEW | APPROVAL | BOTH — what the requester is asking for
+  deadline     DateTime?
+  status       String    @default("PENDING") // PENDING | REVIEWED | APPROVED | REVIEWED_AND_APPROVED | REJECTED
   decisionNote String?
   requestSignature  String? // requester's signature, snapshotted at submission
   decisionSignature String? // approver's signature, snapshotted at decision

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { getMyApprovalRequests, getPendingApprovalsFor } from "@/lib/queries";
 import { Card, StatusBadge, formatDate } from "@/components/ui";
@@ -10,9 +11,14 @@ export default async function ApprovalsPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [myRequests, pending] = await Promise.all([
+  const [myRequests, pending, colleagues] = await Promise.all([
     getMyApprovalRequests(membership.id),
     getPendingApprovalsFor(membership.id),
+    prisma.membership.findMany({
+      where: { companyId: membership.companyId, isDirector: false, id: { not: membership.id } },
+      include: { user: true },
+      orderBy: { title: "asc" },
+    }),
   ]);
 
   return (
@@ -46,6 +52,7 @@ export default async function ApprovalsPage() {
                   </div>
                   <div className="text-[17px] text-slate-500">
                     From {r.requestedBy.user.name} · {formatDate(r.createdAt)}
+                    {r.deadline && ` · due ${formatDate(r.deadline)}`}
                     {r._count.attachments > 0 &&
                       ` · ${r._count.attachments} file${r._count.attachments === 1 ? "" : "s"}`}
                     {r._count.comments > 0 &&
@@ -59,17 +66,17 @@ export default async function ApprovalsPage() {
         </Card>
       )}
 
-      {membership.managerId ? (
-        <Card>
-          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-            Send a new request
-          </h2>
-          <p className="mb-3 text-[19px] text-slate-500">
-            Goes to your manager for approval — sign-off, a read, a decision.
-          </p>
-          <NewApprovalRequestForm />
-        </Card>
-      ) : null}
+      <Card>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+          Send a new request
+        </h2>
+        <p className="mb-3 text-[19px] text-slate-500">
+          Send to anyone at your company — for a review, an approval, or both.
+        </p>
+        <NewApprovalRequestForm
+          colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
+        />
+      </Card>
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My requests</h2>
@@ -91,6 +98,7 @@ export default async function ApprovalsPage() {
                   </div>
                   <div className="text-[17px] text-slate-500">
                     To {r.approver.user.name} · {formatDate(r.createdAt)}
+                    {r.deadline && ` · due ${formatDate(r.deadline)}`}
                     {r._count.attachments > 0 &&
                       ` · ${r._count.attachments} file${r._count.attachments === 1 ? "" : "s"}`}
                     {r._count.comments > 0 &&

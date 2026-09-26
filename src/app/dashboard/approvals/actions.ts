@@ -8,6 +8,8 @@ import { saveFile } from "@/lib/storage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const BLOCKED_EXTENSIONS = /\.(exe|sh|bat|cmd|msi|app|dll)$/i;
+const REQUEST_TYPES = ["REVIEW", "APPROVAL", "BOTH"];
+const OUTCOMES = ["REVIEWED", "APPROVED", "REVIEWED_AND_APPROVED", "REJECTED"];
 
 export async function createApprovalRequestAction(
   _prev: { error?: string } | undefined,
@@ -15,12 +17,24 @@ export async function createApprovalRequestAction(
 ): Promise<{ error?: string }> {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." };
-  if (!membership.managerId) {
-    return { error: "You have no manager to send approval requests to." };
+
+  const approverId = String(formData.get("approverId") || "");
+  if (!approverId || approverId === membership.id) {
+    return { error: "Choose who to send this to." };
+  }
+  const approver = await prisma.membership.findUnique({ where: { id: approverId } });
+  if (!approver || approver.companyId !== membership.companyId) {
+    return { error: "Choose a valid colleague at your company." };
+  }
+
+  const requestType = String(formData.get("requestType") || "APPROVAL");
+  if (!REQUEST_TYPES.includes(requestType)) {
+    return { error: "Invalid request type." };
   }
 
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
+  const deadlineRaw = String(formData.get("deadline") || "");
   if (!title) return { error: "Give the request a title." };
 
   const file = formData.get("file");
@@ -35,9 +49,11 @@ export async function createApprovalRequestAction(
     data: {
       companyId: membership.companyId,
       requestedById: membership.id,
-      approverId: membership.managerId,
+      approverId,
       title,
       description: description || null,
+      requestType,
+      deadline: deadlineRaw ? new Date(deadlineRaw) : null,
       // Snapshotted so the signed copy never changes even if the signature is redrawn later.
       requestSignature: membership.user.signature,
     },
@@ -106,22 +122,69 @@ export async function decideApprovalAction(
   }
   if (request.status !== "PENDING") return {};
 
-  const decision = String(formData.get("decision") || "");
-  if (decision !== "APPROVED" && decision !== "REJECTED") {
-    return { error: "Invalid decision." };
+  const outcome = String(formData.get("outcome") || "");
+  if (!OUTCOMES.includes(outcome)) {
+    return { error: "Choose an outcome before sending." };
   }
   const note = String(formData.get("note") || "").trim();
 
   await prisma.approvalRequest.update({
     where: { id },
     data: {
-      status: decision,
+      status: outcome,
       decisionNote: note || null,
       decidedAt: new Date(),
       // Snapshotted so the signed decision never changes even if the signature is redrawn later.
       decisionSignature: membership.user.signature,
     },
   });
+
+  revalidatePath("/dashboard/approvals");
+  revalidatePath(`/dashboard/approvals/${id}`);
+  return {};
+}
+
+export async function reassignApprovalAction(
+  id: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const request = await prisma.approvalRequest.findUnique({ where: { id } });
+  if (!request || request.approverId !== membership.id) {
+    return { error: "You can only reassign requests sent to you." };
+  }
+  if (request.status !== "PENDING") {
+    return { error: "This request has already been decided." };
+  }
+
+  const newApproverId = String(formData.get("newApproverId") || "");
+  if (!newApproverId || newApproverId === membership.id) {
+    return { error: "Choose someone else to reassign this to." };
+  }
+  const newApprover = await prisma.membership.findUnique({
+    where: { id: newApproverId },
+    include: { user: true },
+  });
+  if (!newApprover || newApprover.companyId !== membership.companyId) {
+    return { error: "Choose a valid colleague at your company." };
+  }
+
+  await prisma.$transaction([
+    prisma.approvalRequest.update({
+      where: { id },
+      data: { approverId: newApproverId, viewedAt: null },
+    }),
+    prisma.approvalComment.create({
+      data: {
+        approvalRequestId: id,
+        authorId: membership.id,
+        body: `Reassigned to ${newApprover.user.name} (${newApprover.title}).`,
+      },
+    }),
+  ]);
 
   revalidatePath("/dashboard/approvals");
   revalidatePath(`/dashboard/approvals/${id}`);

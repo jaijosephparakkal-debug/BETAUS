@@ -4,8 +4,14 @@ import { getCurrentMembership } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getApprovalRequestDetail } from "@/lib/queries";
 import { Card, StatusBadge, AttachmentList, formatDate } from "@/components/ui";
-import { DecideApprovalForm } from "../ApprovalForms";
+import { DecideApprovalForm, ReassignApprovalForm } from "../ApprovalForms";
 import { CommentForm, UploadForm } from "./Forms";
+
+const REQUEST_TYPE_LABELS: Record<string, string> = {
+  REVIEW: "Review only",
+  APPROVAL: "Approval",
+  BOTH: "Review and approval",
+};
 
 export default async function ApprovalDetailPage({
   params,
@@ -32,6 +38,14 @@ export default async function ApprovalDetailPage({
     request.viewedAt = new Date();
   }
 
+  const colleagues = isApprover
+    ? await prisma.membership.findMany({
+        where: { companyId: membership.companyId, isDirector: false, id: { not: membership.id } },
+        include: { user: true },
+        orderBy: { title: "asc" },
+      })
+    : [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,7 +64,9 @@ export default async function ApprovalDetailPage({
         </div>
         <div className="mt-1 text-[17px] text-slate-500">
           {request.requestedBy.user.name} → {request.approver.user.name} ·{" "}
-          {formatDate(request.createdAt)}
+          {REQUEST_TYPE_LABELS[request.requestType] ?? request.requestType} ·{" "}
+          Sent {formatDate(request.createdAt)}
+          {request.deadline && ` · Due ${formatDate(request.deadline)}`}
         </div>
         {request.description && (
           <p className="mt-2 text-[19px] text-slate-600">{request.description}</p>
@@ -80,6 +96,12 @@ export default async function ApprovalDetailPage({
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Your decision</h2>
           <DecideApprovalForm id={request.id} />
+          <div className="mt-3 border-t border-brand-100 pt-3">
+            <ReassignApprovalForm
+              id={request.id}
+              colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
+            />
+          </div>
         </Card>
       )}
 

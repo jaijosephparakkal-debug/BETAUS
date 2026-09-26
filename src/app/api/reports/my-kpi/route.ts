@@ -23,21 +23,13 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  try {
-    const buffer = await generateKpiReportPdf(report);
-    const filename = `${report.membership.user.name.replace(/\s+/g, "_")}_KPI_Report.pdf`;
+  const buffer = await generateKpiReportPdf(report);
+  const filename = `${report.membership.user.name.replace(/\s+/g, "_")}_KPI_Report.pdf`;
 
-    return new NextResponse(new Uint8Array(buffer), {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    });
-  } catch (e) {
-    // TEMPORARY diagnostic — remove once the render failure is understood.
-    return NextResponse.json(
-      { error: String(e), stack: e instanceof Error ? e.stack : null },
-      { status: 500 }
-    );
-  }
+  return new NextResponse(new Uint8Array(buffer), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
 }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
 import { getActivityReport } from "@/lib/kpiReport";
-import { KpiReportDocument } from "@/lib/pdf/KpiReportDocument";
+import { generateKpiReportPdf } from "@/lib/pdf/generateKpiReportPdf";
 
 export async function GET(request: NextRequest) {
   const membership = await getCurrentMembership();
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const buffer = await renderToBuffer(KpiReportDocument({ report }));
+    const buffer = await generateKpiReportPdf(report);
     const filename = `${report.membership.user.name.replace(/\s+/g, "_")}_KPI_Report.pdf`;
 
     return new NextResponse(new Uint8Array(buffer), {

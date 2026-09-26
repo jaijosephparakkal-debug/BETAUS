@@ -2,18 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import type { FullMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
-import { logoutAction } from "@/app/logout/actions";
+import { AttendanceClock } from "@/components/AttendanceClock";
 
 export function AppHeader({
   membership,
   reportCount,
   membershipCount,
   pendingApprovalCount = 0,
+  clockInIso = null,
 }: {
   membership: FullMembership;
   reportCount: number;
   membershipCount: number;
   pendingApprovalCount?: number;
+  clockInIso?: string | null;
 }) {
   const theme = getCompanyTheme(membership.company.slug);
 
@@ -63,11 +65,7 @@ export function AppHeader({
               Switch company
             </Link>
           )}
-          <form action={logoutAction}>
-            <button className="text-[19px] text-slate-500 hover:text-slate-700">
-              Sign out
-            </button>
-          </form>
+          <AttendanceClock clockInIso={clockInIso} />
         </div>
       </div>
       <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2">

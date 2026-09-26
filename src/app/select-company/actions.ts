@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getSessionUserId, setActiveCompanyCookie } from "@/lib/auth";
+import { clockInIfNeeded } from "@/lib/attendance";
 
 export async function selectCompanyAction(formData: FormData) {
   const userId = await getSessionUserId();
@@ -15,5 +16,6 @@ export async function selectCompanyAction(formData: FormData) {
   if (!membership) redirect("/select-company");
 
   setActiveCompanyCookie(companyId);
+  await clockInIfNeeded(membership.id);
   redirect("/dashboard");
 }

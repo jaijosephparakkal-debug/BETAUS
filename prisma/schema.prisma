@@ -65,8 +65,24 @@ model Membership {
   approvalsToDecide  ApprovalRequest[] @relation("Approver")
   attachmentsUploaded Attachment[]
   approvalComments    ApprovalComment[]
+  attendanceEntries   AttendanceEntry[]
 
   @@unique([userId, companyId])
+}
+
+// One row per clock-in. Starts when someone verifies their OTP into a
+// company context (sign-in, or picking a company on /select-company) and
+// ends only when they explicitly sign out — not on session expiry, so a
+// stale browser tab left open overnight doesn't silently close it.
+model AttendanceEntry {
+  id           String    @id @default(cuid())
+  membershipId String
+  clockIn      DateTime  @default(now())
+  clockOut     DateTime?
+  reason       String? // OFFICE_USE | SICKNESS | SHIFT_ENDED — set when clocking out
+  createdAt    DateTime  @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 }
 
 model Task {

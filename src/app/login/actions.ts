@@ -2,7 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { requestSignInCode, verifySignInCode } from "@/lib/otp";
-import { createSession, getMembershipCount } from "@/lib/auth";
+import { createSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { clockInIfNeeded } from "@/lib/attendance";
 
 export async function requestCodeAction(
   _prev: { error?: string; sent?: boolean; email?: string } | undefined,
@@ -32,6 +34,9 @@ export async function verifyCodeAction(
 
   await createSession(userId);
 
-  const count = await getMembershipCount();
-  redirect(count > 1 ? "/select-company" : "/dashboard");
+  const memberships = await prisma.membership.findMany({ where: { userId } });
+  if (memberships.length === 1) {
+    await clockInIfNeeded(memberships[0].id);
+  }
+  redirect(memberships.length > 1 ? "/select-company" : "/dashboard");
 }

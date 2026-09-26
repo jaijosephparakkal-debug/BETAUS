@@ -30,8 +30,14 @@ export function AttendanceClock({ clockInIso }: { clockInIso: string | null }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(signOutWithReasonAction, {});
   const [elapsedMs, setElapsedMs] = useState(0);
+  // Client-only mount gate: toLocaleTimeString() can format differently on
+  // the server (Node's locale/timezone) than in the browser, which mismatches
+  // the SSR'd HTML and breaks hydration for the whole page. Rendering nothing
+  // until after mount keeps the server and first client render identical.
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!clockInIso) return;
     const clockIn = new Date(clockInIso).getTime();
     const tick = () => setElapsedMs(Date.now() - clockIn);
@@ -50,7 +56,7 @@ export function AttendanceClock({ clockInIso }: { clockInIso: string | null }) {
 
   return (
     <div className="relative flex items-center gap-3">
-      {clockInTime && (
+      {mounted && clockInTime && (
         <div
           className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[17px] ${
             overNine ? "bg-red-500/15 text-red-400" : "bg-brand-50 text-brand-700"

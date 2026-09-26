@@ -82,16 +82,25 @@ const companies: CompanySpec[] = [
           ],
         },
         {
-          name: "Jayaprakash",
-          email: "service@flaretechnical.com",
-          title: "Service Engineer",
+          name: "Maintenance Manager",
+          // Placeholder — replace with the real person's name/email once hired.
+          email: "maintenance@flaretechnical.com",
+          title: "Maintenance Manager",
           department: "Maintenance",
           children: [
             {
-              name: "Flexie",
-              email: "alerts@flaretechnical.com",
-              title: "Gas Reading",
+              name: "Jayaprakash",
+              email: "service@flaretechnical.com",
+              title: "Service Engineer",
               department: "Maintenance",
+              children: [
+                {
+                  name: "Flexie",
+                  email: "alerts@flaretechnical.com",
+                  title: "Gas Reading",
+                  department: "Maintenance",
+                },
+              ],
             },
           ],
         },
@@ -180,6 +189,7 @@ const SAMPLE_KPIS: Record<string, { name: string; target: number; current: numbe
   "Project Coordinator": { name: "Client Response Time", target: 24, current: 30, unit: "hrs" },
   "Design Engineer": { name: "Designs Delivered On Time", target: 90, current: 75, unit: "%" },
   "Estimation Engineer": { name: "Estimation Accuracy", target: 95, current: 89, unit: "%" },
+  "Maintenance Manager": { name: "Maintenance SLA Compliance", target: 95, current: 80, unit: "%" },
   "Service Engineer": { name: "Maintenance Response Time", target: 4, current: 6, unit: "hrs" },
   "Gas Reading": { name: "Readings Completed On Schedule", target: 100, current: 94, unit: "%" },
   "Operations Manager": { name: "Order Fulfilment Rate", target: 95, current: 82, unit: "%" },
@@ -204,7 +214,12 @@ async function createNode(
 
   const membership = await prisma.membership.upsert({
     where: { userId_companyId: { userId: user.id, companyId } },
-    update: {},
+    update: {
+      title: node.title,
+      department: node.department,
+      isDirector: !!node.isDirector,
+      managerId,
+    },
     create: {
       userId: user.id,
       companyId,

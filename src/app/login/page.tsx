@@ -73,7 +73,7 @@ function LoginForm() {
                 type="email"
                 required
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-brand-300 bg-[rgb(var(--card-text))] px-3 py-2 text-[19px] text-[rgb(var(--button-bg))] placeholder:text-[rgb(var(--button-bg))] placeholder:opacity-80 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-brand-300 bg-white px-3 py-2 text-[19px] text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {requestState.error && (
@@ -101,7 +101,7 @@ function LoginForm() {
                 maxLength={6}
                 required
                 placeholder="123456"
-                className="mt-1 w-full rounded-lg border border-brand-300 bg-[rgb(var(--card-text))] px-3 py-2 text-center text-[23px] tracking-[0.5em] text-[rgb(var(--button-bg))] placeholder:text-[rgb(var(--button-bg))] placeholder:opacity-80 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="mt-1 w-full rounded-lg border border-brand-300 bg-white px-3 py-2 text-center text-[23px] tracking-[0.5em] text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             {verifyState.error && (

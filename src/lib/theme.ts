@@ -44,10 +44,10 @@ const THEMES: Record<string, CompanyTheme> = {
       // more legible button hover state.
       "--brand-700": "89 171 219",
       "--brand-900": "0 57 90",
-      // Orange text, blue buttons, on white card backgrounds.
-      "--card-text": "180 83 9", // a readable, slightly deeper orange than the glow's #F5881F
-      "--button-bg": "0 126 200", // same blue as --brand-600
-      "--button-bg-hover": "0 98 156",
+      // Blue text, orange buttons, on white card backgrounds.
+      "--card-text": "0 126 200", // same blue as --brand-600
+      "--button-bg": "180 83 9", // a readable, slightly deeper orange than the glow's #F5881F
+      "--button-bg-hover": "150 68 5",
     } as CSSProperties,
     // Blue (top-left) and orange (bottom-right) glow, echoing the logo's own
     // diagonal flame-to-drop split, over a near-black base.

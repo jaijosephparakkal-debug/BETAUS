@@ -54,6 +54,7 @@ export default async function TaskDetailPage({
 
   const isOwner = task.assignedToId === membership.id;
   const isRam = membership.user.email === "ram@flaretechnical.com";
+  const useQuickToggle = !!task.parentTask || (!!task.projectId && task.stageOrder != null);
   const canManage =
     membership.isDirector ||
     task.assignedById === membership.id ||
@@ -233,16 +234,16 @@ export default async function TaskDetailPage({
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && task.parentTask && (
+      {isOwner && task.subtasks.length === 0 && useQuickToggle && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-            Mark today&rsquo;s status
+            {task.parentTask ? "Mark today’s status" : "Mark status"}
           </h2>
           <QuickStatusToggle taskId={task.id} initialStatus={task.status} />
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && !task.parentTask && (
+      {isOwner && task.subtasks.length === 0 && !useQuickToggle && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Log an update</h2>
           <ProgressForm taskId={task.id} initialProgress={task.progress} />

@@ -69,10 +69,11 @@ const QUICK_STATUS_LABELS: Record<(typeof QUICK_STATUSES)[number], string> = {
 };
 
 /**
- * Lightweight status toggle for daily tasks — no comment or approval, just a
- * quick "done / in progress / not started" flip. Still logs an
- * auto-generated comment so the change shows up with a timestamp in the
- * person's activity/KPI report, same as a normal progress update would.
+ * Lightweight status toggle for daily tasks and project-pipeline stage
+ * tasks — no comment or approval required, just a quick "done / in
+ * progress / not started" flip. Still logs an auto-generated comment so
+ * the change shows up with a timestamp in the person's activity/KPI
+ * report, same as a normal progress update would.
  */
 export async function quickToggleTaskStatusAction(
   taskId: string,
@@ -85,8 +86,10 @@ export async function quickToggleTaskStatusAction(
   if (!task || task.assignedToId !== membership.id) {
     return { error: "You can only update your own tasks." };
   }
-  if (!task.parentTaskId) {
-    return { error: "Quick status toggles are only for daily tasks." };
+  const isDailyTask = !!task.parentTaskId;
+  const isStageTask = !!task.projectId && task.stageOrder != null;
+  if (!isDailyTask && !isStageTask) {
+    return { error: "Quick status toggles are only for daily or project-stage tasks." };
   }
   if (!QUICK_STATUSES.includes(targetStatus)) {
     return { error: "Invalid status." };
@@ -113,10 +116,15 @@ export async function quickToggleTaskStatusAction(
     }),
   ]);
 
-  await recomputeTaskProgress(task.parentTaskId);
+  if (task.parentTaskId) {
+    await recomputeTaskProgress(task.parentTaskId);
+    revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  }
+  if (task.projectId) {
+    revalidatePath(`/dashboard/projects/${task.projectId}`);
+  }
 
   revalidatePath(`/dashboard/tasks/${taskId}`);
-  revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
   return {};

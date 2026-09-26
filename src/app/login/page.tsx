@@ -53,7 +53,7 @@ function LoginForm() {
       >
         ← Home
       </Link>
-      <div className="w-full max-w-sm rounded-2xl border border-brand-300 bg-surface p-8 shadow-sm">
+      <div className="card-themed w-full max-w-sm rounded-2xl border border-brand-300 p-8 shadow-sm">
         <div className="flex justify-center">
           <div className="rounded-xl border border-amber-300 bg-amber-400/40 p-4">
             <Image

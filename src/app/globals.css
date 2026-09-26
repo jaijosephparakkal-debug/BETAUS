@@ -16,6 +16,32 @@ html {
   --brand-600: 0 126 200;
   --brand-700: 89 171 219;
   --brand-900: 0 57 90;
+  --card-text: 30 41 59;
+  --button-bg: 0 126 200;
+  --button-bg-hover: 0 98 156;
+}
+
+/* Dialog/card boxes (the Card component, plus the login/select-company
+   cards) get a white background with brand-coloured text and buttons —
+   the page's own gradient background is untouched. Scoped to slate-* text
+   utilities and bg-brand-600 buttons specifically (not a blanket override)
+   so status badges (emerald/red/amber) keep their own colours. */
+.card-themed {
+  background-color: #fff !important;
+}
+.card-themed .text-slate-900,
+.card-themed .text-slate-800,
+.card-themed .text-slate-700,
+.card-themed .text-slate-600,
+.card-themed .text-slate-500,
+.card-themed .text-slate-400 {
+  color: rgb(var(--card-text)) !important;
+}
+.card-themed .bg-brand-600 {
+  background-color: rgb(var(--button-bg)) !important;
+}
+.card-themed .hover\:bg-brand-700:hover {
+  background-color: rgb(var(--button-bg-hover)) !important;
 }
 
 /* accent-color (set via Tailwind's accent-brand-600) themes the thumb and

@@ -21,6 +21,13 @@ const config: Config = {
         // Elevated panel background (cards, header) — sits one step lighter
         // than the page background below for a subtle dark-theme lift.
         surface: "#121722",
+        // Dialog/card boxes: white background with brand-coloured text and
+        // buttons (see src/lib/theme.ts and the .card-themed rules in
+        // globals.css that apply these on top of the existing slate/brand
+        // utility classes already used throughout the app's forms).
+        "card-text": "rgb(var(--card-text) / <alpha-value>)",
+        "button-bg": "rgb(var(--button-bg) / <alpha-value>)",
+        "button-bg-hover": "rgb(var(--button-bg-hover) / <alpha-value>)",
         // App-wide dark theme: re-pointing the neutral scale here means every
         // existing bg-slate-50 / text-slate-900 / border-slate-200 / etc.
         // across the app (used as page bg / primary text / borders) becomes

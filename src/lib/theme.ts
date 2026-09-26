@@ -21,6 +21,10 @@ export type CompanyTheme = {
 // are red (#D30A0A, same as their primary — they only have the one accent
 // colour). All tinted toward black since the app runs a dark theme. See
 // GASNEEDS_Brand_Guidelines.pdf and FLARETECH-UAE.pdf for the source hex.
+//
+// --card-text / --button-bg: dialog/card boxes only (the page gradient below
+// is untouched) — white card background, brand-coloured text, brand-coloured
+// buttons, per request.
 const THEMES: Record<string, CompanyTheme> = {
   flaretechnical: {
     displayName: "Flaretech Trading LLC",
@@ -40,6 +44,10 @@ const THEMES: Record<string, CompanyTheme> = {
       // more legible button hover state.
       "--brand-700": "89 171 219",
       "--brand-900": "0 57 90",
+      // Orange text, blue buttons, on white card backgrounds.
+      "--card-text": "180 83 9", // a readable, slightly deeper orange than the glow's #F5881F
+      "--button-bg": "0 126 200", // same blue as --brand-600
+      "--button-bg-hover": "0 98 156",
     } as CSSProperties,
     // Blue (top-left) and orange (bottom-right) glow, echoing the logo's own
     // diagonal flame-to-drop split, over a near-black base.
@@ -63,6 +71,10 @@ const THEMES: Record<string, CompanyTheme> = {
       "--brand-600": "211 10 10",
       "--brand-700": "226 96 96",
       "--brand-900": "95 4 4",
+      // Red text, black buttons, on white card backgrounds.
+      "--card-text": "211 10 10", // same red as --brand-600
+      "--button-bg": "17 17 17",
+      "--button-bg-hover": "40 40 40",
     } as CSSProperties,
     pageBackground:
       "radial-gradient(circle at 30% 20%, #4a0808 0%, #0a0505 55%, #0a0505 100%)",

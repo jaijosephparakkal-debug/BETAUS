@@ -44,7 +44,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-slate-200 bg-surface p-5 shadow-sm ${className}`}
+      className={`card-themed rounded-xl border border-gray-200 p-5 shadow-sm ${className}`}
     >
       {children}
     </div>

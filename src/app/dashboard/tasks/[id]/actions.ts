@@ -93,9 +93,9 @@ export async function quickToggleTaskStatusAction(
     return { error: "You can only update your own tasks." };
   }
   const isDailyTask = !!task.parentTaskId;
-  const isStageTask = !!task.projectId && task.stageOrder != null;
-  if (!isDailyTask && !isStageTask) {
-    return { error: "Quick status toggles are only for daily or project-stage tasks." };
+  const isChecklistTask = task.stageOrder != null;
+  if (!isDailyTask && !isChecklistTask) {
+    return { error: "Quick status toggles are only for daily or checklist-style tasks." };
   }
   if (!QUICK_STATUSES.includes(targetStatus)) {
     return { error: "Invalid status." };

@@ -54,7 +54,7 @@ export default async function TaskDetailPage({
 
   const isOwner = task.assignedToId === membership.id;
   const isRam = membership.user.email === "ram@flaretechnical.com";
-  const useQuickToggle = !!task.parentTask || (!!task.projectId && task.stageOrder != null);
+  const useQuickToggle = !!task.parentTask || task.stageOrder != null;
   const canManage =
     membership.isDirector ||
     task.assignedById === membership.id ||

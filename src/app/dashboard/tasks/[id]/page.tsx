@@ -11,6 +11,7 @@ import {
   isOverdue,
 } from "@/components/ui";
 import ProgressForm from "./ProgressForm";
+import { QuickStatusToggle } from "./QuickStatusToggle";
 import { UploadAttachmentForm } from "./UploadAttachmentForm";
 import {
   AddDailyTaskForm,
@@ -210,7 +211,16 @@ export default async function TaskDetailPage({
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && (
+      {isOwner && task.subtasks.length === 0 && task.parentTask && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
+            Mark today&rsquo;s status
+          </h2>
+          <QuickStatusToggle taskId={task.id} initialStatus={task.status} />
+        </Card>
+      )}
+
+      {isOwner && task.subtasks.length === 0 && !task.parentTask && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Log an update</h2>
           <ProgressForm taskId={task.id} initialProgress={task.progress} />

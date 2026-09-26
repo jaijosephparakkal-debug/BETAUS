@@ -61,6 +61,67 @@ export async function logProgressAction(
   return {};
 }
 
+const QUICK_STATUSES = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] as const;
+const QUICK_STATUS_LABELS: Record<(typeof QUICK_STATUSES)[number], string> = {
+  NOT_STARTED: "Marked as Not Started",
+  IN_PROGRESS: "Marked as In Progress",
+  COMPLETED: "Marked as Complete",
+};
+
+/**
+ * Lightweight status toggle for daily tasks — no comment or approval, just a
+ * quick "done / in progress / not started" flip. Still logs an
+ * auto-generated comment so the change shows up with a timestamp in the
+ * person's activity/KPI report, same as a normal progress update would.
+ */
+export async function quickToggleTaskStatusAction(
+  taskId: string,
+  targetStatus: (typeof QUICK_STATUSES)[number]
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.assignedToId !== membership.id) {
+    return { error: "You can only update your own tasks." };
+  }
+  if (!task.parentTaskId) {
+    return { error: "Quick status toggles are only for daily tasks." };
+  }
+  if (!QUICK_STATUSES.includes(targetStatus)) {
+    return { error: "Invalid status." };
+  }
+
+  const progress =
+    targetStatus === "COMPLETED"
+      ? 100
+      : targetStatus === "NOT_STARTED"
+        ? 0
+        : task.progress > 0 && task.progress < 100
+          ? task.progress
+          : 50;
+
+  await prisma.$transaction([
+    prisma.task.update({ where: { id: taskId }, data: { status: targetStatus, progress } }),
+    prisma.taskComment.create({
+      data: {
+        taskId,
+        authorId: membership.id,
+        body: QUICK_STATUS_LABELS[targetStatus],
+        progressAt: progress,
+      },
+    }),
+  ]);
+
+  await recomputeTaskProgress(task.parentTaskId);
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 export async function uploadTaskAttachmentAction(
   taskId: string,
   _prev: { error?: string } | undefined,

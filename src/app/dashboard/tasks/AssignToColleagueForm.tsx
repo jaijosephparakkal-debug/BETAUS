@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { assignTaskToColleagueAction } from "./actions";
+import { assignTaskToColleagueAction, addTaskTitlePresetAction } from "./actions";
+
+const ADD_NEW_VALUE = "__add_new__";
 
 function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
@@ -17,6 +19,99 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
   );
 }
 
+/** Dropdown of quick-pick titles, with a "+ Add new title…" option that saves a new one inline. */
+function TitlePicker({ initialOptions }: { initialOptions: string[] }) {
+  const [options, setOptions] = useState(initialOptions);
+  const [selected, setSelected] = useState("");
+  const [addingNew, setAddingNew] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, startSaving] = useTransition();
+
+  function saveNewTitle() {
+    const trimmed = newTitle.trim();
+    if (!trimmed) {
+      setError("Enter a title first.");
+      return;
+    }
+    setError(null);
+    startSaving(async () => {
+      const result = await addTaskTitlePresetAction(trimmed);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      const added = result.title!;
+      setOptions((prev) => (prev.includes(added) ? prev : [...prev, added]));
+      setSelected(added);
+      setAddingNew(false);
+      setNewTitle("");
+    });
+  }
+
+  if (addingNew) {
+    return (
+      <div className="space-y-1">
+        <div className="flex gap-2">
+          <input
+            autoFocus
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="New task title"
+            className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+          />
+          <button
+            type="button"
+            onClick={saveNewTitle}
+            disabled={saving}
+            className="shrink-0 rounded-md bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            {saving ? "Adding…" : "Add"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAddingNew(false);
+              setNewTitle("");
+              setError(null);
+            }}
+            className="shrink-0 text-[17px] text-slate-500 hover:text-slate-700"
+          >
+            Cancel
+          </button>
+        </div>
+        {error && <p className="text-[15px] text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <select
+      name="title"
+      required
+      value={selected}
+      onChange={(e) => {
+        if (e.target.value === ADD_NEW_VALUE) {
+          setAddingNew(true);
+        } else {
+          setSelected(e.target.value);
+        }
+      }}
+      className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+    >
+      <option value="" disabled>
+        Task title…
+      </option>
+      {options.map((t) => (
+        <option key={t} value={t}>
+          {t}
+        </option>
+      ))}
+      <option value={ADD_NEW_VALUE}>+ Add new title…</option>
+    </select>
+  );
+}
+
 export function AssignToColleagueForm({
   colleagues,
   projects = [],
@@ -28,7 +123,7 @@ export function AssignToColleagueForm({
 }: {
   colleagues: { id: string; name: string; title: string }[];
   projects?: { id: string; name: string; number: string | null }[];
-  /** When set, the title field is a fixed dropdown of these instead of free text. */
+  /** When set, the title field is a dropdown of these (plus "Add new title") instead of free text. */
   titleOptions?: string[];
   /** When set, hides the "who is this for" picker and always assigns to this person. */
   selfOnly?: { id: string };
@@ -73,21 +168,7 @@ export function AssignToColleagueForm({
         </select>
       )}
       {titleOptions ? (
-        <select
-          name="title"
-          required
-          defaultValue=""
-          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-        >
-          <option value="" disabled>
-            Task title…
-          </option>
-          {titleOptions.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+        <TitlePicker initialOptions={titleOptions} />
       ) : (
         <input
           name="title"

@@ -66,6 +66,7 @@ model Membership {
   attachmentsUploaded Attachment[]
   approvalComments    ApprovalComment[]
   attendanceEntries   AttendanceEntry[]
+  taskTitlePresets    TaskTitlePreset[]
 
   @@unique([userId, companyId])
 }
@@ -110,6 +111,20 @@ model Task {
   project    Project?      @relation(fields: [projectId], references: [id])
   comments   TaskComment[]
   attachments Attachment[]
+}
+
+// A person's quick-pick task titles for the ad-hoc "add task" form — starts
+// with a fixed set (see TASK_FORM_CONFIG_BY_EMAIL) and grows as they add new
+// ones from the dropdown itself.
+model TaskTitlePreset {
+  id           String   @id @default(cuid())
+  membershipId String
+  title        String
+  createdAt    DateTime @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, title])
 }
 
 model TaskComment {

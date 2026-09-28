@@ -6,32 +6,16 @@ import { getTasksFor } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
-// Customized "add task" form for specific people: a fixed dropdown of their
-// common recurring task categories instead of free-text entry, and (when
-// selfOnly is set) no "who is this for" picker since they only add tasks
-// for themselves.
-const TASK_FORM_CONFIG_BY_EMAIL: Record<string, { titleOptions: string[]; selfOnly: boolean }> = {
-  "saroj@flaretechnical.com": {
-    titleOptions: [
-      "Estimation Drawing",
-      "Documentation",
-      "IT",
-      "Site Visit",
-      "Client Meeting",
-      "DCD Renewal",
-      "Quotation",
-      "Price Updation",
-      "Follow Up",
-    ],
-    selfOnly: true,
-  },
-};
+// People whose "add task" form has no "who is this for" picker, since they
+// only ever add tasks for themselves. Their title dropdown is driven by
+// TaskTitlePreset (seeded once, then grows as they add new ones inline).
+const SELF_ONLY_EMAILS = new Set(["saroj@flaretechnical.com"]);
 
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, colleagues, projects] = await Promise.all([
+  const [tasks, colleagues, projects, titlePresets] = await Promise.all([
     getTasksFor(membership.id),
     prisma.membership.findMany({
       where: { companyId: membership.companyId, isDirector: false },
@@ -43,9 +27,14 @@ export default async function MyTasksPage() {
       select: { id: true, name: true, number: true },
       orderBy: { name: "asc" },
     }),
+    prisma.taskTitlePreset.findMany({
+      where: { membershipId: membership.id },
+      orderBy: { createdAt: "asc" },
+      select: { title: true },
+    }),
   ]);
 
-  const formConfig = TASK_FORM_CONFIG_BY_EMAIL[membership.user.email];
+  const selfOnly = SELF_ONLY_EMAILS.has(membership.user.email);
 
   return (
     <div className="space-y-4">
@@ -57,11 +46,11 @@ export default async function MyTasksPage() {
           title: c.title,
         }))}
         projects={projects}
-        titleOptions={formConfig?.titleOptions}
-        selfOnly={formConfig?.selfOnly ? { id: membership.id } : undefined}
-        toggleLabel={formConfig?.selfOnly ? "+ Add task" : undefined}
-        submitLabel={formConfig?.selfOnly ? "Add task" : undefined}
-        pendingLabel={formConfig?.selfOnly ? "Adding…" : undefined}
+        titleOptions={titlePresets.length > 0 ? titlePresets.map((p) => p.title) : undefined}
+        selfOnly={selfOnly ? { id: membership.id } : undefined}
+        toggleLabel={selfOnly ? "+ Add task" : undefined}
+        submitLabel={selfOnly ? "Add task" : undefined}
+        pendingLabel={selfOnly ? "Adding…" : undefined}
       />
       <div className="space-y-3">
         {tasks.map((task) => (

@@ -51,3 +51,23 @@ export async function assignTaskToColleagueAction(
   revalidatePath("/dashboard");
   return {};
 }
+
+/** Adds a new quick-pick task title to the signed-in person's own dropdown, for next time. */
+export async function addTaskTitlePresetAction(
+  title: string
+): Promise<{ error?: string; title?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const trimmed = title.trim();
+  if (!trimmed) return { error: "Enter a title first." };
+
+  await prisma.taskTitlePreset.upsert({
+    where: { membershipId_title: { membershipId: membership.id, title: trimmed } },
+    update: {},
+    create: { membershipId: membership.id, title: trimmed },
+  });
+
+  revalidatePath("/dashboard/tasks");
+  return { title: trimmed };
+}

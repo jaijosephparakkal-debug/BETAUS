@@ -34,7 +34,7 @@ export function AssignToColleagueForm({
         onClick={() => setOpen(true)}
         className="text-[19px] text-brand-600 hover:underline"
       >
-        + Assign a task to a colleague
+        + Assign task
       </button>
     );
   }
@@ -48,7 +48,7 @@ export function AssignToColleagueForm({
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       >
         <option value="" disabled>
-          Choose a colleague…
+          Who is this task for…
         </option>
         {colleagues.map((c) => (
           <option key={c.id} value={c.id}>

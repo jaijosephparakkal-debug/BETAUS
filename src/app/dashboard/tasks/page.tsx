@@ -13,7 +13,7 @@ export default async function MyTasksPage() {
   const [tasks, colleagues, projects] = await Promise.all([
     getTasksFor(membership.id),
     prisma.membership.findMany({
-      where: { companyId: membership.companyId, isDirector: false, id: { not: membership.id } },
+      where: { companyId: membership.companyId, isDirector: false },
       include: { user: true },
       orderBy: { title: "asc" },
     }),
@@ -28,7 +28,11 @@ export default async function MyTasksPage() {
     <div className="space-y-4">
       <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
       <AssignToColleagueForm
-        colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
+        colleagues={colleagues.map((c) => ({
+          id: c.id,
+          name: c.id === membership.id ? `${c.user.name} (me)` : c.user.name,
+          title: c.title,
+        }))}
         projects={projects}
       />
       <div className="space-y-3">

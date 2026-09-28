@@ -6,9 +6,10 @@ import { getCurrentMembership } from "@/lib/auth";
 
 /**
  * Assigns a plain ad-hoc task from the signed-in employee to any colleague at
- * their company — no reporting-line restriction, unlike daily/weekly/monthly
- * tasks which stay manager-only. The creator still keeps edit/reassign/delete
- * rights on it afterwards (see canManageTask in dashboard/tasks/[id]/actions.ts).
+ * their company (including themselves, for self-assigned tasks) — no
+ * reporting-line restriction, unlike daily/weekly/monthly tasks which stay
+ * manager-only. The creator still keeps edit/reassign/delete rights on it
+ * afterwards (see canManageTask in dashboard/tasks/[id]/actions.ts).
  */
 export async function assignTaskToColleagueAction(
   _prev: { error?: string } | undefined,
@@ -18,13 +19,13 @@ export async function assignTaskToColleagueAction(
   if (!membership) return { error: "Not signed in." };
 
   const assigneeId = String(formData.get("assigneeId") || "");
-  if (!assigneeId || assigneeId === membership.id) {
-    return { error: "Choose a colleague to assign this to." };
+  if (!assigneeId) {
+    return { error: "Choose who this task is for." };
   }
 
   const assignee = await prisma.membership.findUnique({ where: { id: assigneeId } });
   if (!assignee || assignee.companyId !== membership.companyId) {
-    return { error: "Choose a valid colleague at your company." };
+    return { error: "Choose a valid person at your company." };
   }
 
   const title = String(formData.get("title") || "").trim();

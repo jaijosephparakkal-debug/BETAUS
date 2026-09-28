@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
+import { notifyNewTask } from "@/lib/notifications";
 
 /**
  * Assigns a plain ad-hoc task from the signed-in employee to any colleague at
@@ -35,7 +36,7 @@ export async function assignTaskToColleagueAction(
   const workedForCompany = String(formData.get("workedForCompany") || "").trim();
   if (!title) return { error: "Give the task a title." };
 
-  await prisma.task.create({
+  const task = await prisma.task.create({
     data: {
       companyId: membership.companyId,
       title,
@@ -47,6 +48,7 @@ export async function assignTaskToColleagueAction(
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     },
   });
+  await notifyNewTask(assigneeId, task.id, title);
 
   revalidatePath("/dashboard/tasks");
   revalidatePath(`/dashboard/team/${assigneeId}`);

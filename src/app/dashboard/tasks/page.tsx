@@ -6,22 +6,12 @@ import { getTasksFor } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
-// People whose "add task" form has no "who is this for" picker, since they
-// only ever add tasks for themselves. Their title dropdown is driven by
-// TaskTitlePreset (seeded once, then grows as they add new ones inline).
-const SELF_ONLY_EMAILS = new Set(["saroj@flaretechnical.com"]);
-
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, colleagues, projects, titlePresets] = await Promise.all([
+  const [tasks, projects, titlePresets] = await Promise.all([
     getTasksFor(membership.id),
-    prisma.membership.findMany({
-      where: { companyId: membership.companyId, isDirector: false },
-      include: { user: true },
-      orderBy: { title: "asc" },
-    }),
     prisma.project.findMany({
       where: { companyId: membership.companyId },
       select: { id: true, name: true, number: true },
@@ -34,23 +24,13 @@ export default async function MyTasksPage() {
     }),
   ]);
 
-  const selfOnly = SELF_ONLY_EMAILS.has(membership.user.email);
-
   return (
     <div className="space-y-4">
       <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
       <AssignToColleagueForm
-        colleagues={colleagues.map((c) => ({
-          id: c.id,
-          name: c.id === membership.id ? `${c.user.name} (me)` : c.user.name,
-          title: c.title,
-        }))}
+        selfId={membership.id}
+        titleOptions={titlePresets.map((p) => p.title)}
         projects={projects}
-        titleOptions={titlePresets.length > 0 ? titlePresets.map((p) => p.title) : undefined}
-        selfOnly={selfOnly ? { id: membership.id } : undefined}
-        toggleLabel={selfOnly ? "+ Add task" : undefined}
-        submitLabel={selfOnly ? "Add task" : undefined}
-        pendingLabel={selfOnly ? "Adding…" : undefined}
       />
       <div className="space-y-3">
         {tasks.map((task) => (

@@ -17,10 +17,6 @@ import { getCompanyTheme } from "@/lib/theme";
 
 const STATUS_COLORS = { COMPLETED: "#10b981", IN_PROGRESS: "#f59e0b", NOT_STARTED: "#94a3b8" };
 
-function switchLink(companyId: string, next: string) {
-  return `/api/switch-company?companyId=${companyId}&next=${encodeURIComponent(next)}`;
-}
-
 type Rollup = Awaited<ReturnType<typeof getCompanyRollup>>;
 type OrgTree = Awaited<ReturnType<typeof getOrgTree>>;
 type AtRisk = Awaited<ReturnType<typeof getAtRiskTasks>>;
@@ -60,23 +56,14 @@ function CompanyBoardSection({
           <h2 className="text-[21px] font-semibold text-slate-900">{company.name}</h2>
         </div>
         <div className="flex flex-wrap gap-3 text-[17px]">
-          <Link href={switchLink(company.id, "/director/kpi-percentage")} className="text-brand-600 hover:underline">
+          <Link href="/director/kpi-percentage" className="text-brand-600 hover:underline">
             KPI Percentage
           </Link>
-          <Link href={switchLink(company.id, "/director/attendance")} className="text-brand-600 hover:underline">
+          <Link href="/director/attendance" className="text-brand-600 hover:underline">
             Attendance
           </Link>
-          <Link href={switchLink(company.id, "/director/approvals")} className="text-brand-600 hover:underline">
+          <Link href="/director/approvals" className="text-brand-600 hover:underline">
             Approvals{pendingApprovalCount > 0 ? ` (${pendingApprovalCount})` : ""}
-          </Link>
-          <Link href={switchLink(company.id, "/dashboard/projects")} className="text-brand-600 hover:underline">
-            Projects
-          </Link>
-          <Link href={switchLink(company.id, "/director/message")} className="text-brand-600 hover:underline">
-            Post message
-          </Link>
-          <Link href={switchLink(company.id, "/director/employees")} className="text-brand-600 hover:underline">
-            Employees
           </Link>
         </div>
       </div>
@@ -130,47 +117,27 @@ export default async function DirectorPage() {
   if (!membership) redirect("/login");
   if (!membership.isDirector) redirect("/dashboard");
 
-  const memberships = await prisma.membership.findMany({
-    where: { userId: membership.userId },
-    include: { company: true },
-  });
+  // Only ever two companies system-wide — a director sees both together on
+  // one page, regardless of which single company they actually signed in
+  // through. No company-switching involved anywhere on this page.
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
 
   // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
   const boards: {
     company: { id: string; slug: string; name: string };
-    membershipId: string;
     rollup: Rollup;
     orgTree: OrgTree;
     atRiskTasks: AtRisk;
     pendingApprovalCount: number;
   }[] = [];
-  for (const m of memberships) {
-    const rollup = await getCompanyRollup(m.companyId);
-    const orgTree = await getOrgTree(m.companyId);
-    const atRiskTasks = await getAtRiskTasks(m.companyId);
+  for (const c of companies) {
+    const rollup = await getCompanyRollup(c.id);
+    const orgTree = await getOrgTree(c.id);
+    const atRiskTasks = await getAtRiskTasks(c.id);
     const pendingApprovalCount = await prisma.approvalRequest.count({
-      where: { approverId: m.id, status: "PENDING" },
+      where: { companyId: c.id, status: "PENDING" },
     });
-    boards.push({
-      company: { id: m.company.id, slug: m.company.slug, name: m.company.name },
-      membershipId: m.id,
-      rollup,
-      orgTree,
-      atRiskTasks,
-      pendingApprovalCount,
-    });
-  }
-
-  // A single-company director (none exist today, but the flag is generic)
-  // just gets that one company's board, unchanged in spirit from before.
-  if (boards.length <= 1) {
-    const b = boards[0];
-    return (
-      <div className="space-y-6">
-        <h1 className="text-[23px] font-semibold text-slate-900">Company Dashboard</h1>
-        <CompanyBoardSection {...b} />
-      </div>
-    );
+    boards.push({ company: { id: c.id, slug: c.slug, name: c.name }, rollup, orgTree, atRiskTasks, pendingApprovalCount });
   }
 
   const overall = {
@@ -189,7 +156,12 @@ export default async function DirectorPage() {
     ? Math.round(boards.reduce((s, b) => s + b.rollup.avgKpiScore * b.rollup.kpiCount, 0) / totalKpiCount)
     : 0;
 
-  // "My Tasks" / "My KPIs" merged across every membership this person holds.
+  // "My Tasks" / "My KPIs" are personal — based on whichever membership(s)
+  // this specific person actually holds (usually just one).
+  const memberships = await prisma.membership.findMany({
+    where: { userId: membership.userId },
+    include: { company: true },
+  });
   const myTasksByCompany: { company: { id: string; name: string }; tasks: Awaited<ReturnType<typeof getTasksFor>> }[] = [];
   const myKpisByCompany: { company: { id: string; name: string }; kpis: Awaited<ReturnType<typeof getKpisFor>> }[] = [];
   for (const m of memberships) {
@@ -240,68 +212,76 @@ export default async function DirectorPage() {
         </div>
       </Card>
 
-      <Card>
-        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My tasks — both companies</h2>
-        <div className="space-y-5">
-          {myTasksByCompany.map(({ company, tasks }) => (
-            <div key={company.id}>
-              <div className="mb-2 text-[15px] font-semibold uppercase tracking-wide text-slate-500">
-                {company.name}
+      {myTasksByCompany.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My tasks</h2>
+          <div className="space-y-5">
+            {myTasksByCompany.map(({ company, tasks }) => (
+              <div key={company.id}>
+                {myTasksByCompany.length > 1 && (
+                  <div className="mb-2 text-[15px] font-semibold uppercase tracking-wide text-slate-500">
+                    {company.name}
+                  </div>
+                )}
+                {tasks.length === 0 ? (
+                  <p className="text-[17px] text-slate-500">No tasks.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {tasks.slice(0, 5).map((task) => (
+                      <div key={task.id} className="rounded-lg border border-slate-100 p-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[17px] font-medium text-slate-900">{task.title}</span>
+                          <StatusBadge status={task.status} />
+                        </div>
+                        <div className="mt-1.5">
+                          <ProgressBar value={task.progress} />
+                        </div>
+                        <div className="mt-1 text-[15px] text-slate-500">
+                          <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
+                            Due {formatDate(task.deadline)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {tasks.length === 0 ? (
-                <p className="text-[17px] text-slate-500">No tasks.</p>
-              ) : (
-                <div className="space-y-2">
-                  {tasks.slice(0, 5).map((task) => (
-                    <div key={task.id} className="rounded-lg border border-slate-100 p-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[17px] font-medium text-slate-900">{task.title}</span>
-                        <StatusBadge status={task.status} />
-                      </div>
-                      <div className="mt-1.5">
-                        <ProgressBar value={task.progress} />
-                      </div>
-                      <div className="mt-1 text-[15px] text-slate-500">
-                        <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
-                          Due {formatDate(task.deadline)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
 
-      <Card>
-        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My KPIs — both companies</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {myKpisByCompany.map(({ company, kpis }) => (
-            <div key={company.id}>
-              <div className="mb-2 text-[15px] font-semibold uppercase tracking-wide text-slate-500">
-                {company.name}
-              </div>
-              {kpis.length === 0 ? (
-                <p className="text-[17px] text-slate-500">No KPIs set.</p>
-              ) : (
-                <div className="space-y-3">
-                  {kpis.map((k) => (
-                    <div key={k.id}>
-                      <div className="flex items-center justify-between text-[17px]">
-                        <span className="font-medium text-slate-900">{k.name}</span>
-                        <span className="text-slate-500">{kpiScore(k)}%</span>
+      {myKpisByCompany.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My KPIs</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {myKpisByCompany.map(({ company, kpis }) => (
+              <div key={company.id}>
+                {myKpisByCompany.length > 1 && (
+                  <div className="mb-2 text-[15px] font-semibold uppercase tracking-wide text-slate-500">
+                    {company.name}
+                  </div>
+                )}
+                {kpis.length === 0 ? (
+                  <p className="text-[17px] text-slate-500">No KPIs set.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {kpis.map((k) => (
+                      <div key={k.id}>
+                        <div className="flex items-center justify-between text-[17px]">
+                          <span className="font-medium text-slate-900">{k.name}</span>
+                          <span className="text-slate-500">{kpiScore(k)}%</span>
+                        </div>
+                        <ProgressBar value={kpiScore(k)} />
                       </div>
-                      <ProgressBar value={kpiScore(k)} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {boards.map((b) => (
         <CompanyBoardSection key={b.company.id} {...b} />

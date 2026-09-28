@@ -52,69 +52,18 @@ const REASON_LABELS: Record<string, string> = {
   SHIFT_ENDED: "Shift ended",
 };
 
-export default async function AttendanceSheetPage({
-  searchParams,
-}: {
-  searchParams: { date?: string };
-}) {
-  const membership = await getCurrentMembership();
-  if (!membership) redirect("/login");
-  if (!membership.isDirector) redirect("/dashboard");
+type Entry = {
+  id: string;
+  clockIn: Date;
+  clockOut: Date | null;
+  reason: string | null;
+  membership: { title: string; user: { name: string } };
+};
 
-  const { start, end, label, isoValue } = dubaiDayRange(searchParams.date);
-
-  const entries = await prisma.attendanceEntry.findMany({
-    where: {
-      membership: { companyId: membership.companyId },
-      clockIn: { gte: start, lt: end },
-    },
-    include: { membership: { include: { user: true } } },
-    orderBy: { clockIn: "asc" },
-  });
-
-  const now = new Date();
-  const prevDate = new Date(start.getTime() - 24 * 60 * 60 * 1000);
-  const nextDate = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  const toIso = (d: Date) => {
-    const s = new Date(d.getTime() + DUBAI_OFFSET_MS);
-    return `${s.getUTCFullYear()}-${String(s.getUTCMonth() + 1).padStart(2, "0")}-${String(
-      s.getUTCDate()
-    ).padStart(2, "0")}`;
-  };
-
+function CompanyAttendanceTable({ companyName, entries, now }: { companyName: string; entries: Entry[]; now: Date }) {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[23px] font-semibold text-slate-900">
-            Attendance sheet — {membership.company.name}
-          </h1>
-          <p className="text-[19px] text-slate-500">{label}</p>
-        </div>
-        <div className="flex items-center gap-2 text-[19px]">
-          <a
-            href={`/director/attendance?date=${toIso(prevDate)}`}
-            className="rounded-md border border-brand-200 px-3 py-1.5 text-brand-600 hover:bg-brand-50"
-          >
-            ← Previous day
-          </a>
-          <a
-            href={`/director/attendance?date=${toIso(nextDate)}`}
-            className="rounded-md border border-brand-200 px-3 py-1.5 text-brand-600 hover:bg-brand-50"
-          >
-            Next day →
-          </a>
-          {isoValue !== toIso(now) && (
-            <a
-              href="/director/attendance"
-              className="rounded-md bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700"
-            >
-              Today
-            </a>
-          )}
-        </div>
-      </div>
-
+    <div>
+      <h2 className="mb-2 text-[21px] font-semibold text-slate-900">{companyName}</h2>
       <Card className="!p-0">
         <table className="w-full text-[19px]">
           <thead>
@@ -167,6 +116,79 @@ export default async function AttendanceSheetPage({
           </tbody>
         </table>
       </Card>
+    </div>
+  );
+}
+
+export default async function AttendanceSheetPage({
+  searchParams,
+}: {
+  searchParams: { date?: string };
+}) {
+  const membership = await getCurrentMembership();
+  if (!membership) redirect("/login");
+  if (!membership.isDirector) redirect("/dashboard");
+
+  const { start, end, label, isoValue } = dubaiDayRange(searchParams.date);
+
+  // Only ever two companies system-wide — always shown together, one shared
+  // date navigator, no company switch involved.
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  const entries = await prisma.attendanceEntry.findMany({
+    where: { clockIn: { gte: start, lt: end } },
+    include: { membership: { include: { user: true, company: true } } },
+    orderBy: { clockIn: "asc" },
+  });
+
+  const now = new Date();
+  const prevDate = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+  const nextDate = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  const toIso = (d: Date) => {
+    const s = new Date(d.getTime() + DUBAI_OFFSET_MS);
+    return `${s.getUTCFullYear()}-${String(s.getUTCMonth() + 1).padStart(2, "0")}-${String(
+      s.getUTCDate()
+    ).padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[23px] font-semibold text-slate-900">Attendance sheet — both companies</h1>
+          <p className="text-[19px] text-slate-500">{label}</p>
+        </div>
+        <div className="flex items-center gap-2 text-[19px]">
+          <a
+            href={`/director/attendance?date=${toIso(prevDate)}`}
+            className="rounded-md border border-brand-200 px-3 py-1.5 text-brand-600 hover:bg-brand-50"
+          >
+            ← Previous day
+          </a>
+          <a
+            href={`/director/attendance?date=${toIso(nextDate)}`}
+            className="rounded-md border border-brand-200 px-3 py-1.5 text-brand-600 hover:bg-brand-50"
+          >
+            Next day →
+          </a>
+          {isoValue !== toIso(now) && (
+            <a
+              href="/director/attendance"
+              className="rounded-md bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700"
+            >
+              Today
+            </a>
+          )}
+        </div>
+      </div>
+
+      {companies.map((c) => (
+        <CompanyAttendanceTable
+          key={c.id}
+          companyName={c.name}
+          entries={entries.filter((e) => e.membership.company.id === c.id)}
+          now={now}
+        />
+      ))}
     </div>
   );
 }

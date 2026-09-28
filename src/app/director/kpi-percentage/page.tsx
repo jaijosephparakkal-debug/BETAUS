@@ -27,31 +27,26 @@ function dubaiDayLabel(date: Date) {
   return shifted.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
-export default async function KpiPercentagePage() {
-  const membership = await getCurrentMembership();
-  if (!membership) redirect("/login");
-  if (!membership.isDirector) redirect("/dashboard");
+type Counts = { NOT_STARTED: number; IN_PROGRESS: number; COMPLETED: number };
+const emptyCounts = (): Counts => ({ NOT_STARTED: 0, IN_PROGRESS: 0, COMPLETED: 0 });
 
+async function CompanyKpiSection({ company }: { company: { id: string; slug: string; name: string } }) {
   const [employees, tasks] = await Promise.all([
     prisma.membership.findMany({
-      where: { companyId: membership.companyId },
+      where: { companyId: company.id },
       include: { user: true },
       orderBy: { title: "asc" },
     }),
     prisma.task.findMany({
-      where: { companyId: membership.companyId },
+      where: { companyId: company.id },
       select: { assignedToId: true, status: true, completedAt: true },
     }),
   ]);
 
-  const theme = getCompanyTheme(membership.company.slug);
-
-  type Counts = { NOT_STARTED: number; IN_PROGRESS: number; COMPLETED: number };
-  const emptyCounts = (): Counts => ({ NOT_STARTED: 0, IN_PROGRESS: 0, COMPLETED: 0 });
+  const theme = getCompanyTheme(company.slug);
 
   const byEmployee = new Map<string, Counts>();
   const companyTotals = emptyCounts();
-
   for (const t of tasks) {
     const status = (t.status as keyof Counts) in companyTotals ? (t.status as keyof Counts) : "NOT_STARTED";
     companyTotals[status]++;
@@ -63,7 +58,6 @@ export default async function KpiPercentagePage() {
   const companyTotal = companyTotals.NOT_STARTED + companyTotals.IN_PROGRESS + companyTotals.COMPLETED;
   const companyCompletionPct = companyTotal > 0 ? Math.round((companyTotals.COMPLETED / companyTotal) * 100) : 0;
 
-  // Trend: tasks completed per day, last 14 Dubai-local days.
   const days: { key: string; label: string }[] = [];
   const today = new Date();
   for (let i = 13; i >= 0; i--) {
@@ -82,27 +76,14 @@ export default async function KpiPercentagePage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <div className="rounded-lg border border-brand-200 bg-brand-50 p-2">
-          <Image
-            src={theme.logo}
-            alt={theme.displayName}
-            width={theme.logoWidth}
-            height={theme.logoHeight}
-            className="h-12 w-auto"
-          />
+          <Image src={theme.logo} alt={theme.displayName} width={theme.logoWidth} height={theme.logoHeight} className="h-12 w-auto" />
         </div>
-        <div>
-          <h1 className="text-[23px] font-semibold text-slate-900">KPI Percentage</h1>
-          <p className="text-[17px] text-slate-500">
-            {membership.company.name} — task completion by role and responsibility
-          </p>
-        </div>
+        <h2 className="text-[21px] font-semibold text-slate-900">{company.name}</h2>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="flex flex-col items-center text-center">
-          <h2 className="mb-3 self-start text-[21px] font-semibold text-slate-900">
-            Company-wide status
-          </h2>
+          <h3 className="mb-3 self-start text-[19px] font-semibold text-slate-900">Company-wide status</h3>
           <SegmentedDonut
             size={140}
             strokeWidth={16}
@@ -119,28 +100,21 @@ export default async function KpiPercentagePage() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-            Tasks completed — last 14 days
-          </h2>
+          <h3 className="mb-3 text-[19px] font-semibold text-slate-900">Tasks completed — last 14 days</h3>
           <LineChart points={trendPoints} color={`rgb(${(theme.vars as Record<string, string>)["--brand-600"]})`} />
         </Card>
       </div>
 
       <Card>
-        <h2 className="mb-1 text-[21px] font-semibold text-slate-900">By role & responsibility</h2>
-        <p className="mb-4 text-[17px] text-slate-500">
-          Each person's own task completion, broken down by status.
-        </p>
+        <h3 className="mb-1 text-[19px] font-semibold text-slate-900">By role & responsibility</h3>
+        <p className="mb-4 text-[17px] text-slate-500">Each person's own task completion, broken down by status.</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {employees.map((e) => {
             const counts = byEmployee.get(e.id) ?? emptyCounts();
             const total = counts.NOT_STARTED + counts.IN_PROGRESS + counts.COMPLETED;
             const pct = total > 0 ? Math.round((counts.COMPLETED / total) * 100) : 0;
             return (
-              <div
-                key={e.id}
-                className="flex items-center gap-3 rounded-lg border border-slate-100 p-3"
-              >
+              <div key={e.id} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3">
                 <SegmentedDonut
                   size={72}
                   strokeWidth={9}
@@ -173,6 +147,30 @@ export default async function KpiPercentagePage() {
           })}
         </div>
       </Card>
+    </div>
+  );
+}
+
+export default async function KpiPercentagePage() {
+  const membership = await getCurrentMembership();
+  if (!membership) redirect("/login");
+  if (!membership.isDirector) redirect("/dashboard");
+
+  // Only ever two companies system-wide — always shown together, one
+  // continuous page, no company switch involved.
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-[23px] font-semibold text-slate-900">KPI Percentage</h1>
+        <p className="text-[17px] text-slate-500">Task completion by role and responsibility — both companies</p>
+      </div>
+      <div className="space-y-10">
+        {companies.map((c) => (
+          <CompanyKpiSection key={c.id} company={{ id: c.id, slug: c.slug, name: c.name }} />
+        ))}
+      </div>
     </div>
   );
 }

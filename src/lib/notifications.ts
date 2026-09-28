@@ -32,10 +32,16 @@ export function getUnreadTaskNotificationCount(membershipId: string) {
   return prisma.notification.count({ where: { membershipId, read: false } });
 }
 
-/** Clears the badge — called when the person visits their task list. */
+/**
+ * Clears the badge — called when the person visits their task list.
+ * Excludes anything created in the last few seconds: creating a task from
+ * that same page triggers an immediate re-render (via revalidatePath), which
+ * would otherwise wipe the badge for a notification the person never
+ * actually saw.
+ */
 export function markTaskNotificationsRead(membershipId: string) {
   return prisma.notification.updateMany({
-    where: { membershipId, read: false },
+    where: { membershipId, read: false, createdAt: { lt: new Date(Date.now() - 5000) } },
     data: { read: true },
   });
 }

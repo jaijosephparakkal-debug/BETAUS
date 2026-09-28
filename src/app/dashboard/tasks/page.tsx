@@ -6,20 +6,25 @@ import { getTasksFor } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
-// Fixed task-title choices for specific people, replacing free-text entry
-// with their common recurring task categories.
-const TITLE_OPTIONS_BY_EMAIL: Record<string, string[]> = {
-  "saroj@flaretechnical.com": [
-    "Estimation Drawing",
-    "Documentation",
-    "IT",
-    "Site Visit",
-    "Client Meeting",
-    "DCD Renewal",
-    "Quotation",
-    "Price Updation",
-    "Follow Up",
-  ],
+// Customized "add task" form for specific people: a fixed dropdown of their
+// common recurring task categories instead of free-text entry, and (when
+// selfOnly is set) no "who is this for" picker since they only add tasks
+// for themselves.
+const TASK_FORM_CONFIG_BY_EMAIL: Record<string, { titleOptions: string[]; selfOnly: boolean }> = {
+  "saroj@flaretechnical.com": {
+    titleOptions: [
+      "Estimation Drawing",
+      "Documentation",
+      "IT",
+      "Site Visit",
+      "Client Meeting",
+      "DCD Renewal",
+      "Quotation",
+      "Price Updation",
+      "Follow Up",
+    ],
+    selfOnly: true,
+  },
 };
 
 export default async function MyTasksPage() {
@@ -40,6 +45,8 @@ export default async function MyTasksPage() {
     }),
   ]);
 
+  const formConfig = TASK_FORM_CONFIG_BY_EMAIL[membership.user.email];
+
   return (
     <div className="space-y-4">
       <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
@@ -50,7 +57,11 @@ export default async function MyTasksPage() {
           title: c.title,
         }))}
         projects={projects}
-        titleOptions={TITLE_OPTIONS_BY_EMAIL[membership.user.email]}
+        titleOptions={formConfig?.titleOptions}
+        selfOnly={formConfig?.selfOnly ? { id: membership.id } : undefined}
+        toggleLabel={formConfig?.selfOnly ? "+ Add task" : undefined}
+        submitLabel={formConfig?.selfOnly ? "Add task" : undefined}
+        pendingLabel={formConfig?.selfOnly ? "Adding…" : undefined}
       />
       <div className="space-y-3">
         {tasks.map((task) => (

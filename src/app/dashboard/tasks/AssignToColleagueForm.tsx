@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { assignTaskToColleagueAction } from "./actions";
 
-function SubmitButton() {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -12,7 +12,7 @@ function SubmitButton() {
       disabled={pending}
       className="rounded-lg bg-brand-600 px-4 py-2 text-[19px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
-      {pending ? "Assigning…" : "Assign task"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
@@ -21,11 +21,20 @@ export function AssignToColleagueForm({
   colleagues,
   projects = [],
   titleOptions,
+  selfOnly,
+  toggleLabel = "+ Assign task",
+  submitLabel = "Assign task",
+  pendingLabel = "Assigning…",
 }: {
   colleagues: { id: string; name: string; title: string }[];
   projects?: { id: string; name: string; number: string | null }[];
   /** When set, the title field is a fixed dropdown of these instead of free text. */
   titleOptions?: string[];
+  /** When set, hides the "who is this for" picker and always assigns to this person. */
+  selfOnly?: { id: string };
+  toggleLabel?: string;
+  submitLabel?: string;
+  pendingLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
@@ -37,28 +46,32 @@ export function AssignToColleagueForm({
         onClick={() => setOpen(true)}
         className="text-[19px] text-brand-600 hover:underline"
       >
-        + Assign task
+        {toggleLabel}
       </button>
     );
   }
 
   return (
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
-      <select
-        name="assigneeId"
-        required
-        defaultValue=""
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-      >
-        <option value="" disabled>
-          Who is this task for…
-        </option>
-        {colleagues.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name} — {c.title}
+      {selfOnly ? (
+        <input type="hidden" name="assigneeId" value={selfOnly.id} />
+      ) : (
+        <select
+          name="assigneeId"
+          required
+          defaultValue=""
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+        >
+          <option value="" disabled>
+            Who is this task for…
           </option>
-        ))}
-      </select>
+          {colleagues.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name} — {c.title}
+            </option>
+          ))}
+        </select>
+      )}
       {titleOptions ? (
         <select
           name="title"
@@ -110,7 +123,7 @@ export function AssignToColleagueForm({
       />
       {state.error && <p className="text-[19px] text-red-600">{state.error}</p>}
       <div className="flex gap-2">
-        <SubmitButton />
+        <SubmitButton label={submitLabel} pendingLabel={pendingLabel} />
         <button
           type="button"
           onClick={() => setOpen(false)}

@@ -109,7 +109,7 @@ const companies: CompanySpec[] = [
   },
   {
     slug: "gasneeds",
-    name: "Gas Needs",
+    name: "Gasneeds",
     root: {
       // Same person as the Flaretech director — director of both companies.
       name: "Abraham Mathew",

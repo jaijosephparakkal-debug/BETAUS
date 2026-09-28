@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
-import { Card } from "@/components/ui";
+import { Card, CompanyTag } from "@/components/ui";
 
 // Dubai has no DST, fixed UTC+4.
 const DUBAI_OFFSET_MS = 4 * 60 * 60 * 1000;
@@ -57,66 +57,67 @@ type Entry = {
   clockIn: Date;
   clockOut: Date | null;
   reason: string | null;
-  membership: { title: string; user: { name: string } };
+  membership: { title: string; user: { name: string }; company: { slug: string } };
 };
 
-function CompanyAttendanceTable({ companyName, entries, now }: { companyName: string; entries: Entry[]; now: Date }) {
+function MergedAttendanceTable({ entries, now }: { entries: Entry[]; now: Date }) {
   return (
-    <div>
-      <h2 className="mb-2 text-[21px] font-semibold text-slate-900">{companyName}</h2>
-      <Card className="!p-0">
-        <table className="w-full text-[19px]">
-          <thead>
-            <tr className="border-b border-slate-200 text-left text-[17px] uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Clock in</th>
-              <th className="px-4 py-3">Clock out</th>
-              <th className="px-4 py-3">Hours</th>
-              <th className="px-4 py-3">Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => {
-              const isOpen = !entry.clockOut;
-              const durationMs =
-                (entry.clockOut ? entry.clockOut.getTime() : now.getTime()) - entry.clockIn.getTime();
-              return (
-                <tr key={entry.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 text-[21px] font-medium text-slate-900">
-                    {entry.membership.user.name}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{entry.membership.title}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatDubaiTime(entry.clockIn)}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {entry.clockOut ? (
-                      formatDubaiTime(entry.clockOut)
-                    ) : (
-                      <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[17px] font-medium text-emerald-600">
-                        Still clocked in
-                      </span>
-                    )}
-                  </td>
-                  <td className={`px-4 py-3 ${isOpen ? "text-emerald-600" : "text-slate-600"}`}>
-                    {formatDuration(durationMs)}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {entry.reason ? REASON_LABELS[entry.reason] ?? entry.reason : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-            {entries.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-[19px] text-slate-500">
-                  No attendance entries for this day.
+    <Card className="!p-0">
+      <table className="w-full text-[19px]">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-[17px] uppercase tracking-wide text-slate-500">
+            <th className="px-4 py-3">Name</th>
+            <th className="px-4 py-3">Company</th>
+            <th className="px-4 py-3">Title</th>
+            <th className="px-4 py-3">Clock in</th>
+            <th className="px-4 py-3">Clock out</th>
+            <th className="px-4 py-3">Hours</th>
+            <th className="px-4 py-3">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry) => {
+            const isOpen = !entry.clockOut;
+            const durationMs =
+              (entry.clockOut ? entry.clockOut.getTime() : now.getTime()) - entry.clockIn.getTime();
+            return (
+              <tr key={entry.id} className="border-b border-slate-100 last:border-0">
+                <td className="px-4 py-3 text-[21px] font-medium text-slate-900">
+                  {entry.membership.user.name}
+                </td>
+                <td className="px-4 py-3">
+                  <CompanyTag slug={entry.membership.company.slug} />
+                </td>
+                <td className="px-4 py-3 text-slate-600">{entry.membership.title}</td>
+                <td className="px-4 py-3 text-slate-600">{formatDubaiTime(entry.clockIn)}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {entry.clockOut ? (
+                    formatDubaiTime(entry.clockOut)
+                  ) : (
+                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[17px] font-medium text-emerald-600">
+                      Still clocked in
+                    </span>
+                  )}
+                </td>
+                <td className={`px-4 py-3 ${isOpen ? "text-emerald-600" : "text-slate-600"}`}>
+                  {formatDuration(durationMs)}
+                </td>
+                <td className="px-4 py-3 text-slate-500">
+                  {entry.reason ? REASON_LABELS[entry.reason] ?? entry.reason : "—"}
                 </td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
-    </div>
+            );
+          })}
+          {entries.length === 0 && (
+            <tr>
+              <td colSpan={7} className="px-4 py-6 text-center text-[19px] text-slate-500">
+                No attendance entries for this day.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </Card>
   );
 }
 
@@ -131,9 +132,8 @@ export default async function AttendanceSheetPage({
 
   const { start, end, label, isoValue } = dubaiDayRange(searchParams.date);
 
-  // Only ever two companies system-wide — always shown together, one shared
-  // date navigator, no company switch involved.
-  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  // Only ever two companies system-wide — merged into one table with a
+  // Company column, one shared date navigator, no company switch involved.
   const entries = await prisma.attendanceEntry.findMany({
     where: { clockIn: { gte: start, lt: end } },
     include: { membership: { include: { user: true, company: true } } },
@@ -181,14 +181,7 @@ export default async function AttendanceSheetPage({
         </div>
       </div>
 
-      {companies.map((c) => (
-        <CompanyAttendanceTable
-          key={c.id}
-          companyName={c.name}
-          entries={entries.filter((e) => e.membership.company.id === c.id)}
-          now={now}
-        />
-      ))}
+      <MergedAttendanceTable entries={entries} now={now} />
     </div>
   );
 }

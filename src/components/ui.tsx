@@ -1,3 +1,23 @@
+// Only ever two companies system-wide — used to tag rows/cards on the
+// unified director pages that merge both companies into one list/table.
+const COMPANY_TAGS: Record<string, { color: string; label: string }> = {
+  flaretechnical: { color: "#007ec8", label: "FT" },
+  gasneeds: { color: "#d30a0a", label: "GN" },
+};
+
+export function CompanyTag({ slug }: { slug: string }) {
+  const info = COMPANY_TAGS[slug] ?? { color: "#64748b", label: slug.slice(0, 2).toUpperCase() };
+  return (
+    <span
+      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-semibold"
+      style={{ color: info.color, background: `${info.color}1a` }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: info.color }} />
+      {info.label}
+    </span>
+  );
+}
+
 export function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;

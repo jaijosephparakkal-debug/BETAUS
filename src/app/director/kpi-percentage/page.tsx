@@ -1,9 +1,7 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
-import { getCompanyTheme } from "@/lib/theme";
-import { Card, SegmentedDonut, LineChart } from "@/components/ui";
+import { Card, SegmentedDonut, LineChart, CompanyTag } from "@/components/ui";
 
 const STATUS_COLORS = {
   COMPLETED: "#10b981",
@@ -30,33 +28,54 @@ function dubaiDayLabel(date: Date) {
 type Counts = { NOT_STARTED: number; IN_PROGRESS: number; COMPLETED: number };
 const emptyCounts = (): Counts => ({ NOT_STARTED: 0, IN_PROGRESS: 0, COMPLETED: 0 });
 
-async function CompanyKpiSection({ company }: { company: { id: string; slug: string; name: string } }) {
-  const [employees, tasks] = await Promise.all([
-    prisma.membership.findMany({
-      where: { companyId: company.id },
-      include: { user: true },
-      orderBy: { title: "asc" },
-    }),
-    prisma.task.findMany({
-      where: { companyId: company.id },
-      select: { assignedToId: true, status: true, completedAt: true },
-    }),
-  ]);
+export default async function KpiPercentagePage() {
+  const membership = await getCurrentMembership();
+  if (!membership) redirect("/login");
+  if (!membership.isDirector) redirect("/dashboard");
 
-  const theme = getCompanyTheme(company.slug);
+  // Only ever two companies system-wide — merged into one ring, one trend
+  // line, and one "by role" grid, each employee tagged by company, instead
+  // of two separate sections. No company switch involved anywhere here.
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+
+  const employees: { id: string; title: string; department: string | null; isDirector: boolean; companySlug: string; user: { name: string } }[] = [];
+  const tasks: { assignedToId: string; status: string; completedAt: Date | null; companySlug: string }[] = [];
+  const perCompanyTotals: { slug: string; name: string; completed: number; total: number }[] = [];
+
+  for (const c of companies) {
+    const [companyEmployees, companyTasks] = await Promise.all([
+      prisma.membership.findMany({
+        where: { companyId: c.id },
+        include: { user: true },
+        orderBy: { title: "asc" },
+      }),
+      prisma.task.findMany({
+        where: { companyId: c.id },
+        select: { assignedToId: true, status: true, completedAt: true },
+      }),
+    ]);
+    employees.push(...companyEmployees.map((e) => ({ ...e, companySlug: c.slug })));
+    tasks.push(...companyTasks.map((t) => ({ ...t, companySlug: c.slug })));
+    perCompanyTotals.push({
+      slug: c.slug,
+      name: c.name,
+      completed: companyTasks.filter((t) => t.status === "COMPLETED").length,
+      total: companyTasks.length,
+    });
+  }
 
   const byEmployee = new Map<string, Counts>();
-  const companyTotals = emptyCounts();
+  const overallTotals = emptyCounts();
   for (const t of tasks) {
-    const status = (t.status as keyof Counts) in companyTotals ? (t.status as keyof Counts) : "NOT_STARTED";
-    companyTotals[status]++;
+    const status = (t.status as keyof Counts) in overallTotals ? (t.status as keyof Counts) : "NOT_STARTED";
+    overallTotals[status]++;
     const counts = byEmployee.get(t.assignedToId) ?? emptyCounts();
     counts[status]++;
     byEmployee.set(t.assignedToId, counts);
   }
 
-  const companyTotal = companyTotals.NOT_STARTED + companyTotals.IN_PROGRESS + companyTotals.COMPLETED;
-  const companyCompletionPct = companyTotal > 0 ? Math.round((companyTotals.COMPLETED / companyTotal) * 100) : 0;
+  const overallTotal = overallTotals.NOT_STARTED + overallTotals.IN_PROGRESS + overallTotals.COMPLETED;
+  const overallCompletionPct = overallTotal > 0 ? Math.round((overallTotals.COMPLETED / overallTotal) * 100) : 0;
 
   const days: { key: string; label: string }[] = [];
   const today = new Date();
@@ -74,39 +93,45 @@ async function CompanyKpiSection({ company }: { company: { id: string; slug: str
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="rounded-lg border border-brand-200 bg-brand-50 p-2">
-          <Image src={theme.logo} alt={theme.displayName} width={theme.logoWidth} height={theme.logoHeight} className="h-12 w-auto" />
-        </div>
-        <h2 className="text-[21px] font-semibold text-slate-900">{company.name}</h2>
+      <div>
+        <h1 className="text-[23px] font-semibold text-slate-900">KPI Percentage</h1>
+        <p className="text-[17px] text-slate-500">Task completion by role and responsibility — both companies combined</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="flex flex-col items-center text-center">
-          <h3 className="mb-3 self-start text-[19px] font-semibold text-slate-900">Company-wide status</h3>
+          <h2 className="mb-3 self-start text-[19px] font-semibold text-slate-900">Company-wide status</h2>
           <SegmentedDonut
             size={140}
             strokeWidth={16}
-            centerLabel={`${companyCompletionPct}%`}
+            centerLabel={`${overallCompletionPct}%`}
             segments={[
-              { label: "Completed", value: companyTotals.COMPLETED, color: STATUS_COLORS.COMPLETED },
-              { label: "In progress", value: companyTotals.IN_PROGRESS, color: STATUS_COLORS.IN_PROGRESS },
-              { label: "Not started", value: companyTotals.NOT_STARTED, color: STATUS_COLORS.NOT_STARTED },
+              { label: "Completed", value: overallTotals.COMPLETED, color: STATUS_COLORS.COMPLETED },
+              { label: "In progress", value: overallTotals.IN_PROGRESS, color: STATUS_COLORS.IN_PROGRESS },
+              { label: "Not started", value: overallTotals.NOT_STARTED, color: STATUS_COLORS.NOT_STARTED },
             ]}
           />
           <div className="mt-2 text-[17px] text-slate-500">
-            {companyTotals.COMPLETED} of {companyTotal} tasks completed
+            {overallTotals.COMPLETED} of {overallTotal} tasks completed
+          </div>
+          <div className="mt-3 w-full space-y-1 border-t border-brand-100 pt-3 text-left text-[15px] text-slate-500">
+            {perCompanyTotals.map((c) => (
+              <div key={c.slug} className="flex items-center gap-2">
+                <CompanyTag slug={c.slug} />
+                {c.completed}/{c.total} completed
+              </div>
+            ))}
           </div>
         </Card>
 
         <Card className="lg:col-span-2">
-          <h3 className="mb-3 text-[19px] font-semibold text-slate-900">Tasks completed — last 14 days</h3>
-          <LineChart points={trendPoints} color={`rgb(${(theme.vars as Record<string, string>)["--brand-600"]})`} />
+          <h2 className="mb-3 text-[19px] font-semibold text-slate-900">Tasks completed — last 14 days</h2>
+          <LineChart points={trendPoints} color="#4338ca" />
         </Card>
       </div>
 
       <Card>
-        <h3 className="mb-1 text-[19px] font-semibold text-slate-900">By role & responsibility</h3>
+        <h2 className="mb-1 text-[19px] font-semibold text-slate-900">By role & responsibility</h2>
         <p className="mb-4 text-[17px] text-slate-500">Each person's own task completion, broken down by status.</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {employees.map((e) => {
@@ -126,10 +151,11 @@ async function CompanyKpiSection({ company }: { company: { id: string; slug: str
                   ]}
                 />
                 <div className="min-w-0">
-                  <div className="truncate text-[19px] font-medium text-slate-900">
-                    {e.user.name}
+                  <div className="flex items-center gap-1.5">
+                    <CompanyTag slug={e.companySlug} />
+                    <span className="truncate text-[19px] font-medium text-slate-900">{e.user.name}</span>
                     {e.isDirector && (
-                      <span className="ml-1.5 rounded-full bg-brand-50 px-1.5 py-0.5 text-[13px] text-brand-700">
+                      <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[13px] text-brand-700">
                         Director
                       </span>
                     )}
@@ -147,30 +173,6 @@ async function CompanyKpiSection({ company }: { company: { id: string; slug: str
           })}
         </div>
       </Card>
-    </div>
-  );
-}
-
-export default async function KpiPercentagePage() {
-  const membership = await getCurrentMembership();
-  if (!membership) redirect("/login");
-  if (!membership.isDirector) redirect("/dashboard");
-
-  // Only ever two companies system-wide — always shown together, one
-  // continuous page, no company switch involved.
-  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-[23px] font-semibold text-slate-900">KPI Percentage</h1>
-        <p className="text-[17px] text-slate-500">Task completion by role and responsibility — both companies</p>
-      </div>
-      <div className="space-y-10">
-        {companies.map((c) => (
-          <CompanyKpiSection key={c.id} company={{ id: c.id, slug: c.slug, name: c.name }} />
-        ))}
-      </div>
     </div>
   );
 }

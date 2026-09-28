@@ -39,3 +39,28 @@ export async function sendCodeEmail(email: string, code: string) {
     console.log(`\n[team-portal] Sign-in code for ${email}: ${code}\n`);
   }
 }
+
+/** Sends the scheduled 15-day/monthly KPI report to a director. Returns whether it sent successfully. */
+export async function sendReportEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<boolean> {
+  if (!resend) {
+    console.log(`\n[team-portal] Report email skipped (no Resend configured): ${subject}\n`);
+    return false;
+  }
+
+  const result = await resend.emails.send({
+    from: process.env.EMAIL_FROM || "Team Portal <onboarding@resend.dev>",
+    to,
+    subject,
+    html,
+  });
+
+  if (result.error) {
+    console.error(`[team-portal] Resend error sending report to ${to}:`, result.error);
+    return false;
+  }
+  return true;
+}

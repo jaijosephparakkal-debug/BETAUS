@@ -6,6 +6,22 @@ import { getTasksFor } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
+// Fixed task-title choices for specific people, replacing free-text entry
+// with their common recurring task categories.
+const TITLE_OPTIONS_BY_EMAIL: Record<string, string[]> = {
+  "saroj@flaretechnical.com": [
+    "Estimation Drawing",
+    "Documentation",
+    "IT",
+    "Site Visit",
+    "Client Meeting",
+    "DCD Renewal",
+    "Quotation",
+    "Price Updation",
+    "Follow Up",
+  ],
+};
+
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
@@ -34,6 +50,7 @@ export default async function MyTasksPage() {
           title: c.title,
         }))}
         projects={projects}
+        titleOptions={TITLE_OPTIONS_BY_EMAIL[membership.user.email]}
       />
       <div className="space-y-3">
         {tasks.map((task) => (

@@ -20,9 +20,12 @@ function SubmitButton() {
 export function AssignToColleagueForm({
   colleagues,
   projects = [],
+  titleOptions,
 }: {
   colleagues: { id: string; name: string; title: string }[];
   projects?: { id: string; name: string; number: string | null }[];
+  /** When set, the title field is a fixed dropdown of these instead of free text. */
+  titleOptions?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
@@ -56,12 +59,30 @@ export function AssignToColleagueForm({
           </option>
         ))}
       </select>
-      <input
-        name="title"
-        required
-        placeholder="Task title"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-      />
+      {titleOptions ? (
+        <select
+          name="title"
+          required
+          defaultValue=""
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+        >
+          <option value="" disabled>
+            Task title…
+          </option>
+          {titleOptions.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          name="title"
+          required
+          placeholder="Task title"
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+        />
+      )}
       <textarea
         name="description"
         rows={2}

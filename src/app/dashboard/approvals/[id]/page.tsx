@@ -99,7 +99,11 @@ export default async function ApprovalDetailPage({
           <div className="mt-3 border-t border-brand-100 pt-3">
             <ReassignApprovalForm
               id={request.id}
-              colleagues={colleagues.map((c) => ({ id: c.id, name: c.user.name, title: c.title }))}
+              colleagues={colleagues.map((c: { id: string; user: { name: string }; title: string }) => ({
+                id: c.id,
+                name: c.user.name,
+                title: c.title,
+              }))}
             />
           </div>
         </Card>

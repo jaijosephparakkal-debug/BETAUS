@@ -24,10 +24,10 @@ export async function sendCodeEmail(email: string, code: string) {
     : `Your sign-in code: ${code}`;
   const text = REDIRECT_TO
     ? `Sign-in code for ${email}: ${code}. It expires in 10 minutes.\n\n(Redirected to you because ${email}'s domain isn't verified with Resend yet.)`
-    : `Your Team Portal sign-in code is ${code}. It expires in 10 minutes.`;
+    : `Your Flowline sign-in code is ${code}. It expires in 10 minutes.`;
 
   const result = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Team Portal <onboarding@resend.dev>",
+    from: process.env.EMAIL_FROM || "Flowline <onboarding@resend.dev>",
     to,
     subject,
     text,
@@ -52,7 +52,7 @@ export async function sendReportEmail(
   }
 
   const result = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Team Portal <onboarding@resend.dev>",
+    from: process.env.EMAIL_FROM || "Flowline <onboarding@resend.dev>",
     to,
     subject,
     html,

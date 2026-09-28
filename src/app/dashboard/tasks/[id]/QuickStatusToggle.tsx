@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { quickToggleTaskStatusAction, setCompletedDateAction } from "./actions";
+import {
+  quickToggleTaskStatusAction,
+  setCompletedDateAction,
+  setTaskProgressAction,
+} from "./actions";
 
 type Status = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+const PROGRESS_STEPS = [25, 50, 75, 100] as const;
 
 function toLocalInputValue(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -15,10 +20,12 @@ function toLocalInputValue(date: Date) {
 export function QuickStatusToggle({
   taskId,
   initialStatus,
+  initialProgress,
   initialCompletedAt,
 }: {
   taskId: string;
   initialStatus: string;
+  initialProgress: number;
   initialCompletedAt: string | null;
 }) {
   const [status, setStatus] = useState<Status>(
@@ -26,6 +33,7 @@ export function QuickStatusToggle({
       ? initialStatus
       : "NOT_STARTED"
   );
+  const [progress, setProgress] = useState(initialProgress);
   const [completedAt, setCompletedAtValue] = useState(
     toLocalInputValue(initialCompletedAt ? new Date(initialCompletedAt) : new Date())
   );
@@ -35,7 +43,10 @@ export function QuickStatusToggle({
 
   function toggle(target: Exclude<Status, "NOT_STARTED">) {
     const next: Status = status === target ? "NOT_STARTED" : target;
+    const prevStatus = status;
+    const prevProgress = progress;
     setStatus(next);
+    setProgress(next === "COMPLETED" ? 100 : next === "NOT_STARTED" ? 0 : progress || 25);
     setError(null);
     startTransition(async () => {
       const result = await quickToggleTaskStatusAction(
@@ -45,7 +56,24 @@ export function QuickStatusToggle({
       );
       if (result.error) {
         setError(result.error);
-        setStatus(initialStatus === "COMPLETED" || initialStatus === "IN_PROGRESS" ? initialStatus : "NOT_STARTED");
+        setStatus(prevStatus);
+        setProgress(prevProgress);
+      }
+    });
+  }
+
+  function pickProgress(pct: (typeof PROGRESS_STEPS)[number]) {
+    const prevStatus = status;
+    const prevProgress = progress;
+    setProgress(pct);
+    setStatus(pct === 100 ? "COMPLETED" : "IN_PROGRESS");
+    setError(null);
+    startTransition(async () => {
+      const result = await setTaskProgressAction(taskId, pct, pct === 100 ? completedAt : null);
+      if (result.error) {
+        setError(result.error);
+        setStatus(prevStatus);
+        setProgress(prevProgress);
       }
     });
   }
@@ -123,6 +151,29 @@ export function QuickStatusToggle({
       <div className="text-[15px] text-slate-500">
         {isInProgress ? "In Progress" : "Not Started"}
       </div>
+
+      {isInProgress && (
+        <div className="space-y-1.5 rounded-md bg-amber-50 px-2.5 py-2">
+          <div className="text-[15px] text-slate-600">How far along?</div>
+          <div className="flex gap-1.5">
+            {PROGRESS_STEPS.map((pct) => (
+              <button
+                key={pct}
+                type="button"
+                disabled={pending}
+                onClick={() => pickProgress(pct)}
+                className={`flex-1 rounded-md py-1.5 text-[15px] font-medium transition-colors disabled:opacity-60 ${
+                  progress === pct
+                    ? "bg-amber-500 text-white"
+                    : "border border-amber-300 bg-white text-slate-700 hover:bg-amber-100"
+                }`}
+              >
+                {pct}%
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error && <p className="text-[17px] text-red-600">{error}</p>}
     </div>

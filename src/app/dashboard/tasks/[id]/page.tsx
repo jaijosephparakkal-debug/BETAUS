@@ -14,12 +14,7 @@ import ProgressForm from "./ProgressForm";
 import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
 import { UploadAttachmentForm } from "./UploadAttachmentForm";
-import {
-  AddDailyTaskForm,
-  DeleteTaskButton,
-  EditTaskForm,
-  ReassignTaskForm,
-} from "./ManageTaskForms";
+import { DeleteTaskButton, EditTaskForm, ReassignTaskForm } from "./ManageTaskForms";
 
 export default async function TaskDetailPage({
   params,
@@ -54,7 +49,6 @@ export default async function TaskDetailPage({
 
   const isOwner = task.assignedToId === membership.id;
   const isRam = membership.user.email === "ram@flaretechnical.com";
-  const useQuickToggle = !!task.parentTask || task.stageOrder != null;
   const canManage =
     membership.isDirector ||
     task.assignedById === membership.id ||
@@ -198,59 +192,22 @@ export default async function TaskDetailPage({
         </Card>
       )}
 
-      {!task.parentTask && (
+      {isOwner && task.subtasks.length === 0 && (
         <Card>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[21px] font-semibold text-slate-900">Daily tasks</h2>
-          </div>
-          <div className="space-y-3">
-            {task.subtasks.map((sub) => (
-              <Link key={sub.id} href={`/dashboard/tasks/${sub.id}`}>
-                <div className="rounded-lg border border-slate-100 p-3 transition hover:border-brand-200">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[19px] font-medium text-slate-900">
-                      {sub.title}
-                    </span>
-                    <StatusBadge status={sub.status} />
-                  </div>
-                  <div className="mt-2">
-                    <ProgressBar value={sub.progress} />
-                  </div>
-                  <div className="mt-1 text-[17px] text-slate-500">
-                    {sub.assignedTo.user.name} · Due {formatDate(sub.deadline)}
-                  </div>
-                </div>
-              </Link>
-            ))}
-            {task.subtasks.length === 0 && (
-              <p className="text-[19px] text-slate-500">No daily tasks yet.</p>
-            )}
-          </div>
-          {canManage && (
-            <div className="mt-4 border-t border-brand-100 pt-4">
-              <AddDailyTaskForm parentTaskId={task.id} />
-            </div>
-          )}
-        </Card>
-      )}
-
-      {isOwner && task.subtasks.length === 0 && useQuickToggle && (
-        <Card>
-          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-            {task.parentTask ? "Mark today’s status" : "Mark status"}
-          </h2>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Mark status</h2>
           <QuickStatusToggle
             taskId={task.id}
             initialStatus={task.status}
+            initialProgress={task.progress}
             initialCompletedAt={task.completedAt ? task.completedAt.toISOString() : null}
           />
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && !useQuickToggle && (
+      {isOwner && task.subtasks.length === 0 && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Log an update</h2>
-          <ProgressForm taskId={task.id} initialProgress={task.progress} />
+          <ProgressForm taskId={task.id} />
         </Card>
       )}
 

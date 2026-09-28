@@ -146,7 +146,7 @@ export function AssignToColleagueForm({
       <textarea
         name="description"
         rows={2}
-        placeholder="Description (optional)"
+        placeholder="e.g. Prepare BOQ for Al Ain villa project and email to client for review"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
       {projects.length > 0 && (

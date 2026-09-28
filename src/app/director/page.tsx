@@ -22,7 +22,13 @@ export default async function DirectorPage() {
         <h1 className="text-[23px] font-semibold text-slate-900">
           {membership.company.name} — Company Dashboard
         </h1>
-        <div className="flex gap-3 text-[19px]">
+        <div className="flex flex-wrap gap-3 text-[19px]">
+          <Link href="/director/kpi-percentage" className="text-brand-600 hover:underline">
+            KPI Percentage
+          </Link>
+          <Link href="/director/attendance" className="text-brand-600 hover:underline">
+            Attendance sheet
+          </Link>
           <Link href="/director/approvals" className="text-brand-600 hover:underline">
             Company approvals
           </Link>

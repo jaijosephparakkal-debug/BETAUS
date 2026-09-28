@@ -29,7 +29,11 @@ export function AppHeader({
       : []),
     { href: "/dashboard/approvals", label: "Approvals", badge: pendingApprovalCount },
     ...(membership.isDirector
-      ? [{ href: "/director", label: "Company Dashboard" }]
+      ? [
+          { href: "/director", label: "Company Dashboard" },
+          { href: "/director/kpi-percentage", label: "KPI Percentage" },
+          { href: "/director/attendance", label: "Attendance" },
+        ]
       : []),
   ];
 

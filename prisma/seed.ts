@@ -173,6 +173,7 @@ const companies: CompanySpec[] = [
           email: "jai@gasneeds.com",
           title: "Marketing & Content Manager",
           department: "Marketing",
+          isDirector: true,
         },
       ],
     },

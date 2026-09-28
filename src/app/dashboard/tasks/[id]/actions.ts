@@ -69,16 +69,16 @@ const QUICK_STATUS_LABELS: Record<(typeof QUICK_STATUSES)[number], string> = {
 };
 
 /**
- * Lightweight status toggle for daily tasks and project-pipeline stage
- * tasks — no comment or approval required, just a quick "done / in
- * progress / not started" flip. Still logs an auto-generated comment so
- * the change shows up with a timestamp in the person's activity/KPI
- * report, same as a normal progress update would.
+ * Lightweight status toggle for any task the signed-in person owns — no
+ * comment or approval required, just a quick "done / in progress / not
+ * started" flip. Still logs an auto-generated comment so the change shows
+ * up with a timestamp in the person's activity/KPI report, same as a
+ * normal progress update would.
  *
  * `completedAtInput` (datetime-local string, e.g. "2026-09-20T14:30") lets
- * the person backdate when a stage was actually finished — most of this
- * pipeline is being logged retroactively as the app rolls out, so "now" is
- * often wrong. Defaults to the current time when omitted.
+ * the person backdate when a task was actually finished — often useful
+ * since updates are frequently logged after the fact. Defaults to the
+ * current time when omitted.
  */
 export async function quickToggleTaskStatusAction(
   taskId: string,
@@ -91,11 +91,6 @@ export async function quickToggleTaskStatusAction(
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (!task || task.assignedToId !== membership.id) {
     return { error: "You can only update your own tasks." };
-  }
-  const isDailyTask = !!task.parentTaskId;
-  const isChecklistTask = task.stageOrder != null;
-  if (!isDailyTask && !isChecklistTask) {
-    return { error: "Quick status toggles are only for daily or checklist-style tasks." };
   }
   if (!QUICK_STATUSES.includes(targetStatus)) {
     return { error: "Invalid status." };
@@ -166,6 +161,59 @@ export async function setCompletedDateAction(
   revalidatePath(`/dashboard/tasks/${taskId}`);
   if (task.parentTaskId) revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
   if (task.projectId) revalidatePath(`/dashboard/projects/${task.projectId}`);
+  return {};
+}
+
+const PROGRESS_STEPS = [25, 50, 75, 100] as const;
+
+/** Quick-pick progress buttons (25/50/75/100%) — sets progress and status together in one tap. */
+export async function setTaskProgressAction(
+  taskId: string,
+  progress: (typeof PROGRESS_STEPS)[number],
+  completedAtInput?: string | null
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.assignedToId !== membership.id) {
+    return { error: "You can only update your own tasks." };
+  }
+  if (!PROGRESS_STEPS.includes(progress)) {
+    return { error: "Invalid progress value." };
+  }
+
+  let completedAt: Date | null = null;
+  if (progress === 100) {
+    const parsed = completedAtInput ? new Date(completedAtInput) : new Date();
+    if (isNaN(parsed.getTime())) return { error: "Invalid completion date." };
+    completedAt = parsed;
+  }
+
+  await prisma.$transaction([
+    prisma.task.update({
+      where: { id: taskId },
+      data: { status: progress === 100 ? "COMPLETED" : "IN_PROGRESS", progress, completedAt },
+    }),
+    prisma.taskComment.create({
+      data: {
+        taskId,
+        authorId: membership.id,
+        body: `Progress set to ${progress}%`,
+        progressAt: progress,
+      },
+    }),
+  ]);
+
+  if (task.parentTaskId) {
+    await recomputeTaskProgress(task.parentTaskId);
+    revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  }
+  if (task.projectId) revalidatePath(`/dashboard/projects/${task.projectId}`);
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard");
   return {};
 }
 

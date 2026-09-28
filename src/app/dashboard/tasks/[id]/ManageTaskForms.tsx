@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import {
-  addDailyTaskAction,
-  deleteTaskAction,
-  reassignTaskAction,
-  updateTaskAction,
-} from "./actions";
+import { deleteTaskAction, reassignTaskAction, updateTaskAction } from "./actions";
 
 function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
@@ -19,57 +14,6 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
     >
       {pending ? pendingLabel : label}
     </button>
-  );
-}
-
-export function AddDailyTaskForm({ parentTaskId }: { parentTaskId: string }) {
-  const [open, setOpen] = useState(false);
-  const boundAction = addDailyTaskAction.bind(null, parentTaskId);
-  const [state, formAction] = useFormState(boundAction, {});
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-[19px] text-brand-600 hover:underline"
-      >
-        + Add a daily task
-      </button>
-    );
-  }
-
-  return (
-    <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
-      <input
-        name="title"
-        required
-        placeholder="Daily task title"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-      />
-      <textarea
-        name="description"
-        rows={2}
-        placeholder="Description (optional)"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-      />
-      <input
-        name="deadline"
-        type="date"
-        className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-      />
-      {state.error && <p className="text-[19px] text-red-600">{state.error}</p>}
-      <div className="flex gap-2">
-        <SubmitButton label="Add daily task" pendingLabel="Adding…" />
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-[19px] text-slate-500 hover:text-slate-700"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
   );
 }
 
@@ -118,7 +62,7 @@ export function EditTaskForm({
         name="description"
         rows={2}
         defaultValue={initialDescription}
-        placeholder="Description (optional)"
+        placeholder="e.g. Prepare BOQ for Al Ain villa project and email to client for review"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
       {projects.length > 0 && (

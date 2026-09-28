@@ -6,11 +6,19 @@ import { getTasksFor } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
+// A couple of people carry responsibilities at both companies (Shafeek —
+// accounts, Antony — operations) without holding a separate login for each.
+// For them the "add task" form offers a plain "worked for" company tag so
+// their task list/report makes clear which company a given task was for.
+const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com"];
+
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, projects, titlePresets] = await Promise.all([
+  const showCompanyField = DUAL_COMPANY_EMAILS.includes(membership.user.email);
+
+  const [tasks, projects, titlePresets, companies] = await Promise.all([
     getTasksFor(membership.id),
     prisma.project.findMany({
       where: { companyId: membership.companyId },
@@ -22,6 +30,9 @@ export default async function MyTasksPage() {
       orderBy: { createdAt: "asc" },
       select: { title: true },
     }),
+    showCompanyField
+      ? prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -31,6 +42,7 @@ export default async function MyTasksPage() {
         selfId={membership.id}
         titleOptions={titlePresets.map((p) => p.title)}
         projects={projects}
+        companyOptions={companies}
       />
       <div className="space-y-3">
         {tasks.map((task) => (
@@ -40,13 +52,22 @@ export default async function MyTasksPage() {
                 <span className="text-[21px] font-medium text-slate-900">{task.title}</span>
                 <StatusBadge status={task.status} />
               </div>
-              {task.project && (
-                <span className="mt-1 inline-block text-[17px] text-brand-600">
-                  {task.project.number
-                    ? `${task.project.number} — ${task.project.name}`
-                    : task.project.name}
-                </span>
-              )}
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {task.project && (
+                  <span className="text-[17px] text-brand-600">
+                    {task.project.number
+                      ? `${task.project.number} — ${task.project.name}`
+                      : task.project.name}
+                  </span>
+                )}
+                {task.workedForCompany && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+                    For:{" "}
+                    {companies.find((c) => c.slug === task.workedForCompany)?.name ??
+                      task.workedForCompany}
+                  </span>
+                )}
+              </div>
               {task.description && (
                 <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>
               )}

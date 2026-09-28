@@ -52,14 +52,6 @@ const companies: CompanySpec[] = [
               email: "jiyad.m@flaretechnical.com",
               title: "Site Engineer",
               department: "Projects",
-              children: [
-                {
-                  name: "Santhosh",
-                  email: "santhosh@flaretechnical.com",
-                  title: "Site Supervisor",
-                  department: "Projects",
-                },
-              ],
             },
             {
               name: "Simi",
@@ -147,20 +139,6 @@ const companies: CompanySpec[] = [
                       name: "Vishal",
                       email: "vishal@gasneeds.com",
                       title: "Store Assistant",
-                      department: "Store",
-                      children: [
-                        {
-                          name: "Jibin",
-                          email: "jibin@gasneeds.com",
-                          title: "Store Assistant",
-                          department: "Store",
-                        },
-                      ],
-                    },
-                    {
-                      name: "Badarudheen",
-                      email: "badarudheen@gasneeds.com",
-                      title: "Driver",
                       department: "Store",
                     },
                   ],

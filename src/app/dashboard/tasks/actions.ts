@@ -32,6 +32,7 @@ export async function assignTaskToColleagueAction(
   const description = String(formData.get("description") || "").trim();
   const deadlineRaw = String(formData.get("deadline") || "");
   const projectId = String(formData.get("projectId") || "");
+  const workedForCompany = String(formData.get("workedForCompany") || "").trim();
   if (!title) return { error: "Give the task a title." };
 
   await prisma.task.create({
@@ -42,6 +43,7 @@ export async function assignTaskToColleagueAction(
       assignedToId: assigneeId,
       assignedById: membership.id,
       projectId: projectId || null,
+      workedForCompany: workedForCompany || null,
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     },
   });

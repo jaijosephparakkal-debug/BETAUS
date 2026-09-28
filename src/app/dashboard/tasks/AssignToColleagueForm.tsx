@@ -118,11 +118,14 @@ export function AssignToColleagueForm({
   selfId,
   titleOptions,
   projects = [],
+  companyOptions = [],
 }: {
   /** This person's own membership id — every task added here is always for themself. */
   selfId: string;
   titleOptions: string[];
   projects?: { id: string; name: string; number: string | null }[];
+  /** Only non-empty for the few people with responsibilities at both companies (see DUAL_COMPANY_EMAILS). */
+  companyOptions?: { slug: string; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
@@ -143,6 +146,26 @@ export function AssignToColleagueForm({
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
       <input type="hidden" name="assigneeId" value={selfId} />
       <TitlePicker initialOptions={titleOptions} />
+      {companyOptions.length > 0 && (
+        <div>
+          <label className="block text-[15px] text-slate-600">Worked for which company?</label>
+          <select
+            name="workedForCompany"
+            required
+            defaultValue=""
+            className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+          >
+            <option value="" disabled>
+              Choose company…
+            </option>
+            {companyOptions.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <textarea
         name="description"
         rows={2}

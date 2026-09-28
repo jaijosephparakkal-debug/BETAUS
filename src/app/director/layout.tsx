@@ -14,15 +14,13 @@ export default async function DirectorLayout({
   if (!membership) redirect("/login");
   if (!membership.isDirector) redirect("/dashboard");
 
-  const [reportCount, membershipCount, pendingApprovalCount, attendanceEntry] =
-    await Promise.all([
-      prisma.membership.count({ where: { managerId: membership.id } }),
-      getMembershipCount(),
-      prisma.approvalRequest.count({
-        where: { approverId: membership.id, status: "PENDING" },
-      }),
-      clockInIfNeeded(membership.id),
-    ]);
+  // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
+  const reportCount = await prisma.membership.count({ where: { managerId: membership.id } });
+  const membershipCount = await getMembershipCount();
+  const pendingApprovalCount = await prisma.approvalRequest.count({
+    where: { approverId: membership.id, status: "PENDING" },
+  });
+  const attendanceEntry = await clockInIfNeeded(membership.id);
 
   const theme = getCompanyTheme(membership.company.slug);
 

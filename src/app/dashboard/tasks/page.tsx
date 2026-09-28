@@ -18,22 +18,21 @@ export default async function MyTasksPage() {
 
   const showCompanyField = DUAL_COMPANY_EMAILS.includes(membership.user.email);
 
-  const [tasks, projects, titlePresets, companies] = await Promise.all([
-    getTasksFor(membership.id),
-    prisma.project.findMany({
-      where: { companyId: membership.companyId },
-      select: { id: true, name: true, number: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.taskTitlePreset.findMany({
-      where: { membershipId: membership.id },
-      orderBy: { createdAt: "asc" },
-      select: { title: true },
-    }),
-    showCompanyField
-      ? prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
-      : Promise.resolve([]),
-  ]);
+  // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
+  const tasks = await getTasksFor(membership.id);
+  const projects = await prisma.project.findMany({
+    where: { companyId: membership.companyId },
+    select: { id: true, name: true, number: true },
+    orderBy: { name: "asc" },
+  });
+  const titlePresets = await prisma.taskTitlePreset.findMany({
+    where: { membershipId: membership.id },
+    orderBy: { createdAt: "asc" },
+    select: { title: true },
+  });
+  const companies = showCompanyField
+    ? await prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
+    : [];
 
   return (
     <div className="space-y-4">

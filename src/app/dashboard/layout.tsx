@@ -13,15 +13,17 @@ export default async function DashboardLayout({
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [reportCount, membershipCount, pendingApprovalCount, attendanceEntry] =
-    await Promise.all([
-      prisma.membership.count({ where: { managerId: membership.id } }),
-      getMembershipCount(),
-      prisma.approvalRequest.count({
-        where: { approverId: membership.id, status: "PENDING" },
-      }),
-      clockInIfNeeded(membership.id),
-    ]);
+  // Sequential rather than Promise.all — this layout runs on every
+  // dashboard page, so firing 4 queries at once here multiplies fast under
+  // concurrent staff load (10 people loading pages = 40 simultaneous
+  // connection requests just from this one layout). One at a time trades a
+  // little latency for much lower peak connection pressure on the database.
+  const reportCount = await prisma.membership.count({ where: { managerId: membership.id } });
+  const membershipCount = await getMembershipCount();
+  const pendingApprovalCount = await prisma.approvalRequest.count({
+    where: { approverId: membership.id, status: "PENDING" },
+  });
+  const attendanceEntry = await clockInIfNeeded(membership.id);
 
   const theme = getCompanyTheme(membership.company.slug);
 

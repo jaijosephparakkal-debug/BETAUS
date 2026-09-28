@@ -15,12 +15,11 @@ export default async function DashboardOverviewPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [tasks, kpis, message, orgTree] = await Promise.all([
-    getTasksFor(membership.id),
-    getKpisFor(membership.id),
-    getLatestDirectorMessage(membership.companyId),
-    getOrgTree(membership.companyId),
-  ]);
+  // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
+  const tasks = await getTasksFor(membership.id);
+  const kpis = await getKpisFor(membership.id);
+  const message = await getLatestDirectorMessage(membership.companyId);
+  const orgTree = await getOrgTree(membership.companyId);
 
   const activeTasks = tasks.filter((t) => t.status !== "COMPLETED");
   const completedTasks = tasks.filter((t) => t.status === "COMPLETED");

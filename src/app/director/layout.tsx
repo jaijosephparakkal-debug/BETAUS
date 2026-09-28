@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AppHeader } from "@/components/AppHeader";
 import { getCompanyTheme } from "@/lib/theme";
 import { clockInIfNeeded } from "@/lib/attendance";
+import { getUnreadTaskNotificationCount } from "@/lib/notifications";
 
 export default async function DirectorLayout({
   children,
@@ -21,6 +22,7 @@ export default async function DirectorLayout({
     where: { approverId: membership.id, status: "PENDING" },
   });
   const attendanceEntry = await clockInIfNeeded(membership.id);
+  const taskNotificationCount = await getUnreadTaskNotificationCount(membership.id);
 
   const theme = getCompanyTheme(membership.company.slug);
 
@@ -34,6 +36,7 @@ export default async function DirectorLayout({
         reportCount={reportCount}
         membershipCount={membershipCount}
         pendingApprovalCount={pendingApprovalCount}
+        taskNotificationCount={taskNotificationCount}
         clockInIso={attendanceEntry.clockIn.toISOString()}
       />
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>

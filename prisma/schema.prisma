@@ -67,6 +67,7 @@ model Membership {
   approvalComments    ApprovalComment[]
   attendanceEntries   AttendanceEntry[]
   taskTitlePresets    TaskTitlePreset[]
+  notifications       Notification[]
 
   @@unique([userId, companyId])
 }
@@ -112,6 +113,23 @@ model Task {
   project    Project?      @relation(fields: [projectId], references: [id])
   comments   TaskComment[]
   attachments Attachment[]
+  notifications Notification[]
+}
+
+// A lightweight "you've been assigned a task" alert — surfaces as an
+// unread-count badge on "My Tasks" in the nav, same pattern as the pending-
+// approvals badge. Marked read the next time the person visits their task
+// list.
+model Notification {
+  id           String   @id @default(cuid())
+  membershipId String
+  taskId       String?
+  message      String
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  task       Task?      @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 // A person's quick-pick task titles for the ad-hoc "add task" form — starts

@@ -9,19 +9,21 @@ export function AppHeader({
   reportCount,
   membershipCount,
   pendingApprovalCount = 0,
+  taskNotificationCount = 0,
   clockInIso = null,
 }: {
   membership: FullMembership;
   reportCount: number;
   membershipCount: number;
   pendingApprovalCount?: number;
+  taskNotificationCount?: number;
   clockInIso?: string | null;
 }) {
   const theme = getCompanyTheme(membership.company.slug);
 
   const navItems = [
     { href: "/dashboard", label: "Overview" },
-    { href: "/dashboard/tasks", label: "My Tasks" },
+    { href: "/dashboard/tasks", label: "My Tasks", badge: taskNotificationCount },
     { href: "/dashboard/kpis", label: "My KPIs" },
     { href: "/dashboard/projects", label: "Projects" },
     ...(reportCount > 0

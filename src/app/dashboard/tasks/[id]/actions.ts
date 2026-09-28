@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
 import { recomputeTaskProgress } from "@/lib/tasks";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const BLOCKED_EXTENSIONS = /\.(exe|sh|bat|cmd|msi|app|dll)$/i;
@@ -342,7 +343,7 @@ export async function addDailyTaskAction(
   const deadlineRaw = String(formData.get("deadline") || "");
   if (!title) return { error: "Give the daily task a title." };
 
-  await prisma.task.create({
+  const dailyTask = await prisma.task.create({
     data: {
       companyId: parent.companyId,
       title,
@@ -354,6 +355,7 @@ export async function addDailyTaskAction(
     },
   });
   await recomputeTaskProgress(parent.id);
+  await notifyTaskAssigned(membership.id, parent.assignedToId, dailyTask.id, title);
 
   revalidatePath(`/dashboard/tasks/${parentTaskId}`);
   revalidatePath("/dashboard/tasks");
@@ -429,6 +431,7 @@ export async function reassignTaskAction(
       data: { assignedToId: newAssigneeId },
     });
   }
+  await notifyTaskAssigned(membership.id, newAssigneeId, taskId, task.title);
 
   revalidatePath(`/dashboard/tasks/${taskId}`);
   revalidatePath("/dashboard/tasks");

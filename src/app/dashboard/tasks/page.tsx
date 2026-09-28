@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { getTasksFor } from "@/lib/queries";
+import { markTaskNotificationsRead } from "@/lib/notifications";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
@@ -17,6 +18,8 @@ export default async function MyTasksPage() {
   if (!membership) redirect("/login");
 
   const showCompanyField = DUAL_COMPANY_EMAILS.includes(membership.user.email);
+
+  await markTaskNotificationsRead(membership.id);
 
   // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
   const tasks = await getTasksFor(membership.id);

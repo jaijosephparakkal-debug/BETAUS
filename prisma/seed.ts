@@ -104,6 +104,14 @@ const companies: CompanySpec[] = [
             },
           ],
         },
+        {
+          // Same person as the Gasneeds admin — admin access to both
+          // companies, but not "Managing Director" like Abraham.
+          name: "Jai Joseph Parakkal",
+          email: "jai@gasneeds.com",
+          title: "Admin",
+          isDirector: true,
+        },
       ],
     },
   },

@@ -7,11 +7,12 @@ import { markTaskNotificationsRead } from "@/lib/notifications";
 import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
-// A couple of people carry responsibilities at both companies (Shafeek —
-// accounts, Antony — operations) without holding a separate login for each.
-// For them the "add task" form offers a plain "worked for" company tag so
-// their task list/report makes clear which company a given task was for.
-const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com"];
+// A few people carry responsibilities at both companies (Shafeek —
+// accounts, Antony — operations, Jai — marketing & content) without needing
+// a separate login for each. For them the "add task" form offers a plain
+// "worked for" company tag so their task list/report makes clear which
+// company a given task was for.
+const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com", "jai@gasneeds.com"];
 
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();

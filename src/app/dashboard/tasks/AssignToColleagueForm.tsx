@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { assignTaskToColleagueAction, addTaskTitlePresetAction } from "./actions";
 
@@ -16,6 +16,14 @@ function SubmitButton() {
     >
       {pending ? "Adding…" : "Add task"}
     </button>
+  );
+}
+
+function CreatedToast() {
+  return (
+    <div className="toast-in fixed left-1/2 top-4 z-50 rounded-lg bg-slate-900 px-4 py-2.5 text-[17px] font-medium text-white shadow-lg">
+      ✓ Task created
+    </div>
   );
 }
 
@@ -129,16 +137,34 @@ export function AssignToColleagueForm({
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
+  const [showToast, setShowToast] = useState(false);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!state.error) {
+      setOpen(false);
+      setShowToast(true);
+      const timer = setTimeout(() => setShowToast(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [state]);
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-[19px] text-brand-600 hover:underline"
-      >
-        + Add task
-      </button>
+      <>
+        {showToast && <CreatedToast />}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-[19px] text-brand-600 hover:underline"
+        >
+          + Add task
+        </button>
+      </>
     );
   }
 

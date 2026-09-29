@@ -12,7 +12,7 @@ export function getLatestDirectorMessage(companyId: string) {
 export function getTasksFor(membershipId: string) {
   return prisma.task.findMany({
     where: { assignedToId: membershipId, parentTaskId: null },
-    orderBy: [{ status: "asc" }, { deadline: "asc" }],
+    orderBy: { createdAt: "desc" },
     include: {
       assignedBy: { include: { user: true } },
       project: { select: { id: true, name: true, number: true } },

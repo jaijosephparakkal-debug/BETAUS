@@ -101,6 +101,12 @@ export default async function TaskDetailPage({
               : task.project.name}
           </Link>
         )}
+        {task.category && (
+          <span className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[15px] text-brand-700">
+            {task.category}
+            {task.phase ? ` · ${task.phase}` : ""}
+          </span>
+        )}
         {task.description && (
           <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>
         )}

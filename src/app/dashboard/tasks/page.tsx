@@ -70,6 +70,12 @@ export default async function MyTasksPage() {
                       task.workedForCompany}
                   </span>
                 )}
+                {task.category && (
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[15px] text-brand-700">
+                    {task.category}
+                    {task.phase ? ` · ${task.phase}` : ""}
+                  </span>
+                )}
               </div>
               {task.description && (
                 <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>

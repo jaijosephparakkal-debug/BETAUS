@@ -11,6 +11,36 @@ import { notifyTaskAssigned } from "@/lib/notifications";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const BLOCKED_EXTENSIONS = /\.(exe|sh|bat|cmd|msi|app|dll)$/i;
 
+/**
+ * True if the signed-in person owns this task — checked by person (userId),
+ * not by the specific membership row, since a few people (Jai, Abraham) hold
+ * tasks under more than one of their own company memberships. Comparing
+ * against only the currently-active membership would block someone from
+ * managing their own task whenever the "wrong" company happens to be active.
+ */
+async function isSelfTask(membership: { id: string; userId: string }, task: { assignedToId: string }) {
+  if (task.assignedToId === membership.id) return true;
+  const owner = await prisma.membership.findUnique({
+    where: { id: task.assignedToId },
+    select: { userId: true },
+  });
+  return owner?.userId === membership.userId;
+}
+
+/**
+ * True if the signed-in person has a membership at this company — their
+ * active one, or another of their own (again, Jai/Abraham hold real
+ * memberships at both companies). A plain `task.companyId !==
+ * membership.companyId` check would otherwise block a director from
+ * managing their own company's task just because a different company
+ * happens to be active in their session right now.
+ */
+async function hasCompanyAccess(membership: { userId: string; companyId: string }, companyId: string) {
+  if (membership.companyId === companyId) return true;
+  const m = await prisma.membership.findFirst({ where: { userId: membership.userId, companyId } });
+  return !!m;
+}
+
 export async function logProgressAction(
   taskId: string,
   _prev: { error?: string } | undefined,
@@ -20,7 +50,7 @@ export async function logProgressAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.assignedToId !== membership.id) {
+  if (!task || !(await isSelfTask(membership, task))) {
     return { error: "You can only log progress on your own tasks." };
   }
 
@@ -41,7 +71,7 @@ export async function logProgressAction(
     prisma.taskComment.create({
       data: {
         taskId,
-        authorId: membership.id,
+        authorId: task.assignedToId,
         body,
         progressAt: progress,
       },
@@ -90,7 +120,7 @@ export async function quickToggleTaskStatusAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.assignedToId !== membership.id) {
+  if (!task || !(await isSelfTask(membership, task))) {
     return { error: "You can only update your own tasks." };
   }
   if (!QUICK_STATUSES.includes(targetStatus)) {
@@ -118,7 +148,7 @@ export async function quickToggleTaskStatusAction(
     prisma.taskComment.create({
       data: {
         taskId,
-        authorId: membership.id,
+        authorId: task.assignedToId,
         body: QUICK_STATUS_LABELS[targetStatus],
         progressAt: progress,
       },
@@ -148,7 +178,7 @@ export async function setCompletedDateAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.assignedToId !== membership.id) {
+  if (!task || !(await isSelfTask(membership, task))) {
     return { error: "You can only update your own tasks." };
   }
   if (task.status !== "COMPLETED") {
@@ -177,7 +207,7 @@ export async function setTaskProgressAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.assignedToId !== membership.id) {
+  if (!task || !(await isSelfTask(membership, task))) {
     return { error: "You can only update your own tasks." };
   }
   if (!PROGRESS_STEPS.includes(progress)) {
@@ -199,7 +229,7 @@ export async function setTaskProgressAction(
     prisma.taskComment.create({
       data: {
         taskId,
-        authorId: membership.id,
+        authorId: task.assignedToId,
         body: `Progress set to ${progress}%`,
         progressAt: progress,
       },
@@ -262,10 +292,10 @@ export async function uploadTaskAttachmentAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.companyId !== membership.companyId) {
+  if (!task || !(await hasCompanyAccess(membership, task.companyId))) {
     return { error: "Task not found." };
   }
-  const isOwner = task.assignedToId === membership.id;
+  const isOwner = await isSelfTask(membership, task);
   const canManage =
     membership.isDirector || (await isManagerOf(membership.id, task.assignedToId));
   if (!isOwner && !canManage) {
@@ -328,7 +358,7 @@ export async function addDailyTaskAction(
   if (!membership) return { error: "Not signed in." };
 
   const parent = await prisma.task.findUnique({ where: { id: parentTaskId } });
-  if (!parent || parent.companyId !== membership.companyId) {
+  if (!parent || !(await hasCompanyAccess(membership, parent.companyId))) {
     return { error: "Task not found." };
   }
   if (parent.parentTaskId) {
@@ -372,7 +402,7 @@ export async function updateTaskAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.companyId !== membership.companyId) {
+  if (!task || !(await hasCompanyAccess(membership, task.companyId))) {
     return { error: "Task not found." };
   }
   if (!(await canManageTask(membership, task))) {
@@ -410,7 +440,7 @@ export async function reassignTaskAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.companyId !== membership.companyId) {
+  if (!task || !(await hasCompanyAccess(membership, task.companyId))) {
     return { error: "Task not found." };
   }
   if (!(await canReassignTask(membership, task))) {
@@ -419,7 +449,7 @@ export async function reassignTaskAction(
 
   const newAssigneeId = String(formData.get("assigneeId") || "");
   const newAssignee = await prisma.membership.findUnique({ where: { id: newAssigneeId } });
-  if (!newAssignee || newAssignee.companyId !== membership.companyId || newAssignee.isDirector) {
+  if (!newAssignee || newAssignee.companyId !== task.companyId || newAssignee.isDirector) {
     return { error: "Choose a valid employee to reassign to." };
   }
 
@@ -450,7 +480,7 @@ export async function deleteTaskAction(
   if (!membership) return { error: "Not signed in." };
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task || task.companyId !== membership.companyId) {
+  if (!task || !(await hasCompanyAccess(membership, task.companyId))) {
     return { error: "Task not found." };
   }
   if (!(await canManageTask(membership, task))) {

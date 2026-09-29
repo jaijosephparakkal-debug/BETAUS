@@ -45,9 +45,19 @@ export default async function TaskDetailPage({
       },
     },
   });
-  if (!task || task.companyId !== membership.companyId) notFound();
+  // Company access check by person, not by whichever membership/company
+  // happens to be currently active — a few people (Jai, Abraham) hold real
+  // memberships at both companies, so their own task in the "other" company
+  // shouldn't 404 just because a different company is active right now.
+  const hasCompanyAccess =
+    task &&
+    (task.companyId === membership.companyId ||
+      (await prisma.membership.findFirst({
+        where: { userId: membership.userId, companyId: task.companyId },
+      })));
+  if (!task || !hasCompanyAccess) notFound();
 
-  const isOwner = task.assignedToId === membership.id;
+  const isOwner = task.assignedTo.userId === membership.userId;
   const isRam = membership.user.email === "ram@flaretechnical.com";
   const canManage =
     membership.isDirector ||
@@ -57,17 +67,20 @@ export default async function TaskDetailPage({
     redirect("/dashboard/tasks");
   }
 
+  // Scoped to the task's own company, not necessarily the currently active
+  // one, so managing a cross-company task shows the right company's people
+  // and projects.
   const [employees, projects] = await Promise.all([
     canManage || isOwner
       ? prisma.membership.findMany({
-          where: { companyId: membership.companyId, isDirector: false },
+          where: { companyId: task.companyId, isDirector: false },
           include: { user: true },
           orderBy: { title: "asc" },
         })
       : Promise.resolve([]),
     canManage
       ? prisma.project.findMany({
-          where: { companyId: membership.companyId },
+          where: { companyId: task.companyId },
           select: { id: true, name: true, number: true },
           orderBy: { number: "asc" },
         })

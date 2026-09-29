@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { getTasksFor } from "@/lib/queries";
 import { markTaskNotificationsRead } from "@/lib/notifications";
-import { Card, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
+import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 
 // A few people carry responsibilities at both companies (Shafeek —
@@ -22,8 +22,22 @@ export default async function MyTasksPage() {
 
   await markTaskNotificationsRead(membership.id);
 
-  // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
-  const tasks = await getTasksFor(membership.id);
+  // Anyone holding more than one company membership (e.g. Abraham, Jai) sees
+  // their tasks merged across every company they belong to, tagged by
+  // company, instead of only whichever company happens to be active.
+  const allMemberships = await prisma.membership.findMany({
+    where: { userId: membership.userId },
+    include: { company: true },
+  });
+  const showCompanyTag = allMemberships.length > 1;
+
+  const tasks: (Awaited<ReturnType<typeof getTasksFor>>[number] & { companySlug: string })[] = [];
+  for (const m of allMemberships) {
+    const mTasks = await getTasksFor(m.id);
+    tasks.push(...mTasks.map((t) => ({ ...t, companySlug: m.company.slug })));
+  }
+  tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
   const projects = await prisma.project.findMany({
     where: { companyId: membership.companyId },
     select: { id: true, name: true, number: true },
@@ -52,7 +66,10 @@ export default async function MyTasksPage() {
           <Card key={task.id}>
             <Link href={`/dashboard/tasks/${task.id}`} className="block hover:opacity-90">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[21px] font-medium text-slate-900">{task.title}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  {showCompanyTag && <CompanyTag slug={task.companySlug} />}
+                  <span className="truncate text-[21px] font-medium text-slate-900">{task.title}</span>
+                </span>
                 <StatusBadge status={task.status} />
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2">

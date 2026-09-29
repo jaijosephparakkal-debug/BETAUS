@@ -1,18 +1,32 @@
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { getKpisFor, getCompletionsFor, kpiScore } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
-import { Card, DonutChart } from "@/components/ui";
+import { Card, DonutChart, CompanyTag } from "@/components/ui";
 import { CompletionRollup } from "@/components/CompletionRollup";
 
 export default async function MyKpisPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
-  const [kpis, completions] = await Promise.all([
-    getKpisFor(membership.id),
-    getCompletionsFor(membership.id),
-  ]);
+  // Anyone holding more than one company membership (e.g. Abraham, Jai) sees
+  // their KPIs and completions merged across every company they belong to,
+  // tagged by company — one profile, not split by whichever is active.
+  const allMemberships = await prisma.membership.findMany({
+    where: { userId: membership.userId },
+    include: { company: true },
+  });
+  const showCompanyTag = allMemberships.length > 1;
+
+  const kpis: (Awaited<ReturnType<typeof getKpisFor>>[number] & { companySlug: string })[] = [];
+  const completions: Awaited<ReturnType<typeof getCompletionsFor>> = [];
+  for (const m of allMemberships) {
+    const [mKpis, mCompletions] = await Promise.all([getKpisFor(m.id), getCompletionsFor(m.id)]);
+    kpis.push(...mKpis.map((k) => ({ ...k, companySlug: m.company.slug })));
+    completions.push(...mCompletions);
+  }
+
   const months = buildCompletionRollup(
     completions.map((c) => ({ id: c.id, title: c.title, completedAt: c.completedAt! }))
   );
@@ -35,7 +49,10 @@ export default async function MyKpisPage() {
             <Card key={kpi.id} className="flex items-center gap-4">
               <DonutChart value={score} size={72} strokeWidth={8} />
               <div>
-                <h2 className="text-[21px] font-medium text-slate-900">{kpi.name}</h2>
+                <h2 className="flex items-center gap-2 text-[21px] font-medium text-slate-900">
+                  {showCompanyTag && <CompanyTag slug={kpi.companySlug} />}
+                  {kpi.name}
+                </h2>
                 {kpi.period && (
                   <div className="text-[17px] text-slate-500">{kpi.period}</div>
                 )}

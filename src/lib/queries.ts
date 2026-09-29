@@ -34,7 +34,7 @@ export async function getProjectsFor(companyId: string) {
         select: { status: true, progress: true },
       },
     },
-    orderBy: { name: "asc" },
+    orderBy: { number: "asc" },
   });
 
   return projects.map((p) => ({

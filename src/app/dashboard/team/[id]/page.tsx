@@ -40,7 +40,7 @@ export default async function TeamMemberPage({
     prisma.project.findMany({
       where: { companyId: membership.companyId },
       select: { id: true, name: true, number: true },
-      orderBy: { name: "asc" },
+      orderBy: { number: "asc" },
     }),
   ]);
   const completionMonths = buildCompletionRollup(

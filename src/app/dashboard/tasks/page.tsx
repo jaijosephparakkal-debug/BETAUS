@@ -26,7 +26,7 @@ export default async function MyTasksPage() {
   const projects = await prisma.project.findMany({
     where: { companyId: membership.companyId },
     select: { id: true, name: true, number: true },
-    orderBy: { name: "asc" },
+    orderBy: { number: "asc" },
   });
   const titlePresets = await prisma.taskTitlePreset.findMany({
     where: { membershipId: membership.id },

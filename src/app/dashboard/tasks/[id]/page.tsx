@@ -69,7 +69,7 @@ export default async function TaskDetailPage({
       ? prisma.project.findMany({
           where: { companyId: membership.companyId },
           select: { id: true, name: true, number: true },
-          orderBy: { name: "asc" },
+          orderBy: { number: "asc" },
         })
       : Promise.resolve([]),
   ]);

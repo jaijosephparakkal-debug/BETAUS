@@ -6,6 +6,22 @@ import { assignTaskToColleagueAction, addTaskTitlePresetAction } from "./actions
 
 const ADD_NEW_VALUE = "__add_new__";
 
+// These default presets (added to every staff member's title list) capture
+// who the interaction was with, so the "who was it with" pick shows up
+// automatically whenever one of them is selected.
+const CONTACT_TITLES = new Set(["Calls in", "Calls out", "Emails Attended", "Follow Up"]);
+const CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Office staff", "Site staff", "Others"];
+const FOLLOW_UP_TOPICS = [
+  "Quotation",
+  "Invoice",
+  "Bills",
+  "Payments",
+  "Drawing",
+  "Plans",
+  "Maintenance staff",
+  "Site staff",
+];
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -28,7 +44,13 @@ function CreatedToast() {
 }
 
 /** Dropdown of quick-pick titles, with a "+ Add new title…" option that saves a new one inline. */
-function TitlePicker({ initialOptions }: { initialOptions: string[] }) {
+function TitlePicker({
+  initialOptions,
+  onTitleChange,
+}: {
+  initialOptions: string[];
+  onTitleChange: (title: string) => void;
+}) {
   const [options, setOptions] = useState(initialOptions);
   const [selected, setSelected] = useState("");
   const [addingNew, setAddingNew] = useState(options.length === 0);
@@ -52,6 +74,7 @@ function TitlePicker({ initialOptions }: { initialOptions: string[] }) {
       const added = result.title!;
       setOptions((prev) => (prev.includes(added) ? prev : [...prev, added]));
       setSelected(added);
+      onTitleChange(added);
       setAddingNew(false);
       setNewTitle("");
     });
@@ -105,6 +128,7 @@ function TitlePicker({ initialOptions }: { initialOptions: string[] }) {
           setAddingNew(true);
         } else {
           setSelected(e.target.value);
+          onTitleChange(e.target.value);
         }
       }}
       className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
@@ -139,6 +163,11 @@ export function AssignToColleagueForm({
   const [state, formAction] = useFormState(assignTaskToColleagueAction, {});
   const [showToast, setShowToast] = useState(false);
   const isFirstRender = useRef(true);
+  const [title, setTitle] = useState("");
+  const [contactType, setContactType] = useState("");
+  const showContactFields = CONTACT_TITLES.has(title);
+  const showFollowUpField = title === "Follow Up";
+  const showContactName = contactType === "Others";
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -171,7 +200,58 @@ export function AssignToColleagueForm({
   return (
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
       <input type="hidden" name="assigneeId" value={selfId} />
-      <TitlePicker initialOptions={titleOptions} />
+      <TitlePicker initialOptions={titleOptions} onTitleChange={setTitle} />
+      {showContactFields && (
+        <div className="space-y-2">
+          <div>
+            <label className="block text-[15px] text-slate-600">Who was it with?</label>
+            <select
+              name="contactType"
+              required
+              value={contactType}
+              onChange={(e) => setContactType(e.target.value)}
+              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+            >
+              <option value="" disabled>
+                Choose…
+              </option>
+              {CONTACT_TYPES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          {showContactName && (
+            <input
+              name="contactName"
+              required
+              placeholder="Mention who"
+              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+            />
+          )}
+        </div>
+      )}
+      {showFollowUpField && (
+        <div>
+          <label className="block text-[15px] text-slate-600">What are they following up on?</label>
+          <select
+            name="followUpTopic"
+            required
+            defaultValue=""
+            className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+          >
+            <option value="" disabled>
+              Choose…
+            </option>
+            {FOLLOW_UP_TOPICS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {companyOptions.length > 0 && (
         <div>
           <label className="block text-[15px] text-slate-600">Worked for which company?</label>

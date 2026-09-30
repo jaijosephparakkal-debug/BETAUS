@@ -128,6 +128,16 @@ export default async function TaskDetailPage({
             {task.phase ? ` · ${task.phase}` : ""}
           </span>
         )}
+        {task.contactType && (
+          <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+            With: {task.contactType === "Others" ? task.contactName || "Others" : task.contactType}
+          </span>
+        )}
+        {task.followUpTopic && (
+          <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+            Following up on: {task.followUpTopic}
+          </span>
+        )}
         {task.description && (
           <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>
         )}

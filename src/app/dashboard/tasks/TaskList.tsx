@@ -14,6 +14,9 @@ type BaseTask = {
   workedForCompany: string | null;
   category: string | null;
   phase: string | null;
+  contactType: string | null;
+  contactName: string | null;
+  followUpTopic: string | null;
   companySlug: string;
   project: { id: string; name: string; number: string | null } | null;
   subtasks: { id: string; title: string; status: string }[];
@@ -73,6 +76,16 @@ function TaskCard({
             <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[15px] text-brand-700">
               {task.category}
               {task.phase ? ` · ${task.phase}` : ""}
+            </span>
+          )}
+          {task.contactType && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+              With: {task.contactType === "Others" ? task.contactName || "Others" : task.contactType}
+            </span>
+          )}
+          {task.followUpTopic && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+              Following up on: {task.followUpTopic}
             </span>
           )}
         </div>

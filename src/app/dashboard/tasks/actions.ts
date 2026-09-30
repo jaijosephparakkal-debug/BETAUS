@@ -34,6 +34,9 @@ export async function assignTaskToColleagueAction(
   const deadlineRaw = String(formData.get("deadline") || "");
   const projectId = String(formData.get("projectId") || "");
   const workedForCompany = String(formData.get("workedForCompany") || "").trim();
+  const contactType = String(formData.get("contactType") || "").trim();
+  const contactName = String(formData.get("contactName") || "").trim();
+  const followUpTopic = String(formData.get("followUpTopic") || "").trim();
   if (!title) return { error: "Give the task a title." };
 
   const task = await prisma.task.create({
@@ -45,6 +48,9 @@ export async function assignTaskToColleagueAction(
       assignedById: membership.id,
       projectId: projectId || null,
       workedForCompany: workedForCompany || null,
+      contactType: contactType || null,
+      contactName: contactType === "Others" ? contactName || null : null,
+      followUpTopic: followUpTopic || null,
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     },
   });

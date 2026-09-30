@@ -44,7 +44,8 @@ export async function sendCodeEmail(email: string, code: string) {
 export async function sendReportEmail(
   to: string,
   subject: string,
-  html: string
+  html: string,
+  attachment?: { filename: string; content: Buffer }
 ): Promise<boolean> {
   if (!resend) {
     console.log(`\n[team-portal] Report email skipped (no Resend configured): ${subject}\n`);
@@ -56,6 +57,7 @@ export async function sendReportEmail(
     to,
     subject,
     html,
+    ...(attachment ? { attachments: [{ filename: attachment.filename, content: attachment.content }] } : {}),
   });
 
   if (result.error) {

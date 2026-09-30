@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
-import { getTasksFor } from "@/lib/queries";
+import { getTasksFor, getAssignedTasksFor } from "@/lib/queries";
 import { markTaskNotificationsRead } from "@/lib/notifications";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 import { TaskList } from "./TaskList";
@@ -31,11 +31,15 @@ export default async function MyTasksPage() {
   const showCompanyTag = allMemberships.length > 1;
 
   const tasks: (Awaited<ReturnType<typeof getTasksFor>>[number] & { companySlug: string })[] = [];
+  const assignedTasks: (Awaited<ReturnType<typeof getAssignedTasksFor>>[number] & { companySlug: string })[] = [];
   for (const m of allMemberships) {
     const mTasks = await getTasksFor(m.id);
     tasks.push(...mTasks.map((t) => ({ ...t, companySlug: m.company.slug })));
+    const mAssigned = await getAssignedTasksFor(m.id);
+    assignedTasks.push(...mAssigned.map((t) => ({ ...t, companySlug: m.company.slug })));
   }
   tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  assignedTasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   const projects = await prisma.project.findMany({
     where: { companyId: membership.companyId },
@@ -60,7 +64,12 @@ export default async function MyTasksPage() {
         projects={projects}
         companyOptions={companies}
       />
-      <TaskList tasks={tasks} showCompanyTag={showCompanyTag} companies={companies} />
+      <TaskList
+        tasks={tasks}
+        assignedTasks={assignedTasks}
+        showCompanyTag={showCompanyTag}
+        companies={companies}
+      />
     </div>
   );
 }

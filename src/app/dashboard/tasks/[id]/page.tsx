@@ -59,9 +59,17 @@ export default async function TaskDetailPage({
 
   const isOwner = task.assignedTo.userId === membership.userId;
   const isRam = membership.user.email === "ram@flaretechnical.com";
+  // Checked by person, not just the currently-active membership — Jai and
+  // Abraham hold real memberships at more than one company, so the person
+  // who assigned a task shouldn't lose Manage access to it just because a
+  // different company happens to be active right now.
+  const isAssignerSelf =
+    task.assignedById === membership.id ||
+    (await prisma.membership.findUnique({ where: { id: task.assignedById }, select: { userId: true } }))
+      ?.userId === membership.userId;
   const canManage =
     membership.isDirector ||
-    task.assignedById === membership.id ||
+    isAssignerSelf ||
     (await isManagerOf(membership.id, task.assignedToId));
   if (!isOwner && !canManage) {
     redirect("/dashboard/tasks");

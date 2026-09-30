@@ -24,6 +24,22 @@ export function getTasksFor(membershipId: string) {
   });
 }
 
+/** Top-level tasks this membership assigned to someone else — feeds the assigner's "Assigned" tab. */
+export function getAssignedTasksFor(membershipId: string) {
+  return prisma.task.findMany({
+    where: { assignedById: membershipId, assignedToId: { not: membershipId }, parentTaskId: null },
+    orderBy: { createdAt: "desc" },
+    include: {
+      assignedTo: { include: { user: true } },
+      project: { select: { id: true, name: true, number: true } },
+      subtasks: {
+        select: { id: true, title: true, status: true, progress: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+}
+
 /** Every project at a company, with a computed progress rollup from its linked top-level tasks. */
 export async function getProjectsFor(companyId: string) {
   const projects = await prisma.project.findMany({

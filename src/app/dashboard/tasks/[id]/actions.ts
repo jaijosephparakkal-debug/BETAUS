@@ -28,6 +28,20 @@ async function isSelfTask(membership: { id: string; userId: string }, task: { as
 }
 
 /**
+ * True if the signed-in person is the one who assigned this task — checked
+ * by person (userId), not just the currently-active membership, since Jai
+ * and Abraham hold real memberships at more than one company.
+ */
+async function isSelfAssigner(membership: { id: string; userId: string }, task: { assignedById: string }) {
+  if (task.assignedById === membership.id) return true;
+  const assigner = await prisma.membership.findUnique({
+    where: { id: task.assignedById },
+    select: { userId: true },
+  });
+  return assigner?.userId === membership.userId;
+}
+
+/**
  * True if the signed-in person has a membership at this company — their
  * active one, or another of their own (again, Jai/Abraham hold real
  * memberships at both companies). A plain `task.companyId !==
@@ -332,17 +346,17 @@ export async function uploadTaskAttachmentAction(
 }
 
 async function canManageTask(
-  membership: { id: string; isDirector: boolean },
+  membership: { id: string; userId: string; isDirector: boolean },
   task: { assignedToId: string; assignedById: string }
 ) {
   if (membership.isDirector) return true;
-  if (task.assignedById === membership.id) return true;
+  if (await isSelfAssigner(membership, task)) return true;
   return isManagerOf(membership.id, task.assignedToId);
 }
 
 /** Reassign/reallocate rights: management rights, or being the person the task was actually given to. */
 async function canReassignTask(
-  membership: { id: string; isDirector: boolean },
+  membership: { id: string; userId: string; isDirector: boolean },
   task: { assignedToId: string; assignedById: string }
 ) {
   if (task.assignedToId === membership.id) return true;

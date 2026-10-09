@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
+import { getCurrentMembership, canManageAllStaff, isManagingDirector } from "@/lib/auth";
 import {
   getCompanyRollup,
   getOrgTree,
@@ -171,9 +171,11 @@ export default async function DirectorPage() {
               Manage My Staff
             </Link>
           )}
-          <Link href="/director/kpi-percentage" className="text-brand-600 hover:underline">
-            KPI Percentage
-          </Link>
+          {!isManagingDirector(membership) && (
+            <Link href="/director/kpi-percentage" className="text-brand-600 hover:underline">
+              KPI Percentage
+            </Link>
+          )}
         </div>
       </div>
 

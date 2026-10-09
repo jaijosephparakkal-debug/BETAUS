@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { Card, SegmentedDonut, LineChart, CompanyTag } from "@/components/ui";
 
 const STATUS_COLORS = {
@@ -32,6 +32,7 @@ export default async function KpiPercentagePage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
   if (!membership.isDirector) redirect("/dashboard");
+  if (isManagingDirector(membership)) redirect("/director/kpi");
 
   // Only ever two companies system-wide — merged into one ring, one trend
   // line, and one "by role" grid, each employee tagged by company, instead

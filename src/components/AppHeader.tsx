@@ -44,7 +44,7 @@ export function AppHeader({
     ...(membership.isDirector
       ? [
           ...(canManageAllStaff(membership) ? [{ href: "/director/staff", label: "Manage My Staff" }] : []),
-          { href: "/director/kpi-percentage", label: "KPI Percentage" },
+          ...(isManagingDirector(membership) ? [] : [{ href: "/director/kpi-percentage", label: "KPI Percentage" }]),
           { href: "/director/attendance", label: "Attendance" },
         ]
       : []),

@@ -348,3 +348,70 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
 
   return build(rootId);
 }
+
+/**
+ * KPI picture for the director: every non-director's KPIs at both
+ * companies — overall average, per-company average, and per person (people
+ * at both companies merged, each KPI tagged with its company). Averages are
+ * over KPIs (each KPI counts once), matching getCompanyRollup.
+ */
+export async function getKpiOverview() {
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  const memberships = await prisma.membership.findMany({
+    where: { isDirector: false },
+    include: { user: true, company: true, kpis: { orderBy: { createdAt: "asc" } } },
+    orderBy: { user: { name: "asc" } },
+  });
+
+  const avg = (scores: number[]) =>
+    scores.length ? Math.round(scores.reduce((s, x) => s + x, 0) / scores.length) : null;
+
+  type PersonKpis = {
+    userId: string;
+    name: string;
+    titles: string[];
+    companySlugs: string[];
+    kpis: { id: string; name: string; current: number; target: number; unit: string | null; period: string | null; score: number; companySlug: string }[];
+    avgScore: number | null;
+  };
+  const people = new Map<string, PersonKpis>();
+  for (const m of memberships) {
+    let p = people.get(m.userId);
+    if (!p) {
+      p = { userId: m.userId, name: m.user.name, titles: [], companySlugs: [], kpis: [], avgScore: null };
+      people.set(m.userId, p);
+    }
+    if (!p.titles.includes(m.title)) p.titles.push(m.title);
+    if (!p.companySlugs.includes(m.company.slug)) p.companySlugs.push(m.company.slug);
+    p.kpis.push(
+      ...m.kpis.map((k) => ({
+        id: k.id,
+        name: k.name,
+        current: k.current,
+        target: k.target,
+        unit: k.unit,
+        period: k.period,
+        score: kpiScore(k),
+        companySlug: m.company.slug,
+      }))
+    );
+  }
+  for (const p of people.values()) p.avgScore = avg(p.kpis.map((k) => k.score));
+
+  const allKpis = Array.from(people.values()).flatMap((p) => p.kpis);
+  return {
+    overall: { avgScore: avg(allKpis.map((k) => k.score)), kpiCount: allKpis.length, peopleCount: people.size },
+    perCompany: companies.map((c) => {
+      const kpis = allKpis.filter((k) => k.companySlug === c.slug);
+      return {
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        avgScore: avg(kpis.map((k) => k.score)),
+        kpiCount: kpis.length,
+        peopleWithKpis: Array.from(people.values()).filter((p) => p.kpis.some((k) => k.companySlug === c.slug)).length,
+      };
+    }),
+    people: Array.from(people.values()),
+  };
+}

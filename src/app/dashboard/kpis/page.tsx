@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getKpisFor, getCompletionsFor, kpiScore } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
 import { Card, DonutChart, CompanyTag } from "@/components/ui";
@@ -9,6 +9,7 @@ import { CompletionRollup } from "@/components/CompletionRollup";
 export default async function MyKpisPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (isManagingDirector(membership)) redirect("/director/kpi");
 
   // Anyone holding more than one company membership (e.g. Abraham, Jai) sees
   // their KPIs and completions merged across every company they belong to,

@@ -27,7 +27,10 @@ export function AppHeader({
     ...(isManagingDirector(membership)
       ? []
       : [{ href: "/dashboard/tasks", label: "My Tasks", badge: taskNotificationCount }]),
-    { href: "/dashboard/kpis", label: "My KPIs" },
+    // The Managing Director sees the company-wide KPI page, not personal KPIs.
+    isManagingDirector(membership)
+      ? { href: "/director/kpi", label: "KPI" }
+      : { href: "/dashboard/kpis", label: "My KPIs" },
     { href: "/dashboard/projects", label: "Projects" },
     ...(reportCount > 0
       ? [{ href: "/dashboard/team", label: "My Team" }]

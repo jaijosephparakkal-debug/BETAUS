@@ -7,6 +7,7 @@ import {
   getCompanyRollup,
   getOrgTree,
   getAtRiskTasks,
+  getKpiOverview,
 } from "@/lib/queries";
 import { Card, SegmentedDonut, StatusBadge, CompanyTag, formatDate } from "@/components/ui";
 import { MergedOrgChart } from "@/components/OrgChart";
@@ -75,10 +76,10 @@ export default async function DirectorPage() {
   const overallCompletionPct = overall.totalTasks
     ? Math.round((overall.completedTasks / overall.totalTasks) * 100)
     : 0;
-  const totalKpiCount = perCompany.reduce((s, b) => s + b.rollup.kpiCount, 0);
-  const overallAvgKpi = totalKpiCount
-    ? Math.round(perCompany.reduce((s, b) => s + b.rollup.avgKpiScore * b.rollup.kpiCount, 0) / totalKpiCount)
-    : 0;
+  // Same numbers as the KPI page (staff KPIs, directors excluded).
+  const kpiOverview = await getKpiOverview();
+  const overallAvgKpi = kpiOverview.overall.avgScore ?? 0;
+  const companyAvgKpi = (slug: string) => kpiOverview.perCompany.find((c) => c.slug === slug)?.avgScore ?? 0;
 
   // One merged at-risk list across both companies, most overdue first.
   const mergedAtRisk = perCompany
@@ -323,7 +324,7 @@ export default async function DirectorPage() {
           />
           <StatBox href="/director/tasks?status=in_progress" value={overall.inProgressTasks} label="In progress" />
           <StatBox href="/director/tasks?status=overdue" value={overall.overdueTasks} label="Overdue" color="text-red-600" />
-          <StatBox href="/director/kpi-percentage" value={`${overallAvgKpi}%`} label="Avg. KPI" />
+          <StatBox href="/director/kpi" value={`${overallAvgKpi}%`} label="Avg. KPI" />
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-8 border-t border-brand-100 pt-4">
           <Link href="/director/tasks" className="hover:opacity-80" aria-label="All tasks">
@@ -346,7 +347,7 @@ export default async function DirectorPage() {
                 className="flex items-center gap-2 hover:text-brand-600 hover:underline"
               >
                 <CompanyTag slug={b.company.slug} />
-                {b.rollup.completedTasks}/{b.rollup.totalTasks} completed, {b.rollup.avgKpiScore}% avg KPI
+                {b.rollup.completedTasks}/{b.rollup.totalTasks} completed, {companyAvgKpi(b.company.slug)}% avg KPI
               </Link>
             ))}
           </div>

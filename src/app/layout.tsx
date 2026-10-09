@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Flowline",
+  title: "OWN IT",
   description: "Employee task, progress and KPI portal",
 };
 

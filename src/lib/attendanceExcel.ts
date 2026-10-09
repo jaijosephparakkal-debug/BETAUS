@@ -54,7 +54,7 @@ export async function buildAttendanceExcel(date = new Date()) {
   });
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Flowline";
+  workbook.creator = "OWN IT";
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet("Attendance", {

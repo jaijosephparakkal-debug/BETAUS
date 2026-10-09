@@ -31,7 +31,7 @@ export default async function TaskDetailPage({
       assignedTo: { include: { user: true } },
       assignedBy: { include: { user: true } },
       parentTask: true,
-      project: { select: { id: true, name: true, number: true } },
+      project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
         include: { assignedTo: { include: { user: true } } },
         orderBy: { createdAt: "asc" },
@@ -114,6 +114,7 @@ export default async function TaskDetailPage({
             href={`/dashboard/projects/${task.project.id}`}
             className="mt-1 inline-block text-[17px] text-brand-600 hover:underline"
           >
+            {task.project.type !== "PROJECT" && `${task.project.type} — `}
             {task.project.number
               ? `${task.project.number} — ${task.project.name}`
               : task.project.name}
@@ -133,6 +134,12 @@ export default async function TaskDetailPage({
         {task.followUpTopic && (
           <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
             Following up on: {task.followUpTopic}
+          </span>
+        )}
+        {task.forDepartment && (
+          <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+            For: {task.forDepartment}
+            {task.forPerson ? ` — ${task.forPerson}` : ""}
           </span>
         )}
         {task.description && (

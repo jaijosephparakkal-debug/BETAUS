@@ -342,10 +342,13 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function formatDate(date: Date | string | null | undefined) {
   if (!date) return "No deadline";
-  return new Date(date).toLocaleDateString(undefined, {
+  // Fixed locale + Dubai time zone so the server and the browser print the
+  // same text (an unset locale differed between them and broke hydration).
+  return new Date(date).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "Asia/Dubai",
   });
 }
 

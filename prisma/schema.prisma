@@ -124,6 +124,9 @@ model Task {
   phase        String? // sub-stage within category, e.g. "Pre-Production" / "Production" / "Post-Production" for Video Production tasks
   contactType  String? // who a "Calls in/out", "Emails Attended" or "Follow Up" task was with — Vendor/Supplier/Client/Office staff/Site staff/Others
   contactName  String? // free-text name, set when contactType is "Others"
+  taskFor      String? // what the task is for, picked on My Tasks' add form: PROJECT | MAINTENANCE | OTHERS (projectId holds the project or AMC/DLP site)
+  forDepartment String? // when taskFor is OTHERS: Accounts | HR | Sales | Purchase
+  forPerson    String? // when taskFor is OTHERS: free text — who the task is for
   followUpTopic String? // what a "Follow Up" task is chasing — Quotation/Invoice/Bills/Payments/Drawing/Plans/Maintenance staff/Site staff
   stageOrder   Int? // position in a fixed ordered checklist (a project's pipeline stages, or a role's standing responsibilities) — set on any task that should use the quick Complete/In Progress toggle instead of the free-form progress form
   milestoneWeight Int? // this stage's percentage share of the project's overall completion; only the Projects Manager sets it

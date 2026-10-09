@@ -17,8 +17,10 @@ type BaseTask = {
   contactType: string | null;
   contactName: string | null;
   followUpTopic: string | null;
+  forDepartment?: string | null;
+  forPerson?: string | null;
   companySlug: string;
-  project: { id: string; name: string; number: string | null } | null;
+  project: { id: string; name: string; number: string | null; type?: string } | null;
   subtasks: { id: string; title: string; status: string }[];
 };
 
@@ -60,6 +62,7 @@ function TaskCard({
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {task.project && (
             <span className="text-[17px] text-brand-600">
+              {task.project.type && task.project.type !== "PROJECT" && `${task.project.type} — `}
               {task.project.number
                 ? `${task.project.number} — ${task.project.name}`
                 : task.project.name}
@@ -86,6 +89,12 @@ function TaskCard({
           {task.followUpTopic && (
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
               Following up on: {task.followUpTopic}
+            </span>
+          )}
+          {task.forDepartment && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
+              For: {task.forDepartment}
+              {task.forPerson ? ` — ${task.forPerson}` : ""}
             </span>
           )}
         </div>

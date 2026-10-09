@@ -15,7 +15,7 @@ export function getTasksFor(membershipId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       assignedBy: { include: { user: true } },
-      project: { select: { id: true, name: true, number: true } },
+      project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
         select: { id: true, title: true, status: true, progress: true },
         orderBy: { createdAt: "asc" },
@@ -31,7 +31,7 @@ export function getAssignedTasksFor(membershipId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       assignedTo: { include: { user: true } },
-      project: { select: { id: true, name: true, number: true } },
+      project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
         select: { id: true, title: true, status: true, progress: true },
         orderBy: { createdAt: "asc" },
@@ -451,4 +451,16 @@ export async function getMaintenanceSites(companyId: string) {
     taskCount: s.tasks.length,
     openTasks: s.tasks.filter((t) => t.status !== "COMPLETED").length,
   }));
+}
+
+/** Choices for My Tasks' "Task for" picker: projects, AMC sites and DLP sites at this company. */
+export async function getTaskForChoices(companyId: string) {
+  const rows = await prisma.project.findMany({
+    where: { companyId },
+    select: { id: true, name: true, number: true, type: true },
+    orderBy: [{ number: "asc" }, { name: "asc" }],
+  });
+  const pick = (type: string) =>
+    rows.filter((r) => r.type === type).map((r) => ({ id: r.id, name: r.name, number: r.number }));
+  return { projects: pick("PROJECT"), amc: pick("AMC"), dlp: pick("DLP") };
 }

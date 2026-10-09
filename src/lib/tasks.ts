@@ -19,3 +19,8 @@ export async function recomputeTaskProgress(taskId: string) {
 
   await prisma.task.update({ where: { id: taskId }, data: { progress, status } });
 }
+
+/** "Task for" choices on My Tasks' add form. */
+export const TASK_FOR_OPTIONS = { PROJECT: "Projects", MAINTENANCE: "Maintenance", OTHERS: "Others" } as const;
+export type TaskFor = keyof typeof TASK_FOR_OPTIONS;
+export const OTHER_DEPARTMENTS = ["Accounts", "HR", "Sales", "Purchase"] as const;

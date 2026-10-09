@@ -3,6 +3,119 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { assignTaskToColleagueAction, addTaskTitlePresetAction } from "./actions";
+import { TASK_FOR_OPTIONS, OTHER_DEPARTMENTS, type TaskFor } from "@/lib/tasks";
+
+type Choice = { id: string; name: string; number: string | null };
+export type TaskForChoices = { projects: Choice[]; amc: Choice[]; dlp: Choice[] };
+
+const selectClass = "w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]";
+
+/**
+ * "Task for" — Projects (pick a project), Maintenance (AMC or DLP, then the
+ * site), or Others (Accounts / HR / Sales / Purchase + who it's for).
+ * Projects and sites submit as projectId; Others as forDepartment/forPerson.
+ */
+function TaskForPicker({ choices }: { choices: TaskForChoices }) {
+  const [taskFor, setTaskFor] = useState<TaskFor | "">("");
+  const [maintenanceType, setMaintenanceType] = useState<"AMC" | "DLP" | "">("");
+  const hasMaintenance = choices.amc.length + choices.dlp.length > 0;
+  const sites = maintenanceType === "AMC" ? choices.amc : maintenanceType === "DLP" ? choices.dlp : [];
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="block text-[15px] text-slate-600">Task for</label>
+        <select
+          name="taskFor"
+          required
+          value={taskFor}
+          onChange={(e) => {
+            setTaskFor(e.target.value as TaskFor);
+            setMaintenanceType("");
+          }}
+          className={selectClass}
+        >
+          <option value="" disabled>
+            Choose…
+          </option>
+          {(Object.keys(TASK_FOR_OPTIONS) as TaskFor[])
+            .filter((k) => k !== "MAINTENANCE" || hasMaintenance)
+            .map((k) => (
+              <option key={k} value={k}>
+                {TASK_FOR_OPTIONS[k]}
+              </option>
+            ))}
+        </select>
+      </div>
+
+      {taskFor === "PROJECT" && (
+        <select name="projectId" required defaultValue="" className={selectClass} aria-label="Project">
+          <option value="" disabled>
+            Choose project…
+          </option>
+          {choices.projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.number ? `${p.number} — ${p.name}` : p.name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {taskFor === "MAINTENANCE" && (
+        <>
+          <select
+            required
+            value={maintenanceType}
+            onChange={(e) => setMaintenanceType(e.target.value as "AMC" | "DLP")}
+            className={selectClass}
+            aria-label="AMC or DLP"
+          >
+            <option value="" disabled>
+              AMC or DLP…
+            </option>
+            {choices.amc.length > 0 && <option value="AMC">AMC</option>}
+            {choices.dlp.length > 0 && <option value="DLP">DLP</option>}
+          </select>
+          {maintenanceType && (
+            <select
+              key={maintenanceType}
+              name="projectId"
+              required
+              defaultValue=""
+              className={selectClass}
+              aria-label={`${maintenanceType} site`}
+            >
+              <option value="" disabled>
+                Choose {maintenanceType} site…
+              </option>
+              {sites.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </>
+      )}
+
+      {taskFor === "OTHERS" && (
+        <>
+          <select name="forDepartment" required defaultValue="" className={selectClass} aria-label="Department">
+            <option value="" disabled>
+              Accounts, HR, Sales or Purchase…
+            </option>
+            {OTHER_DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+          <input name="forPerson" required placeholder="Who is this task for?" className={selectClass} />
+        </>
+      )}
+    </div>
+  );
+}
 
 const ADD_NEW_VALUE = "__add_new__";
 
@@ -149,13 +262,13 @@ function TitlePicker({
 export function AssignToColleagueForm({
   selfId,
   titleOptions,
-  projects = [],
+  taskForChoices,
   companyOptions = [],
 }: {
   /** This person's own membership id — every task added here is always for themself. */
   selfId: string;
   titleOptions: string[];
-  projects?: { id: string; name: string; number: string | null }[];
+  taskForChoices: TaskForChoices;
   /** Only non-empty for the few people with responsibilities at both companies (see DUAL_COMPANY_EMAILS). */
   companyOptions?: { slug: string; name: string }[];
 }) {
@@ -201,6 +314,7 @@ export function AssignToColleagueForm({
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
       <input type="hidden" name="assigneeId" value={selfId} />
       <TitlePicker initialOptions={titleOptions} onTitleChange={setTitle} />
+      <TaskForPicker choices={taskForChoices} />
       {showContactFields && (
         <div className="space-y-2">
           <div>
@@ -278,20 +392,6 @@ export function AssignToColleagueForm({
         placeholder="e.g. Prepare BOQ for Al Ain villa project and email to client for review"
         className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
       />
-      {projects.length > 0 && (
-        <select
-          name="projectId"
-          defaultValue=""
-          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-        >
-          <option value="">No project</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.number ? `${p.number} — ${p.name}` : p.name}
-            </option>
-          ))}
-        </select>
-      )}
       <input
         name="deadline"
         type="date"

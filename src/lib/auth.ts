@@ -104,10 +104,9 @@ export function getDirectorMembership(userId: string) {
 }
 
 /**
- * "Manage My Staff" (/director/staff) is for the Managing Director only —
- * not every isDirector membership (Jai is also flagged director as Admin).
+ * "Manage My Staff" (/director/staff) — Abraham (Managing Director) and Jai
+ * (Admin) only, not every isDirector membership.
  */
-// TEMPORARY: jai@gasneeds.com added so Jai can check the pages — remove once verified.
 const MANAGE_STAFF_EMAILS = ["abraham@flaretechnical.com", "jai@gasneeds.com"];
 
 export function canManageAllStaff(membership: { user: { email: string } }) {

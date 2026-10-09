@@ -306,6 +306,7 @@ export async function getMembershipSummary(membershipId: string) {
 
 export type OrgNode = {
   id: string;
+  userId: string;
   name: string;
   title: string;
   department: string | null;
@@ -336,6 +337,7 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
     const m = byId.get(id)!;
     return {
       id: m.id,
+      userId: m.userId,
       name: m.user.name,
       title: m.title,
       department: m.department,

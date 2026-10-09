@@ -15,12 +15,23 @@ import { dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
 const STATUS_COLORS = { COMPLETED: "#10b981", IN_PROGRESS: "#f59e0b", NOT_STARTED: "#94a3b8" };
 
-function StatBox({ value, label, color = "text-slate-900" }: { value: string | number; label: string; color?: string }) {
+// Every number on the director's Overview opens the list behind it.
+function StatBox({
+  value,
+  label,
+  href,
+  color = "text-slate-900",
+}: {
+  value: string | number;
+  label: React.ReactNode;
+  href: string;
+  color?: string;
+}) {
   return (
-    <div className="rounded-lg bg-slate-50 p-3">
+    <Link href={href} className="block rounded-lg bg-slate-50 p-3 transition hover:bg-brand-50 hover:ring-1 hover:ring-brand-200">
       <div className={`text-[23px] font-semibold ${color}`}>{value}</div>
       <div className="text-[15px] text-slate-500">{label}</div>
-    </div>
+    </Link>
   );
 }
 
@@ -90,7 +101,7 @@ export default async function DirectorPage() {
   // One row per person — their first clock-in today, and whether they're still in.
   const attendanceByPerson = new Map<
     string,
-    { name: string; title: string; companySlug: string; companyId: string; firstIn: Date; stillIn: boolean }
+    { userId: string; name: string; title: string; companySlug: string; companyId: string; firstIn: Date; stillIn: boolean }
   >();
   for (const e of todayEntries) {
     const existing = attendanceByPerson.get(e.membershipId);
@@ -98,6 +109,7 @@ export default async function DirectorPage() {
       existing.stillIn = existing.stillIn || !e.clockOut;
     } else {
       attendanceByPerson.set(e.membershipId, {
+        userId: e.membership.userId,
         name: e.membership.user.name,
         title: e.membership.title,
         companySlug: e.membership.company.slug,
@@ -171,7 +183,8 @@ export default async function DirectorPage() {
           .map((c) => {
             const theme = getCompanyTheme(c.company.slug);
             return (
-              <Card key={c.company.id}>
+              <Link key={c.company.id} href={`/director/staff?company=${c.company.slug}`} className="block transition hover:opacity-90">
+              <Card className="hover:border-brand-300">
                 <div style={theme.vars} className="flex items-center gap-4">
                   <div className="rounded-lg border border-brand-200 bg-brand-50 p-1.5">
                     <Image src={theme.logo} alt={theme.displayName} width={theme.logoWidth} height={theme.logoHeight} className="h-12 w-auto" />
@@ -179,10 +192,11 @@ export default async function DirectorPage() {
                   <div>
                     <div className="text-[17px] text-slate-500">{c.company.name}</div>
                     <div className="text-[34px] font-semibold leading-tight text-brand-600">{c.staff}</div>
-                    <div className="text-[15px] text-slate-500">Total staff</div>
+                    <div className="text-[15px] text-slate-500">Total staff — tap to see who</div>
                   </div>
                 </div>
               </Card>
+              </Link>
             );
           })}
       </div>
@@ -190,7 +204,11 @@ export default async function DirectorPage() {
       {/* 2. Staff attendance — today */}
       <Card>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[21px] font-semibold text-slate-900">Staff attendance — today</h2>
+          <h2 className="text-[21px] font-semibold text-slate-900">
+            <Link href="/director/attendance" className="hover:text-brand-600 hover:underline">
+              Staff attendance — today
+            </Link>
+          </h2>
           <Link href="/director/attendance" className="text-[17px] text-brand-600 hover:underline">
             Full attendance sheet →
           </Link>
@@ -199,18 +217,26 @@ export default async function DirectorPage() {
           {staffCounts.map((c) => {
             const present = presentToday.filter((p) => p.companyId === c.company.id).length;
             return (
-              <div key={c.company.id} className="rounded-lg bg-slate-50 p-3">
-                <div className="text-[23px] font-semibold text-slate-900">
-                  {present}/{c.staff}
-                </div>
-                <div className="flex items-center gap-1.5 text-[15px] text-slate-500">
-                  <CompanyTag slug={c.company.slug} /> present
-                </div>
-              </div>
+              <StatBox
+                key={c.company.id}
+                href={`/director/staff?company=${c.company.slug}&status=present`}
+                value={`${present}/${c.staff}`}
+                label={
+                  <span className="flex items-center gap-1.5">
+                    <CompanyTag slug={c.company.slug} /> present
+                  </span>
+                }
+              />
             );
           })}
-          <StatBox value={presentToday.filter((p) => p.stillIn).length} label="Clocked in now" color="text-emerald-600" />
           <StatBox
+            href="/director/staff?status=in"
+            value={presentToday.filter((p) => p.stillIn).length}
+            label="Clocked in now"
+            color="text-emerald-600"
+          />
+          <StatBox
+            href="/director/staff?status=absent"
             value={staffCounts.reduce((s, c) => s + c.staff, 0) - presentToday.length}
             label="Not in today"
             color="text-red-600"
@@ -221,7 +247,11 @@ export default async function DirectorPage() {
         ) : (
           <div className="max-h-80 divide-y divide-brand-100 overflow-y-auto">
             {presentToday.map((p, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 py-2">
+              <Link
+                key={i}
+                href={`/director/staff/${p.userId}`}
+                className="flex items-center justify-between gap-3 py-2 hover:bg-brand-50/40"
+              >
                 <div className="flex min-w-0 items-center gap-2">
                   <CompanyTag slug={p.companySlug} />
                   <div className="min-w-0">
@@ -237,7 +267,7 @@ export default async function DirectorPage() {
                     <span className="text-slate-400">Signed out</span>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -247,7 +277,9 @@ export default async function DirectorPage() {
       <Card>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-[21px] font-semibold text-slate-900">
-            Approvals — {overall.pendingApprovals} pending
+            <Link href="/director/approvals" className="hover:text-brand-600 hover:underline">
+              Approvals — {overall.pendingApprovals} pending
+            </Link>
           </h2>
           <Link href="/director/approvals" className="text-[17px] text-brand-600 hover:underline">
             All approvals →
@@ -283,13 +315,18 @@ export default async function DirectorPage() {
         <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Combined performance</h2>
         <p className="mb-3 text-[15px] text-slate-500">Every number below is both firms added together.</p>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <StatBox value={overall.headcount} label="Employees" />
-          <StatBox value={`${overall.completedTasks}/${overall.totalTasks}`} label="Tasks completed" />
-          <StatBox value={overall.inProgressTasks} label="In progress" />
-          <StatBox value={overall.overdueTasks} label="Overdue" color="text-red-600" />
-          <StatBox value={`${overallAvgKpi}%`} label="Avg. KPI" />
+          <StatBox href="/director/staff" value={overall.headcount} label="Employees" />
+          <StatBox
+            href="/director/tasks?status=completed"
+            value={`${overall.completedTasks}/${overall.totalTasks}`}
+            label="Tasks completed"
+          />
+          <StatBox href="/director/tasks?status=in_progress" value={overall.inProgressTasks} label="In progress" />
+          <StatBox href="/director/tasks?status=overdue" value={overall.overdueTasks} label="Overdue" color="text-red-600" />
+          <StatBox href="/director/kpi-percentage" value={`${overallAvgKpi}%`} label="Avg. KPI" />
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-8 border-t border-brand-100 pt-4">
+          <Link href="/director/tasks" className="hover:opacity-80" aria-label="All tasks">
           <SegmentedDonut
             size={100}
             strokeWidth={12}
@@ -300,12 +337,17 @@ export default async function DirectorPage() {
               { label: "Not started", value: overall.notStartedTasks, color: STATUS_COLORS.NOT_STARTED },
             ]}
           />
+          </Link>
           <div className="space-y-1.5 text-[15px] text-slate-500">
             {perCompany.map((b) => (
-              <div key={b.company.id} className="flex items-center gap-2">
+              <Link
+                key={b.company.id}
+                href={`/director/tasks?company=${b.company.slug}`}
+                className="flex items-center gap-2 hover:text-brand-600 hover:underline"
+              >
                 <CompanyTag slug={b.company.slug} />
                 {b.rollup.completedTasks}/{b.rollup.totalTasks} completed, {b.rollup.avgKpiScore}% avg KPI
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -313,14 +355,20 @@ export default async function DirectorPage() {
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-          At risk — {mergedAtRisk.length} overdue task{mergedAtRisk.length === 1 ? "" : "s"}
+          <Link href="/director/tasks?status=overdue" className="hover:text-brand-600 hover:underline">
+            At risk — {mergedAtRisk.length} overdue task{mergedAtRisk.length === 1 ? "" : "s"}
+          </Link>
         </h2>
         {mergedAtRisk.length === 0 ? (
           <p className="text-[19px] text-slate-500">Nothing overdue right now.</p>
         ) : (
           <div className="divide-y divide-brand-100">
             {mergedAtRisk.map((t) => (
-              <div key={t.id} className="flex items-center justify-between gap-3 py-2.5">
+              <Link
+                key={t.id}
+                href={`/dashboard/tasks/${t.id}`}
+                className="flex items-center justify-between gap-3 py-2.5 hover:bg-brand-50/40"
+              >
                 <div className="flex min-w-0 items-center gap-2">
                   <CompanyTag slug={t.companySlug} />
                   <div className="min-w-0">
@@ -329,9 +377,9 @@ export default async function DirectorPage() {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[17px] font-medium text-red-400">
-                  {t.daysOverdue}d overdue
+                  {t.daysOverdue === 0 ? "Overdue today" : `${t.daysOverdue}d overdue`}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -340,6 +388,7 @@ export default async function DirectorPage() {
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Company structure — Flare Technical &amp; Gas Needs</h2>
         <MergedOrgChart
+          staffLinks={canManageAllStaff(membership)}
           directorName={directorName}
           directorTitle={directorTitle}
           branches={perCompany.map((b) => ({

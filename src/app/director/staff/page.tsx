@@ -5,10 +5,17 @@ import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
 import { dubaiDayRange } from "@/lib/attendance";
 import { Card, CompanyTag } from "@/components/ui";
 
+const STATUS_FILTERS = {
+  present: "Came in today",
+  in: "Clocked in now",
+  absent: "Not in today",
+} as const;
+type StatusFilter = keyof typeof STATUS_FILTERS;
+
 export default async function ManageStaffPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; company?: string; status?: string };
 }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
@@ -89,22 +96,51 @@ export default async function ManageStaffPage({
     }
   }
 
+  // Filters arrive from the Overview's clickable numbers, e.g.
+  // ?company=gasneeds (GN total staff) or ?status=absent (Not in today).
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  const company = companies.find((c) => c.slug === searchParams.company) ?? null;
+  const status = STATUS_FILTERS[searchParams.status as StatusFilter] ? (searchParams.status as StatusFilter) : null;
   const q = (searchParams.q ?? "").trim().toLowerCase();
   const list = Array.from(people.values()).filter(
-    (p) => !q || p.name.toLowerCase().includes(q) || p.titles.some((t) => t.toLowerCase().includes(q))
+    (p) =>
+      (!q || p.name.toLowerCase().includes(q) || p.titles.some((t) => t.toLowerCase().includes(q))) &&
+      (!company || p.companySlugs.includes(company.slug)) &&
+      (!status ||
+        (status === "in" && p.clockedInNow) ||
+        (status === "present" && p.presentToday) ||
+        (status === "absent" && !p.presentToday))
   );
+  const filterHref = (next: { company?: string | null; status?: string | null }) => {
+    const params = new URLSearchParams();
+    const c = next.company === undefined ? company?.slug : next.company;
+    const st = next.status === undefined ? status : next.status;
+    if (c) params.set("company", c);
+    if (st) params.set("status", st);
+    if (searchParams.q) params.set("q", searchParams.q);
+    const qs = params.toString();
+    return `/director/staff${qs ? `?${qs}` : ""}`;
+  };
+  const chip = (active: boolean) =>
+    `rounded-full px-3 py-1 text-[15px] ${active ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-brand-50"}`;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[23px] font-semibold text-slate-900">Manage My Staff</h1>
+          <h1 className="text-[23px] font-semibold text-slate-900">
+            Manage My Staff{company ? ` — ${company.name}` : ""}
+            {status ? ` · ${STATUS_FILTERS[status]}` : ""}
+          </h1>
           <p className="text-[17px] text-slate-500">
-            {people.size} people across Flare Technical &amp; Gas Needs — tap anyone to see their KPIs,
-            tasks, reports and attendance.
+            {list.length} {list.length === 1 ? "person" : "people"}
+            {company ? ` at ${company.name}` : " across Flare Technical & Gas Needs"} — tap anyone to see
+            their KPIs, tasks, reports and attendance.
           </p>
         </div>
         <form className="flex gap-2">
+          {company && <input type="hidden" name="company" value={company.slug} />}
+          {status && <input type="hidden" name="status" value={status} />}
           <input
             name="q"
             defaultValue={searchParams.q ?? ""}
@@ -115,6 +151,26 @@ export default async function ManageStaffPage({
             Search
           </button>
         </form>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Link href={filterHref({ company: null })} className={chip(!company)}>
+          Both companies
+        </Link>
+        {companies.map((c) => (
+          <Link key={c.id} href={filterHref({ company: c.slug })} className={chip(company?.slug === c.slug)}>
+            {c.name}
+          </Link>
+        ))}
+        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <Link href={filterHref({ status: null })} className={chip(!status)}>
+          Everyone
+        </Link>
+        {(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((st) => (
+          <Link key={st} href={filterHref({ status: st })} className={chip(status === st)}>
+            {STATUS_FILTERS[st]}
+          </Link>
+        ))}
       </div>
 
       <Card className="!p-0">
@@ -149,7 +205,7 @@ export default async function ManageStaffPage({
               </div>
             </Link>
           ))}
-          {list.length === 0 && <p className="px-4 py-6 text-[17px] text-slate-500">No one matches that search.</p>}
+          {list.length === 0 && <p className="px-4 py-6 text-[17px] text-slate-500">No one matches.</p>}
         </div>
       </Card>
     </div>

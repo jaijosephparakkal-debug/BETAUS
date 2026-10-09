@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getTasksFor, getAssignedTasksFor } from "@/lib/queries";
 import { markTaskNotificationsRead } from "@/lib/notifications";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
@@ -16,6 +16,7 @@ const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com",
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (isManagingDirector(membership)) redirect("/director");
 
   const showCompanyField = DUAL_COMPANY_EMAILS.includes(membership.user.email);
 

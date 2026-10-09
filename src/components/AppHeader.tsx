@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { canManageAllStaff, type FullMembership } from "@/lib/auth";
+import { canManageAllStaff, isManagingDirector, type FullMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
 import { AttendanceClock } from "@/components/AttendanceClock";
 
@@ -24,7 +24,9 @@ export function AppHeader({
   const navItems = [
     // The director's Overview is the merged two-company page at /director.
     { href: membership.isDirector ? "/director" : "/dashboard", label: "Overview" },
-    { href: "/dashboard/tasks", label: "My Tasks", badge: taskNotificationCount },
+    ...(isManagingDirector(membership)
+      ? []
+      : [{ href: "/dashboard/tasks", label: "My Tasks", badge: taskNotificationCount }]),
     { href: "/dashboard/kpis", label: "My KPIs" },
     { href: "/dashboard/projects", label: "Projects" },
     ...(reportCount > 0

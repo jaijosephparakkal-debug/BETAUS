@@ -109,6 +109,11 @@ export function getDirectorMembership(userId: string) {
  */
 const MANAGE_STAFF_EMAILS = ["abraham@flaretechnical.com", "jai@gasneeds.com"];
 
+/** Abraham — the Managing Director has no personal task list of his own. */
+export function isManagingDirector(membership: { user: { email: string } }) {
+  return membership.user.email.toLowerCase() === "abraham@flaretechnical.com";
+}
+
 export function canManageAllStaff(membership: { user: { email: string } }) {
   return MANAGE_STAFF_EMAILS.includes(membership.user.email.toLowerCase());
 }

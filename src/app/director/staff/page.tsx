@@ -178,7 +178,8 @@ export default async function ManageStaffPage({
           {list.map((p) => (
             <Link
               key={p.userId}
-              href={`/director/staff/${p.userId}`}
+              // Opened from an attendance number -> their month of attendance; otherwise their profile.
+              href={status ? `/director/staff/${p.userId}/attendance` : `/director/staff/${p.userId}`}
               className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-brand-50/40"
             >
               <div className="flex min-w-0 items-center gap-2">

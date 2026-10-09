@@ -119,7 +119,8 @@ export default async function StaffProfilePage({
   const overdue = tasks.filter(isOverdueTask);
   const avgKpi = kpis.length ? Math.round(kpis.reduce((s, k) => s + kpiScore(k), 0) / kpis.length) : null;
 
-  const filter: TaskFilter = (searchParams.tasks ?? "all") in TASK_FILTERS ? (searchParams.tasks as TaskFilter) : "all";
+  const filter: TaskFilter =
+    searchParams.tasks && Object.prototype.hasOwnProperty.call(TASK_FILTERS, searchParams.tasks) ? (searchParams.tasks as TaskFilter) : "all";
   const shownTasks = {
     all: tasks,
     others: byOthers,
@@ -227,7 +228,7 @@ export default async function StaffProfilePage({
           <StatLink href={filterHref("completed")} value={completed.length} label="Completed" active={filter === "completed"} color="text-emerald-600" />
           <StatLink href={filterHref("pending")} value={pending.length} label="Pending" active={filter === "pending"} color="text-amber-600" />
           <StatLink href={filterHref("overdue")} value={overdue.length} label="Overdue" active={filter === "overdue"} color="text-red-600" />
-          <a href="#attendance" className="block rounded-lg bg-slate-50 p-3 transition hover:bg-brand-50">
+          <a href={`${base}/attendance`} className="block rounded-lg bg-slate-50 p-3 transition hover:bg-brand-50">
             <div className="text-[23px] font-semibold text-slate-900">{days.length}</div>
             <div className="text-[15px] text-slate-500">Days in (last {ATTENDANCE_DAYS})</div>
           </a>
@@ -349,7 +350,12 @@ export default async function StaffProfilePage({
       {/* Attendance */}
       <Card>
         <div id="attendance" className="mb-3 flex flex-wrap items-baseline justify-between gap-2 scroll-mt-4">
-          <h2 className="text-[21px] font-semibold text-slate-900">Attendance — last {ATTENDANCE_DAYS} days</h2>
+          <h2 className="text-[21px] font-semibold text-slate-900">
+            Attendance — last {ATTENDANCE_DAYS} days{" "}
+            <Link href={`${base}/attendance`} className="text-[17px] font-normal text-brand-600 hover:underline">
+              Full month →
+            </Link>
+          </h2>
           <span className="text-[15px] text-slate-500">
             <span className="font-medium text-amber-600">{lateInDays} late in</span> (after {officeStartLabel}) ·{" "}
             <span className="font-medium text-violet-600">{leftLateDays} left late</span> (after {officeEndLabel})

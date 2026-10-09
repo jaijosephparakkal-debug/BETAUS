@@ -252,7 +252,7 @@ export default async function DirectorPage() {
             {presentToday.map((p, i) => (
               <Link
                 key={i}
-                href={`/director/staff/${p.userId}`}
+                href={`/director/staff/${p.userId}/attendance`}
                 className="flex items-center justify-between gap-3 py-2 hover:bg-brand-50/40"
               >
                 <div className="flex min-w-0 items-center gap-2">

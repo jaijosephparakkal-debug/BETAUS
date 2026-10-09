@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
@@ -22,7 +23,7 @@ type Entry = {
   clockIn: Date;
   clockOut: Date | null;
   reason: string | null;
-  membership: { title: string; user: { name: string }; company: { slug: string } };
+  membership: { title: string; userId: string; user: { name: string }; company: { slug: string } };
 };
 
 function MergedAttendanceTable({ entries, now }: { entries: Entry[]; now: Date }) {
@@ -48,7 +49,12 @@ function MergedAttendanceTable({ entries, now }: { entries: Entry[]; now: Date }
             return (
               <tr key={entry.id} className="border-b border-slate-100 last:border-0">
                 <td className="px-4 py-3 text-[21px] font-medium text-slate-900">
-                  {entry.membership.user.name}
+                  <Link
+                    href={`/director/staff/${entry.membership.userId}/attendance`}
+                    className="text-brand-600 hover:underline"
+                  >
+                    {entry.membership.user.name}
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <CompanyTag slug={entry.membership.company.slug} />

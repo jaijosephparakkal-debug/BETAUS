@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getDirectReports, getMembershipSummary } from "@/lib/queries";
 import { Card, ProgressBar } from "@/components/ui";
 
 export default async function MyTeamPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (isManagingDirector(membership)) redirect("/director/staff");
 
   const reports = await getDirectReports(membership.id);
   const summaries = await Promise.all(

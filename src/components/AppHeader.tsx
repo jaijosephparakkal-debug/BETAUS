@@ -36,7 +36,8 @@ export function AppHeader({
     ...(membership.company.slug === "flaretechnical" || membership.isDirector
       ? [{ href: "/dashboard/maintenance", label: "Maintenance" }]
       : []),
-    ...(reportCount > 0
+    // Abraham sees everyone through Manage My Staff instead of My Team.
+    ...(reportCount > 0 && !isManagingDirector(membership)
       ? [{ href: "/dashboard/team", label: "My Team" }]
       : []),
     { href: "/dashboard/approvals", label: "Approvals", badge: pendingApprovalCount },

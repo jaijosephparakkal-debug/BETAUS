@@ -44,15 +44,34 @@ export const STANDARD_SITE_TASKS = [
 /** Only Flaretech projects carry the site-task checklist. */
 export const SITE_TASK_COMPANY_SLUG = "flaretechnical";
 
-/** Who can set weights, update progress, delete (X) and re-add site tasks. */
+/** Who can update progress — the editors below plus the site engineer. */
+const SITE_TASK_PROGRESS_EMAILS = [
+  "ram@flaretechnical.com",
+  "abraham@flaretechnical.com",
+  "saroj@flaretechnical.com",
+  "jiyad.m@flaretechnical.com", // Site Engineer
+];
+
+/** Who can delete (X) and re-add site tasks. */
 const SITE_TASK_EDITOR_EMAILS = [
   "ram@flaretechnical.com", // Projects Manager
   "abraham@flaretechnical.com", // Managing Director
   "saroj@flaretechnical.com",
 ];
 
+/** Who can set each task's weight — not Ram. */
+const SITE_TASK_WEIGHT_EMAILS = ["abraham@flaretechnical.com", "saroj@flaretechnical.com"];
+
 export function canEditSiteTasks(user: { email: string }) {
   return SITE_TASK_EDITOR_EMAILS.includes(user.email.toLowerCase());
+}
+
+export function canUpdateSiteTaskProgress(user: { email: string }) {
+  return SITE_TASK_PROGRESS_EMAILS.includes(user.email.toLowerCase());
+}
+
+export function canSetSiteTaskWeights(user: { email: string }) {
+  return SITE_TASK_WEIGHT_EMAILS.includes(user.email.toLowerCase());
 }
 
 /** Sum of assigned weights, and how much of that weight has been fulfilled (weight x progress). */

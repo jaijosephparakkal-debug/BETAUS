@@ -10,8 +10,6 @@ import {
 
 type SiteTask = { id: string; title: string; weight: number | null; progress: number };
 
-const PROGRESS_OPTIONS = [0, 25, 50, 75, 100];
-
 function progressColor(p: number) {
   if (p === 100) return "text-emerald-600";
   if (p > 0) return "text-amber-600";
@@ -22,14 +20,19 @@ function SiteTaskRow({
   projectId,
   task,
   canEdit,
+  canSetWeights,
+  canUpdateProgress,
   onError,
 }: {
   projectId: string;
   task: SiteTask;
   canEdit: boolean;
+  canSetWeights: boolean;
+  canUpdateProgress: boolean;
   onError: (msg: string | null) => void;
 }) {
   const [weight, setWeight] = useState(task.weight == null ? "" : String(task.weight));
+  const [progress, setProgress] = useState(String(task.progress));
   const [pending, startTransition] = useTransition();
 
   function run(action: () => Promise<{ error?: string }>) {
@@ -46,6 +49,17 @@ function SiteTaskRow({
     run(() => setSiteTaskWeightAction(projectId, task.id, weight));
   }
 
+  function saveProgress() {
+    const value = Number(progress.trim());
+    if (progress.trim() === "" || !Number.isInteger(value) || value < 0 || value > 100) {
+      onError("Progress must be a whole number from 0 to 100.");
+      setProgress(String(task.progress));
+      return;
+    }
+    if (value === task.progress) return;
+    run(() => setSiteTaskProgressAction(projectId, task.id, value));
+  }
+
   const fulfilled = ((task.weight ?? 0) * task.progress) / 100;
 
   return (
@@ -56,7 +70,7 @@ function SiteTaskRow({
         </span>
       </td>
       <td className="px-2 py-2">
-        {canEdit ? (
+        {canSetWeights ? (
           <div className="flex items-center gap-1">
             <input
               type="number"
@@ -77,19 +91,22 @@ function SiteTaskRow({
         )}
       </td>
       <td className="px-2 py-2">
-        {canEdit ? (
-          <select
-            value={task.progress}
-            onChange={(e) => run(() => setSiteTaskProgressAction(projectId, task.id, Number(e.target.value)))}
-            className={`rounded-md border border-brand-300 px-2 py-1 text-[17px] ${progressColor(task.progress)}`}
-            aria-label={`Progress for ${task.title}`}
-          >
-            {PROGRESS_OPTIONS.map((p) => (
-              <option key={p} value={p}>
-                {p === 100 ? "Done (100%)" : `${p}%`}
-              </option>
-            ))}
-          </select>
+        {canUpdateProgress ? (
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={progress}
+              onChange={(e) => setProgress(e.target.value)}
+              onBlur={saveProgress}
+              onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+              className={`w-20 rounded-md border border-brand-300 px-2 py-1 text-[17px] focus:border-brand-500 focus:outline-none ${progressColor(task.progress)}`}
+              aria-label={`Progress for ${task.title}`}
+            />
+            <span className="text-[15px] text-slate-500">%</span>
+          </div>
         ) : (
           <span className={`text-[17px] ${progressColor(task.progress)}`}>{task.progress}%</span>
         )}
@@ -123,12 +140,16 @@ export function SiteTasks({
   tasks,
   missingStandard,
   canEdit,
+  canSetWeights,
+  canUpdateProgress,
   summary,
 }: {
   projectId: string;
   tasks: SiteTask[];
   missingStandard: string[];
   canEdit: boolean;
+  canSetWeights: boolean;
+  canUpdateProgress: boolean;
   summary: { totalWeight: number; fulfilled: number; completed: number };
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -190,7 +211,15 @@ export function SiteTasks({
             </thead>
             <tbody>
               {tasks.map((t) => (
-                <SiteTaskRow key={t.id} projectId={projectId} task={t} canEdit={canEdit} onError={setError} />
+                <SiteTaskRow
+                  key={t.id}
+                  projectId={projectId}
+                  task={t}
+                  canEdit={canEdit}
+                  canSetWeights={canSetWeights}
+                  canUpdateProgress={canUpdateProgress}
+                  onError={setError}
+                />
               ))}
             </tbody>
           </table>
@@ -228,9 +257,9 @@ export function SiteTasks({
           </button>
         </div>
       )}
-      {!canEdit && (
-        <p className="mt-3 text-[15px] text-slate-400">Only Ram, Abraham or Saroj can change these.</p>
-      )}
+      <p className="mt-3 text-[15px] text-slate-400">
+        Weights: Abraham or Saroj. Progress: Ram, Abraham, Saroj or Jiyad. Removing/adding tasks: Ram, Abraham or Saroj.
+      </p>
     </div>
   );
 }

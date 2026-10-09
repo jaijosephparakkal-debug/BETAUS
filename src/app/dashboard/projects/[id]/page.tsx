@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { STANDARD_SITE_TASKS, SITE_TASK_COMPANY_SLUG, canEditSiteTasks, siteTaskSummary } from "@/lib/siteTasks";
+import { STANDARD_SITE_TASKS, SITE_TASK_COMPANY_SLUG, canEditSiteTasks, canSetSiteTaskWeights, canUpdateSiteTaskProgress, siteTaskSummary } from "@/lib/siteTasks";
 import { getProjectDetail } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
 import { Card, ProgressBar, StatusBadge, formatDate } from "@/components/ui";
@@ -101,6 +101,8 @@ export default async function ProjectDetailPage({
             tasks={siteTasks}
             missingStandard={[...missingStandard]}
             canEdit={canEditSiteTasks(membership.user)}
+            canSetWeights={canSetSiteTaskWeights(membership.user)}
+            canUpdateProgress={canUpdateSiteTaskProgress(membership.user)}
             summary={siteTaskSummary(siteTasks)}
           />
         </Card>

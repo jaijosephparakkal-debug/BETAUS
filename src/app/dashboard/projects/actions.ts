@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
-import { STANDARD_SITE_TASKS, SITE_TASK_COMPANY_SLUG, canEditSiteTasks } from "@/lib/siteTasks";
+import {
+  STANDARD_SITE_TASKS,
+  SITE_TASK_COMPANY_SLUG,
+  canEditSiteTasks,
+  canSetSiteTaskWeights,
+  canUpdateSiteTaskProgress,
+} from "@/lib/siteTasks";
 
 async function assertCanManageProjects() {
   const membership = await getCurrentMembership();
@@ -67,11 +73,20 @@ export async function updateProjectStatusAction(
 
 // ---- Required site tasks (ProjectSiteTask) --------------------------------
 
-async function assertCanEditSiteTasks(projectId: string) {
+async function assertCanEditSiteTasks(
+  projectId: string,
+  need: "weights" | "progress" | "edit" = "edit"
+) {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." as const };
-  if (!canEditSiteTasks(membership.user)) {
-    return { error: "Only Ram, Abraham or Saroj can change site tasks." as const };
+  if (need === "weights" && !canSetSiteTaskWeights(membership.user)) {
+    return { error: "Only Abraham or Saroj can set weights." as const };
+  }
+  if (need === "progress" && !canUpdateSiteTaskProgress(membership.user)) {
+    return { error: "Only Ram, Abraham, Saroj or Jiyad can update progress." as const };
+  }
+  if (need === "edit" && !canEditSiteTasks(membership.user)) {
+    return { error: "Only Ram, Abraham or Saroj can remove or add site tasks." as const };
   }
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project || !(await hasCompanyAccess(membership, project.companyId))) {
@@ -86,7 +101,7 @@ async function siteTaskInProject(projectId: string, siteTaskId: string) {
 }
 
 export async function setSiteTaskWeightAction(projectId: string, siteTaskId: string, raw: string) {
-  const access = await assertCanEditSiteTasks(projectId);
+  const access = await assertCanEditSiteTasks(projectId, "weights");
   if ("error" in access) return { error: access.error };
   if (!(await siteTaskInProject(projectId, siteTaskId))) return { error: "Task not found." };
 
@@ -101,10 +116,12 @@ export async function setSiteTaskWeightAction(projectId: string, siteTaskId: str
 }
 
 export async function setSiteTaskProgressAction(projectId: string, siteTaskId: string, progress: number) {
-  const access = await assertCanEditSiteTasks(projectId);
+  const access = await assertCanEditSiteTasks(projectId, "progress");
   if ("error" in access) return { error: access.error };
   if (!(await siteTaskInProject(projectId, siteTaskId))) return { error: "Task not found." };
-  if (![0, 25, 50, 75, 100].includes(progress)) return { error: "Invalid progress." };
+  if (!Number.isInteger(progress) || progress < 0 || progress > 100) {
+    return { error: "Progress must be a whole number from 0 to 100." };
+  }
 
   await prisma.projectSiteTask.update({ where: { id: siteTaskId }, data: { progress } });
   revalidateProject(projectId);

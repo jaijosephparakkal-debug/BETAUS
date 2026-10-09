@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
+import { STANDARD_SITE_TASKS, SITE_TASK_COMPANY_SLUG, canEditSiteTasks } from "@/lib/siteTasks";
 
 async function assertCanManageProjects() {
   const membership = await getCurrentMembership();
@@ -25,9 +26,15 @@ export async function createProjectAction(
   const name = String(formData.get("name") || "").trim();
   if (!name) return { error: "Give the project a name." };
 
-  await prisma.project.create({
+  const project = await prisma.project.create({
     data: { companyId: access.membership.companyId, number: number || null, name },
   });
+  // New Flaretech projects start with the full required site-task checklist.
+  if (access.membership.company.slug === SITE_TASK_COMPANY_SLUG) {
+    await prisma.projectSiteTask.createMany({
+      data: STANDARD_SITE_TASKS.map((title, i) => ({ projectId: project.id, title, sortOrder: i + 1 })),
+    });
+  }
 
   revalidatePath("/dashboard/projects");
   return {};
@@ -56,4 +63,81 @@ export async function updateProjectStatusAction(
   revalidatePath("/dashboard/projects");
   revalidatePath(`/dashboard/projects/${projectId}`);
   return {};
+}
+
+// ---- Required site tasks (ProjectSiteTask) --------------------------------
+
+async function assertCanEditSiteTasks(projectId: string) {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." as const };
+  if (!canEditSiteTasks(membership.user)) {
+    return { error: "Only Ram, Abraham or Saroj can change site tasks." as const };
+  }
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project || !(await hasCompanyAccess(membership, project.companyId))) {
+    return { error: "Project not found." as const };
+  }
+  return { project };
+}
+
+async function siteTaskInProject(projectId: string, siteTaskId: string) {
+  const task = await prisma.projectSiteTask.findUnique({ where: { id: siteTaskId } });
+  return task && task.projectId === projectId ? task : null;
+}
+
+export async function setSiteTaskWeightAction(projectId: string, siteTaskId: string, raw: string) {
+  const access = await assertCanEditSiteTasks(projectId);
+  if ("error" in access) return { error: access.error };
+  if (!(await siteTaskInProject(projectId, siteTaskId))) return { error: "Task not found." };
+
+  const trimmed = raw.trim();
+  const weight = trimmed === "" ? null : Number(trimmed);
+  if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 100 || !Number.isInteger(weight))) {
+    return { error: "Weight must be a whole number from 0 to 100." };
+  }
+  await prisma.projectSiteTask.update({ where: { id: siteTaskId }, data: { weight } });
+  revalidateProject(projectId);
+  return {};
+}
+
+export async function setSiteTaskProgressAction(projectId: string, siteTaskId: string, progress: number) {
+  const access = await assertCanEditSiteTasks(projectId);
+  if ("error" in access) return { error: access.error };
+  if (!(await siteTaskInProject(projectId, siteTaskId))) return { error: "Task not found." };
+  if (![0, 25, 50, 75, 100].includes(progress)) return { error: "Invalid progress." };
+
+  await prisma.projectSiteTask.update({ where: { id: siteTaskId }, data: { progress } });
+  revalidateProject(projectId);
+  return {};
+}
+
+export async function deleteSiteTaskAction(projectId: string, siteTaskId: string) {
+  const access = await assertCanEditSiteTasks(projectId);
+  if ("error" in access) return { error: access.error };
+  if (!(await siteTaskInProject(projectId, siteTaskId))) return { error: "Task not found." };
+
+  await prisma.projectSiteTask.delete({ where: { id: siteTaskId } });
+  revalidateProject(projectId);
+  return {};
+}
+
+/** Adds back a standard site task that was deleted from this project. */
+export async function addSiteTaskAction(projectId: string, title: string) {
+  const access = await assertCanEditSiteTasks(projectId);
+  if ("error" in access) return { error: access.error };
+  const index = STANDARD_SITE_TASKS.indexOf(title as (typeof STANDARD_SITE_TASKS)[number]);
+  if (index === -1) return { error: "Unknown task." };
+
+  await prisma.projectSiteTask.upsert({
+    where: { projectId_title: { projectId, title } },
+    update: {},
+    create: { projectId, title, sortOrder: index + 1 },
+  });
+  revalidateProject(projectId);
+  return {};
+}
+
+function revalidateProject(projectId: string) {
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath("/dashboard/projects");
 }

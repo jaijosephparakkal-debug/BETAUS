@@ -49,6 +49,7 @@ export async function getProjectsFor(companyId: string) {
         where: { parentTaskId: null },
         select: { status: true, progress: true },
       },
+      siteTasks: { select: { weight: true, progress: true } },
     },
     orderBy: { number: "asc" },
   });
@@ -63,6 +64,10 @@ export async function getProjectsFor(companyId: string) {
     avgProgress: p.tasks.length
       ? Math.round(p.tasks.reduce((s, t) => s + t.progress, 0) / p.tasks.length)
       : 0,
+    siteTaskCount: p.siteTasks.length,
+    siteWeightFulfilled: Math.round(
+      p.siteTasks.reduce((s, t) => s + ((t.weight ?? 0) * t.progress) / 100, 0)
+    ),
   }));
 }
 

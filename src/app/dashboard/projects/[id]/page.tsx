@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { STANDARD_SITE_TASKS, SITE_TASK_COMPANY_SLUG, canEditSiteTasks, siteTaskSummary } from "@/lib/siteTasks";
 import { getProjectDetail } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
 import { Card, ProgressBar, StatusBadge, formatDate } from "@/components/ui";
 import { CompletionRollup } from "@/components/CompletionRollup";
 import { UpdateProjectStatusForm } from "./StatusForm";
+import { SiteTasks } from "./SiteTasks";
 
 export default async function ProjectDetailPage({
   params,
@@ -16,7 +19,19 @@ export default async function ProjectDetailPage({
   if (!membership) redirect("/login");
 
   const project = await getProjectDetail(params.id);
-  if (!project || project.companyId !== membership.companyId) notFound();
+  // By person, not active company — the director holds memberships at both.
+  if (!project || !(await hasCompanyAccess(membership, project.companyId))) notFound();
+
+  const company = await prisma.company.findUnique({ where: { id: project.companyId } });
+  const hasSiteTasks = company?.slug === SITE_TASK_COMPANY_SLUG;
+  const siteTasks = hasSiteTasks
+    ? await prisma.projectSiteTask.findMany({
+        where: { projectId: project.id },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, title: true, weight: true, progress: true },
+      })
+    : [];
+  const missingStandard = STANDARD_SITE_TASKS.filter((t) => !siteTasks.some((s) => s.title === t));
 
   const completionMonths = buildCompletionRollup(
     project.tasks
@@ -73,6 +88,23 @@ export default async function ProjectDetailPage({
           <UpdateProjectStatusForm projectId={project.id} currentStatus={project.status} />
         </div>
       </Card>
+
+      {hasSiteTasks && (
+        <Card>
+          <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Required site tasks</h2>
+          <p className="mb-3 text-[15px] text-slate-500">
+            Give each task a weight (% of the site work) and update its progress. Tap ✕ to remove a
+            task this project doesn&rsquo;t need.
+          </p>
+          <SiteTasks
+            projectId={project.id}
+            tasks={siteTasks}
+            missingStandard={[...missingStandard]}
+            canEdit={canEditSiteTasks(membership.user)}
+            summary={siteTaskSummary(siteTasks)}
+          />
+        </Card>
+      )}
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">

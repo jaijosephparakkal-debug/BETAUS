@@ -40,6 +40,12 @@ export default async function ProjectsPage() {
               <div className="mt-2 text-[17px] text-slate-500">
                 {p.completedTasks}/{p.taskCount} task{p.taskCount === 1 ? "" : "s"} completed
               </div>
+              {p.siteTaskCount > 0 && (
+                <div className="text-[17px] text-slate-500">
+                  Site work: <span className="font-medium text-emerald-600">{p.siteWeightFulfilled}%</span> of weight
+                  fulfilled · {p.siteTaskCount} required tasks
+                </div>
+              )}
             </Card>
           </Link>
         ))}

@@ -36,8 +36,30 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tasks   Task[]
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  siteTasks ProjectSiteTask[]
+}
+
+// A project's required on-site work items (Riser/Dropper Installation,
+// Kitchen Cabling, ...) — an unassigned checklist on the project page, not
+// Tasks in anyone's My Tasks. Every Flaretech project starts with the full
+// standard list (STANDARD_SITE_TASKS in src/lib/siteTasks.ts); items that
+// don't apply to a project are deleted. Each carries a weight (% of the
+// project's site work) and a progress, giving "% of weight fulfilled".
+model ProjectSiteTask {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  sortOrder Int
+  weight    Int? // % share of this project's site work; null until set
+  progress  Int      @default(0) // 0-100
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, title])
 }
 
 model Membership {

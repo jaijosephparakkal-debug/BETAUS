@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSessionUserId, getMembershipCount } from "@/lib/auth";
+import { getSessionUserId, getMembershipCount, getDirectorMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
 
 export default async function Home() {
   const userId = await getSessionUserId();
   if (userId) {
+    if (await getDirectorMembership(userId)) redirect("/director");
     const count = await getMembershipCount();
     redirect(count > 1 ? "/select-company" : "/dashboard");
   }

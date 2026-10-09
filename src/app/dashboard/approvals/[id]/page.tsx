@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getApprovalRequestDetail } from "@/lib/queries";
 import { Card, StatusBadge, AttachmentList, formatDate } from "@/components/ui";
@@ -22,7 +22,9 @@ export default async function ApprovalDetailPage({
   if (!membership) redirect("/login");
 
   const request = await getApprovalRequestDetail(params.id);
-  if (!request || request.companyId !== membership.companyId) notFound();
+  // By person, not active company — the director holds memberships at both
+  // companies and opens either company's requests from the merged Overview.
+  if (!request || !(await hasCompanyAccess(membership, request.companyId))) notFound();
 
   const isRequester = request.requestedById === membership.id;
   const isApprover = request.approverId === membership.id;

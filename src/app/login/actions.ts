@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requestSignInCode, verifySignInCode } from "@/lib/otp";
-import { createSession } from "@/lib/auth";
+import { createSession, getDirectorMembership, setActiveCompanyCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { clockInIfNeeded } from "@/lib/attendance";
 
@@ -33,6 +33,13 @@ export async function verifyCodeAction(
   if (!userId) return { error: "That code is invalid or has expired." };
 
   await createSession(userId);
+
+  const director = await getDirectorMembership(userId);
+  if (director) {
+    setActiveCompanyCookie(director.companyId);
+    await clockInIfNeeded(director.id);
+    redirect("/director");
+  }
 
   const memberships = await prisma.membership.findMany({ where: { userId } });
   if (memberships.length === 1) {

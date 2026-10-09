@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentMembership, isManagerOf } from "@/lib/auth";
+import { getCurrentMembership, isManagerOf, hasCompanyAccess } from "@/lib/auth";
 import { getActivityReport } from "@/lib/kpiReport";
 import { generateKpiReportPdf } from "@/lib/pdf/generateKpiReportPdf";
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   const report = await getActivityReport(targetId);
-  if (!report || report.membership.companyId !== membership.companyId) {
+  if (!report || !(await hasCompanyAccess(membership, report.membership.companyId))) {
     return new NextResponse("Not found", { status: 404 });
   }
 

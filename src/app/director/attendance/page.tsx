@@ -2,42 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card, CompanyTag } from "@/components/ui";
-
-// Dubai has no DST, fixed UTC+4.
-const DUBAI_OFFSET_MS = 4 * 60 * 60 * 1000;
-
-function dubaiDayRange(dateStr?: string) {
-  let y: number, m: number, d: number;
-  if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    [y, m, d] = dateStr.split("-").map(Number);
-    m -= 1;
-  } else {
-    const dubaiNow = new Date(Date.now() + DUBAI_OFFSET_MS);
-    y = dubaiNow.getUTCFullYear();
-    m = dubaiNow.getUTCMonth();
-    d = dubaiNow.getUTCDate();
-  }
-  const start = new Date(Date.UTC(y, m, d, 0, 0, 0) - DUBAI_OFFSET_MS);
-  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  const label = new Date(Date.UTC(y, m, d)).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-  const isoValue = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  return { start, end, label, isoValue };
-}
-
-function formatDubaiTime(date: Date) {
-  const shifted = new Date(date.getTime() + DUBAI_OFFSET_MS);
-  const h = shifted.getUTCHours();
-  const min = String(shifted.getUTCMinutes()).padStart(2, "0");
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${min} ${period}`;
-}
+import { DUBAI_OFFSET_MS, dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
 function formatDuration(ms: number) {
   const totalMinutes = Math.max(0, Math.round(ms / 60000));

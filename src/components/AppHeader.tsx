@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { FullMembership } from "@/lib/auth";
+import { canManageAllStaff, type FullMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
 import { AttendanceClock } from "@/components/AttendanceClock";
 
@@ -22,7 +22,8 @@ export function AppHeader({
   const theme = getCompanyTheme(membership.company.slug);
 
   const navItems = [
-    { href: "/dashboard", label: "Overview" },
+    // The director's Overview is the merged two-company page at /director.
+    { href: membership.isDirector ? "/director" : "/dashboard", label: "Overview" },
     { href: "/dashboard/tasks", label: "My Tasks", badge: taskNotificationCount },
     { href: "/dashboard/kpis", label: "My KPIs" },
     { href: "/dashboard/projects", label: "Projects" },
@@ -32,7 +33,7 @@ export function AppHeader({
     { href: "/dashboard/approvals", label: "Approvals", badge: pendingApprovalCount },
     ...(membership.isDirector
       ? [
-          { href: "/director", label: "Company Dashboard" },
+          ...(canManageAllStaff(membership) ? [{ href: "/director/staff", label: "Manage My Staff" }] : []),
           { href: "/director/kpi-percentage", label: "KPI Percentage" },
           { href: "/director/attendance", label: "Attendance" },
         ]
@@ -63,7 +64,7 @@ export function AppHeader({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {membershipCount > 1 && (
+          {membershipCount > 1 && !membership.isDirector && (
             <Link
               href="/select-company"
               className="text-[19px] text-brand-600 hover:underline"

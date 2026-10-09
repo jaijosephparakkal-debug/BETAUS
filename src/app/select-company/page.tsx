@@ -16,6 +16,7 @@ export default async function SelectCompanyPage() {
 
   if (memberships.length === 0) redirect("/login");
   if (memberships.length === 1) redirect("/dashboard");
+  if (memberships.some((m) => m.isDirector)) redirect("/director");
 
   const { user, title } = memberships[0];
 

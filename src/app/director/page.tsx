@@ -2,18 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
 import {
   getCompanyRollup,
   getOrgTree,
   getAtRiskTasks,
-  getTasksFor,
-  getKpisFor,
-  kpiScore,
 } from "@/lib/queries";
-import { Card, SegmentedDonut, StatusBadge, ProgressBar, CompanyTag, formatDate, isOverdue } from "@/components/ui";
+import { Card, SegmentedDonut, StatusBadge, CompanyTag, formatDate } from "@/components/ui";
 import { MergedOrgChart } from "@/components/OrgChart";
 import { getCompanyTheme } from "@/lib/theme";
+import { dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
 const STATUS_COLORS = { COMPLETED: "#10b981", IN_PROGRESS: "#f59e0b", NOT_STARTED: "#94a3b8" };
 
@@ -76,22 +74,52 @@ export default async function DirectorPage() {
     .flatMap((b) => b.atRiskTasks.map((t) => ({ ...t, companySlug: b.company.slug })))
     .sort((a, b) => b.daysOverdue - a.daysOverdue);
 
-  // "My Tasks" / "My KPIs" are personal — based on whichever membership(s)
-  // this specific person actually holds (usually just one) — merged into a
-  // single tagged list rather than grouped per company.
-  const memberships = await prisma.membership.findMany({
-    where: { userId: membership.userId },
-    include: { company: true },
+  // Staff = everyone except the director, per company.
+  const staffCounts = perCompany.map((b) => ({
+    company: b.company,
+    staff: b.rollup.memberships.filter((m) => !m.isDirector).length,
+  }));
+
+  // Today's attendance (Dubai day), both companies merged, director excluded.
+  const today = dubaiDayRange();
+  const todayEntries = await prisma.attendanceEntry.findMany({
+    where: { clockIn: { gte: today.start, lt: today.end }, membership: { isDirector: false } },
+    include: { membership: { include: { user: true, company: true } } },
+    orderBy: { clockIn: "asc" },
   });
-  const myTasks: (Awaited<ReturnType<typeof getTasksFor>>[number] & { companySlug: string })[] = [];
-  const myKpis: (Awaited<ReturnType<typeof getKpisFor>>[number] & { companySlug: string })[] = [];
-  for (const m of memberships) {
-    const tasks = await getTasksFor(m.id);
-    const kpis = await getKpisFor(m.id);
-    myTasks.push(...tasks.map((t) => ({ ...t, companySlug: m.company.slug })));
-    myKpis.push(...kpis.map((k) => ({ ...k, companySlug: m.company.slug })));
+  // One row per person — their first clock-in today, and whether they're still in.
+  const attendanceByPerson = new Map<
+    string,
+    { name: string; title: string; companySlug: string; companyId: string; firstIn: Date; stillIn: boolean }
+  >();
+  for (const e of todayEntries) {
+    const existing = attendanceByPerson.get(e.membershipId);
+    if (existing) {
+      existing.stillIn = existing.stillIn || !e.clockOut;
+    } else {
+      attendanceByPerson.set(e.membershipId, {
+        name: e.membership.user.name,
+        title: e.membership.title,
+        companySlug: e.membership.company.slug,
+        companyId: e.membership.companyId,
+        firstIn: e.clockIn,
+        stillIn: !e.clockOut,
+      });
+    }
   }
-  const showTags = memberships.length > 1;
+  const presentToday = Array.from(attendanceByPerson.values());
+
+  const pendingApprovals = await prisma.approvalRequest.findMany({
+    where: { status: "PENDING" },
+    include: {
+      requestedBy: { include: { user: true } },
+      approver: { include: { user: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+  });
+
+  const slugByCompanyId = new Map(companies.map((c) => [c.id, c.slug]));
 
   const directorName = perCompany[0]?.orgTree?.name ?? membership.user.name;
   const directorTitle = perCompany[0]?.orgTree?.title ?? membership.title;
@@ -121,18 +149,135 @@ export default async function DirectorPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 text-[17px]">
+        <div className="flex flex-wrap items-center gap-3 text-[17px]">
+          {canManageAllStaff(membership) && (
+            <Link
+              href="/director/staff"
+              className="rounded-lg bg-brand-600 px-3 py-1.5 font-medium text-white hover:bg-brand-700"
+            >
+              Manage My Staff
+            </Link>
+          )}
           <Link href="/director/kpi-percentage" className="text-brand-600 hover:underline">
             KPI Percentage
           </Link>
-          <Link href="/director/attendance" className="text-brand-600 hover:underline">
-            Attendance
-          </Link>
-          <Link href="/director/approvals" className="text-brand-600 hover:underline">
-            Approvals{overall.pendingApprovals > 0 ? ` (${overall.pendingApprovals})` : ""}
-          </Link>
         </div>
       </div>
+
+      {/* 1. Total staff per company */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[...staffCounts]
+          .sort((a, b) => (a.company.slug === "gasneeds" ? -1 : b.company.slug === "gasneeds" ? 1 : 0))
+          .map((c) => {
+            const theme = getCompanyTheme(c.company.slug);
+            return (
+              <Card key={c.company.id}>
+                <div style={theme.vars} className="flex items-center gap-4">
+                  <div className="rounded-lg border border-brand-200 bg-brand-50 p-1.5">
+                    <Image src={theme.logo} alt={theme.displayName} width={theme.logoWidth} height={theme.logoHeight} className="h-12 w-auto" />
+                  </div>
+                  <div>
+                    <div className="text-[17px] text-slate-500">{c.company.name}</div>
+                    <div className="text-[34px] font-semibold leading-tight text-brand-600">{c.staff}</div>
+                    <div className="text-[15px] text-slate-500">Total staff</div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+      </div>
+
+      {/* 2. Staff attendance — today */}
+      <Card>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-[21px] font-semibold text-slate-900">Staff attendance — today</h2>
+          <Link href="/director/attendance" className="text-[17px] text-brand-600 hover:underline">
+            Full attendance sheet →
+          </Link>
+        </div>
+        <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {staffCounts.map((c) => {
+            const present = presentToday.filter((p) => p.companyId === c.company.id).length;
+            return (
+              <div key={c.company.id} className="rounded-lg bg-slate-50 p-3">
+                <div className="text-[23px] font-semibold text-slate-900">
+                  {present}/{c.staff}
+                </div>
+                <div className="flex items-center gap-1.5 text-[15px] text-slate-500">
+                  <CompanyTag slug={c.company.slug} /> present
+                </div>
+              </div>
+            );
+          })}
+          <StatBox value={presentToday.filter((p) => p.stillIn).length} label="Clocked in now" color="text-emerald-600" />
+          <StatBox
+            value={staffCounts.reduce((s, c) => s + c.staff, 0) - presentToday.length}
+            label="Not in today"
+            color="text-red-600"
+          />
+        </div>
+        {presentToday.length === 0 ? (
+          <p className="text-[17px] text-slate-500">Nobody has clocked in yet today.</p>
+        ) : (
+          <div className="max-h-80 divide-y divide-brand-100 overflow-y-auto">
+            {presentToday.map((p, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <CompanyTag slug={p.companySlug} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[17px] font-medium text-slate-900">{p.name}</div>
+                    <div className="truncate text-[15px] text-slate-500">{p.title}</div>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right text-[15px]">
+                  <div className="text-slate-600">In {formatDubaiTime(p.firstIn)}</div>
+                  {p.stillIn ? (
+                    <span className="font-medium text-emerald-600">Clocked in</span>
+                  ) : (
+                    <span className="text-slate-400">Signed out</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* 3. Approvals */}
+      <Card>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-[21px] font-semibold text-slate-900">
+            Approvals — {overall.pendingApprovals} pending
+          </h2>
+          <Link href="/director/approvals" className="text-[17px] text-brand-600 hover:underline">
+            All approvals →
+          </Link>
+        </div>
+        {pendingApprovals.length === 0 ? (
+          <p className="text-[17px] text-slate-500">No pending approvals.</p>
+        ) : (
+          <div className="divide-y divide-brand-100">
+            {pendingApprovals.map((r) => (
+              <Link
+                key={r.id}
+                href={`/dashboard/approvals/${r.id}`}
+                className="flex items-center justify-between gap-3 py-2.5 hover:bg-brand-50/40"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <CompanyTag slug={slugByCompanyId.get(r.companyId) ?? ""} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[17px] font-medium text-slate-900">{r.title}</div>
+                    <div className="truncate text-[15px] text-slate-500">
+                      {r.requestedBy.user.name} → {r.approver.user.name} · {formatDate(r.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <StatusBadge status={r.status} />
+              </Link>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card>
         <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Combined performance</h2>
@@ -167,57 +312,6 @@ export default async function DirectorPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My tasks</h2>
-        {myTasks.length === 0 ? (
-          <p className="text-[17px] text-slate-500">No tasks.</p>
-        ) : (
-          <div className="space-y-2">
-            {myTasks.slice(0, 6).map((task) => (
-              <div key={task.id} className="rounded-lg border border-slate-100 p-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-2">
-                    {showTags && <CompanyTag slug={task.companySlug} />}
-                    <span className="truncate text-[17px] font-medium text-slate-900">{task.title}</span>
-                  </span>
-                  <StatusBadge status={task.status} />
-                </div>
-                <div className="mt-1.5">
-                  <ProgressBar value={task.progress} />
-                </div>
-                <div className="mt-1 text-[15px] text-slate-500">
-                  <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
-                    Due {formatDate(task.deadline)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">My KPIs</h2>
-        {myKpis.length === 0 ? (
-          <p className="text-[17px] text-slate-500">No KPIs set.</p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {myKpis.map((k) => (
-              <div key={k.id}>
-                <div className="flex items-center justify-between text-[17px]">
-                  <span className="flex items-center gap-2 font-medium text-slate-900">
-                    {showTags && <CompanyTag slug={k.companySlug} />}
-                    {k.name}
-                  </span>
-                  <span className="text-slate-500">{kpiScore(k)}%</span>
-                </div>
-                <ProgressBar value={kpiScore(k)} />
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
           At risk — {mergedAtRisk.length} overdue task{mergedAtRisk.length === 1 ? "" : "s"}
         </h2>
@@ -244,7 +338,7 @@ export default async function DirectorPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Org chart</h2>
+        <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Company structure — Flare Technical &amp; Gas Needs</h2>
         <MergedOrgChart
           directorName={directorName}
           directorTitle={directorTitle}

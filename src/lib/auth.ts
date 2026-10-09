@@ -91,6 +91,41 @@ export async function getCurrentMembership(): Promise<FullMembership | null> {
   return active as FullMembership;
 }
 
+/**
+ * The user's director membership, if they have one. The director oversees
+ * both companies from one merged Overview, so they skip /select-company and
+ * land straight on /director.
+ */
+export function getDirectorMembership(userId: string) {
+  return prisma.membership.findFirst({
+    where: { userId, isDirector: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/**
+ * "Manage My Staff" (/director/staff) is for the Managing Director only —
+ * not every isDirector membership (Jai is also flagged director as Admin).
+ */
+const MANAGE_STAFF_EMAILS = ["abraham@flaretechnical.com"];
+
+export function canManageAllStaff(membership: { user: { email: string } }) {
+  return MANAGE_STAFF_EMAILS.includes(membership.user.email.toLowerCase());
+}
+
+/**
+ * True if this person holds any membership at `companyId` — their active one
+ * or another of their own (Abraham and Jai are members of both companies).
+ */
+export async function hasCompanyAccess(
+  membership: { userId: string; companyId: string },
+  companyId: string
+) {
+  if (membership.companyId === companyId) return true;
+  const m = await prisma.membership.findFirst({ where: { userId: membership.userId, companyId } });
+  return !!m;
+}
+
 export async function getMembershipCount(): Promise<number> {
   const userId = await getSessionUserId();
   if (!userId) return 0;

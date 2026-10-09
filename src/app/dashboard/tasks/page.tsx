@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
-import { getTasksFor, getAssignedTasksFor } from "@/lib/queries";
+import { getTasksFor, getAssignedTasksFor, getProjectOptions } from "@/lib/queries";
 import { markTaskNotificationsRead } from "@/lib/notifications";
 import { AssignToColleagueForm } from "./AssignToColleagueForm";
 import { TaskList } from "./TaskList";
@@ -42,11 +42,7 @@ export default async function MyTasksPage() {
   tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   assignedTasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  const projects = await prisma.project.findMany({
-    where: { companyId: membership.companyId },
-    select: { id: true, name: true, number: true },
-    orderBy: { number: "asc" },
-  });
+  const projects = await getProjectOptions(membership.companyId);
   const titlePresets = await prisma.taskTitlePreset.findMany({
     where: { membershipId: membership.id },
     orderBy: { createdAt: "asc" },

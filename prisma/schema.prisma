@@ -32,6 +32,7 @@ model Project {
   companyId String
   number    String? // e.g. "P672-2021", the site's own project number
   name      String
+  type      String   @default("PROJECT") // PROJECT | AMC | DLP — AMC/DLP sites are listed under Maintenance, not Projects
   status    String   @default("ACTIVE") // ACTIVE | ON_HOLD | COMPLETED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

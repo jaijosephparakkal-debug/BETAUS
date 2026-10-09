@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { getProjectOptions } from "@/lib/queries";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
 import {
   Card,
@@ -87,11 +88,7 @@ export default async function TaskDetailPage({
         })
       : Promise.resolve([]),
     canManage
-      ? prisma.project.findMany({
-          where: { companyId: task.companyId },
-          select: { id: true, name: true, number: true },
-          orderBy: { number: "asc" },
-        })
+      ? getProjectOptions(task.companyId)
       : Promise.resolve([]),
   ]);
 

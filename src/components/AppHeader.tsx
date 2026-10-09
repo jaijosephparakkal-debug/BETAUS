@@ -32,6 +32,10 @@ export function AppHeader({
       ? { href: "/director/kpi", label: "KPI" }
       : { href: "/dashboard/kpis", label: "My KPIs" },
     { href: "/dashboard/projects", label: "Projects" },
+    // Maintenance (AMC / DLP sites) is Flaretech's; directors see it from either company.
+    ...(membership.company.slug === "flaretechnical" || membership.isDirector
+      ? [{ href: "/dashboard/maintenance", label: "Maintenance" }]
+      : []),
     ...(reportCount > 0
       ? [{ href: "/dashboard/team", label: "My Team" }]
       : []),

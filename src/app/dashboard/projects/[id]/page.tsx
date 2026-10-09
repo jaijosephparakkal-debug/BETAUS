@@ -23,7 +23,8 @@ export default async function ProjectDetailPage({
   if (!project || !(await hasCompanyAccess(membership, project.companyId))) notFound();
 
   const company = await prisma.company.findUnique({ where: { id: project.companyId } });
-  const hasSiteTasks = company?.slug === SITE_TASK_COMPANY_SLUG;
+  const isMaintenanceSite = project.type === "AMC" || project.type === "DLP";
+  const hasSiteTasks = company?.slug === SITE_TASK_COMPANY_SLUG && !isMaintenanceSite;
   const siteTasks = hasSiteTasks
     ? await prisma.projectSiteTask.findMany({
         where: { projectId: project.id },
@@ -47,13 +48,24 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/dashboard/projects" className="text-[19px] text-brand-600 hover:underline">
-          ← Back to Projects
-        </Link>
+        {isMaintenanceSite ? (
+          <Link href="/dashboard/maintenance" className="text-[19px] text-brand-600 hover:underline">
+            ← Back to Maintenance
+          </Link>
+        ) : (
+          <Link href="/dashboard/projects" className="text-[19px] text-brand-600 hover:underline">
+            ← Back to Projects
+          </Link>
+        )}
       </div>
 
       <div>
         <div className="flex items-center gap-2">
+          {isMaintenanceSite && (
+            <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[15px] font-semibold text-brand-700">
+              {project.type} site
+            </span>
+          )}
           <h1 className="text-[23px] font-semibold text-slate-900">{project.name}</h1>
           <StatusBadge status={project.status} />
         </div>
@@ -140,7 +152,7 @@ export default async function ProjectDetailPage({
           ))}
           {project.tasks.length === 0 && (
             <p className="text-[19px] text-slate-500">
-              No tasks linked to this project yet — link one when assigning a task.
+              No tasks linked to this {isMaintenanceSite ? "site" : "project"} yet — link one when assigning a task.
             </p>
           )}
         </div>

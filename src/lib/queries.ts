@@ -43,7 +43,7 @@ export function getAssignedTasksFor(membershipId: string) {
 /** Every project at a company, with a computed progress rollup from its linked top-level tasks. */
 export async function getProjectsFor(companyId: string) {
   const projects = await prisma.project.findMany({
-    where: { companyId },
+    where: { companyId, type: "PROJECT" },
     include: {
       tasks: {
         where: { parentTaskId: null },
@@ -414,4 +414,41 @@ export async function getKpiOverview() {
     }),
     people: Array.from(people.values()),
   };
+}
+
+/**
+ * Choices for a task's "Project / site" dropdown: projects first (by
+ * number), then Maintenance sites labelled "AMC — ..." / "DLP — ...".
+ */
+export async function getProjectOptions(companyId: string) {
+  const rows = await prisma.project.findMany({
+    where: { companyId },
+    select: { id: true, name: true, number: true, type: true },
+    orderBy: [{ number: "asc" }, { name: "asc" }],
+  });
+  const rank = (t: string) => (t === "PROJECT" ? 0 : t === "AMC" ? 1 : 2);
+  return rows
+    .sort((a, b) => rank(a.type) - rank(b.type))
+    .map((r) => ({
+      id: r.id,
+      number: r.number,
+      name: r.type === "PROJECT" ? r.name : `${r.type} — ${r.name}`,
+    }));
+}
+
+/** AMC and DLP sites for the Maintenance page. */
+export async function getMaintenanceSites(companyId: string) {
+  const sites = await prisma.project.findMany({
+    where: { companyId, type: { in: ["AMC", "DLP"] } },
+    include: { tasks: { where: { parentTaskId: null }, select: { status: true } } },
+    orderBy: { name: "asc" },
+  });
+  return sites.map((s) => ({
+    id: s.id,
+    name: s.name,
+    type: s.type as "AMC" | "DLP",
+    status: s.status,
+    taskCount: s.tasks.length,
+    openTasks: s.tasks.filter((t) => t.status !== "COMPLETED").length,
+  }));
 }

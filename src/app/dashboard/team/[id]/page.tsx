@@ -8,6 +8,7 @@ import {
   getTimelineFor,
   getCompletionsFor,
   kpiScore,
+  getProjectOptions,
 } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
 import { Card, ProgressBar, StatusBadge, formatDate } from "@/components/ui";
@@ -37,11 +38,7 @@ export default async function TeamMemberPage({
     getKpisFor(target.id),
     getTimelineFor(target.id),
     getCompletionsFor(target.id),
-    prisma.project.findMany({
-      where: { companyId: membership.companyId },
-      select: { id: true, name: true, number: true },
-      orderBy: { number: "asc" },
-    }),
+    getProjectOptions(membership.companyId),
   ]);
   const completionMonths = buildCompletionRollup(
     completions.map((c) => ({ id: c.id, title: c.title, completedAt: c.completedAt! }))

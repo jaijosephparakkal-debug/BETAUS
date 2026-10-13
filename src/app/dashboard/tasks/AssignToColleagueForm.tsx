@@ -124,9 +124,11 @@ const ADD_NEW_VALUE = "__add_new__";
 // automatically whenever one of them is selected.
 const CONTACT_TITLES = new Set(["Calls in", "Calls out", "Emails Attended", "Follow Up"]);
 const CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Office staff", "Site staff", "Others"];
-// Jayaprakash and Saroj also deal with the internal departments, so their
-// "Who was it with?" list adds them (see DEPARTMENT_CONTACT_EMAILS on the page).
-const DEPARTMENT_CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Accounts", "HR", "Sales", "Purchase", "Office staff", "Site staff", "Others"];
+// Jayaprakash and Saroj also deal with the internal departments: for them,
+// "Others" opens a second pick of these, or "+ Add other…" to type a name
+// (see DEPARTMENT_CONTACT_EMAILS on the page). Saved as contactName.
+const OTHER_CONTACT_DEPARTMENTS = ["Accounts", "HR", "Sales", "Purchase"];
+const ADD_OTHER_CONTACT = "__add_other__";
 // Jayaprakash's own titles ("Phone in", "Phone out", "Emails sent", ...) are
 // interactions too — matched loosely so small wording/case differences still count.
 const LOOSE_CONTACT_TITLE = /^(phone|calls?)\s*(in|out)\b|^emails?\s+(sent|attended)\b/i;
@@ -289,7 +291,7 @@ export function AssignToColleagueForm({
   const [contactType, setContactType] = useState("");
   const showContactFields =
     CONTACT_TITLES.has(title) || (departmentContacts && LOOSE_CONTACT_TITLE.test(title.trim()));
-  const contactTypes = departmentContacts ? DEPARTMENT_CONTACT_TYPES : CONTACT_TYPES;
+  const [otherContact, setOtherContact] = useState("");
   const showFollowUpField = title === "Follow Up";
   const showContactName = contactType === "Others";
 
@@ -334,20 +336,43 @@ export function AssignToColleagueForm({
               name="contactType"
               required
               value={contactType}
-              onChange={(e) => setContactType(e.target.value)}
+              onChange={(e) => {
+                setContactType(e.target.value);
+                setOtherContact("");
+              }}
               className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
             >
               <option value="" disabled>
                 Choose…
               </option>
-              {contactTypes.map((c) => (
+              {CONTACT_TYPES.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
             </select>
           </div>
-          {showContactName && (
+          {showContactName && departmentContacts && (
+            <select
+              name={otherContact === ADD_OTHER_CONTACT ? undefined : "contactName"}
+              required
+              value={otherContact}
+              onChange={(e) => setOtherContact(e.target.value)}
+              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+              aria-label="Which other"
+            >
+              <option value="" disabled>
+                Accounts, HR, Sales, Purchase…
+              </option>
+              {OTHER_CONTACT_DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+              <option value={ADD_OTHER_CONTACT}>+ Add other…</option>
+            </select>
+          )}
+          {showContactName && (!departmentContacts || otherContact === ADD_OTHER_CONTACT) && (
             <input
               name="contactName"
               required

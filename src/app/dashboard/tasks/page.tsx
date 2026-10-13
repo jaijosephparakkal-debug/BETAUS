@@ -13,6 +13,10 @@ import { TaskList } from "./TaskList";
 // company a given task was for.
 const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com", "jai@gasneeds.com"];
 
+// Jayaprakash (Service Engineer) and Saroj: "Who was it with?" also offers
+// Accounts / HR / Sales / Purchase.
+const DEPARTMENT_CONTACT_EMAILS = ["service@flaretechnical.com", "saroj@flaretechnical.com"];
+
 export default async function MyTasksPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
@@ -60,6 +64,7 @@ export default async function MyTasksPage() {
         titleOptions={titlePresets.map((p) => p.title)}
         taskForChoices={taskForChoices}
         companyOptions={companies}
+        departmentContacts={DEPARTMENT_CONTACT_EMAILS.includes(membership.user.email.toLowerCase())}
       />
       <TaskList
         tasks={tasks}

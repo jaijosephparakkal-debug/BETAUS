@@ -124,6 +124,12 @@ const ADD_NEW_VALUE = "__add_new__";
 // automatically whenever one of them is selected.
 const CONTACT_TITLES = new Set(["Calls in", "Calls out", "Emails Attended", "Follow Up"]);
 const CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Office staff", "Site staff", "Others"];
+// Jayaprakash and Saroj also deal with the internal departments, so their
+// "Who was it with?" list adds them (see DEPARTMENT_CONTACT_EMAILS on the page).
+const DEPARTMENT_CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Accounts", "HR", "Sales", "Purchase", "Office staff", "Site staff", "Others"];
+// Jayaprakash's own titles ("Phone in", "Phone out", "Emails sent", ...) are
+// interactions too — matched loosely so small wording/case differences still count.
+const LOOSE_CONTACT_TITLE = /^(phone|calls?)\s*(in|out)\b|^emails?\s+(sent|attended)\b/i;
 const FOLLOW_UP_TOPICS = [
   "Quotation",
   "Invoice",
@@ -264,7 +270,10 @@ export function AssignToColleagueForm({
   titleOptions,
   taskForChoices,
   companyOptions = [],
+  departmentContacts = false,
 }: {
+  /** Adds Accounts/HR/Sales/Purchase to "Who was it with?" and matches phone/email titles loosely. */
+  departmentContacts?: boolean;
   /** This person's own membership id — every task added here is always for themself. */
   selfId: string;
   titleOptions: string[];
@@ -278,7 +287,9 @@ export function AssignToColleagueForm({
   const isFirstRender = useRef(true);
   const [title, setTitle] = useState("");
   const [contactType, setContactType] = useState("");
-  const showContactFields = CONTACT_TITLES.has(title);
+  const showContactFields =
+    CONTACT_TITLES.has(title) || (departmentContacts && LOOSE_CONTACT_TITLE.test(title.trim()));
+  const contactTypes = departmentContacts ? DEPARTMENT_CONTACT_TYPES : CONTACT_TYPES;
   const showFollowUpField = title === "Follow Up";
   const showContactName = contactType === "Others";
 
@@ -329,7 +340,7 @@ export function AssignToColleagueForm({
               <option value="" disabled>
                 Choose…
               </option>
-              {CONTACT_TYPES.map((c) => (
+              {contactTypes.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { assignTaskToColleagueAction, addTaskTitlePresetAction } from "./actions";
-import { TASK_FOR_OPTIONS, OTHER_DEPARTMENTS, type TaskFor } from "@/lib/tasks";
+import { TASK_FOR_OPTIONS, OTHER_DEPARTMENTS, ADD_OTHER, type TaskFor } from "@/lib/taskFor";
 
 type Choice = { id: string; name: string; number: string | null };
 export type TaskForChoices = { projects: Choice[]; amc: Choice[]; dlp: Choice[] };
@@ -11,105 +11,165 @@ export type TaskForChoices = { projects: Choice[]; amc: Choice[]; dlp: Choice[] 
 const selectClass = "w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]";
 
 /**
+ * A dropdown whose last option, "+ Add other…", swaps to a text box (with a
+ * link back to the list). The typed text is submitted as `name` — or, when
+ * `otherName` is given, as `otherName` while `name` submits ADD_OTHER.
+ */
+function SelectWithOther({
+  name,
+  otherName,
+  options,
+  placeholder,
+  otherPlaceholder,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  name: string;
+  otherName?: string;
+  options: { value: string; label: string }[];
+  placeholder: string;
+  otherPlaceholder: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  ariaLabel?: string;
+}) {
+  const [inner, setInner] = useState("");
+  const current = value ?? inner;
+  const set = (v: string) => (onChange ? onChange(v) : setInner(v));
+
+  if (current === ADD_OTHER) {
+    return (
+      <div className="flex gap-2">
+        {otherName && <input type="hidden" name={name} value={ADD_OTHER} />}
+        <input
+          autoFocus
+          name={otherName ?? name}
+          required
+          placeholder={otherPlaceholder}
+          aria-label={ariaLabel}
+          className={selectClass}
+        />
+        <button
+          type="button"
+          onClick={() => set("")}
+          className="shrink-0 text-[15px] text-slate-500 hover:text-slate-700"
+        >
+          ← List
+        </button>
+      </div>
+    );
+  }
+  return (
+    <select
+      name={name}
+      required
+      value={current}
+      onChange={(e) => set(e.target.value)}
+      className={selectClass}
+      aria-label={ariaLabel}
+    >
+      <option value="" disabled>
+        {placeholder}
+      </option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+      <option value={ADD_OTHER}>+ Add other…</option>
+    </select>
+  );
+}
+
+const asOptions = (list: readonly string[]) => list.map((x) => ({ value: x, label: x }));
+
+/**
  * "Task for" — Projects (pick a project), Maintenance (AMC or DLP, then the
- * site), or Others (Accounts / HR / Sales / Purchase + who it's for).
- * Projects and sites submit as projectId; Others as forDepartment/forPerson.
+ * site), or Others (Accounts / HR / Sales / Purchase + who it's for). Every
+ * dropdown also has "+ Add other…" to type an answer instead. A picked
+ * project/site submits as projectId; typed answers go to forDepartment /
+ * forPerson.
  */
 function TaskForPicker({ choices }: { choices: TaskForChoices }) {
-  const [taskFor, setTaskFor] = useState<TaskFor | "">("");
-  const [maintenanceType, setMaintenanceType] = useState<"AMC" | "DLP" | "">("");
+  const [taskFor, setTaskFor] = useState("");
+  const [maintenanceType, setMaintenanceType] = useState("");
   const hasMaintenance = choices.amc.length + choices.dlp.length > 0;
   const sites = maintenanceType === "AMC" ? choices.amc : maintenanceType === "DLP" ? choices.dlp : [];
+  const siteOptions = (list: Choice[]) =>
+    list.map((p) => ({ value: p.id, label: p.number ? `${p.number} — ${p.name}` : p.name }));
 
   return (
     <div className="space-y-2">
       <div>
         <label className="block text-[15px] text-slate-600">Task for</label>
-        <select
+        <SelectWithOther
           name="taskFor"
-          required
+          otherName="forPerson"
           value={taskFor}
-          onChange={(e) => {
-            setTaskFor(e.target.value as TaskFor);
+          onChange={(v) => {
+            setTaskFor(v);
             setMaintenanceType("");
           }}
-          className={selectClass}
-        >
-          <option value="" disabled>
-            Choose…
-          </option>
-          {(Object.keys(TASK_FOR_OPTIONS) as TaskFor[])
+          placeholder="Choose…"
+          otherPlaceholder="What is this task for?"
+          options={(Object.keys(TASK_FOR_OPTIONS) as TaskFor[])
             .filter((k) => k !== "MAINTENANCE" || hasMaintenance)
-            .map((k) => (
-              <option key={k} value={k}>
-                {TASK_FOR_OPTIONS[k]}
-              </option>
-            ))}
-        </select>
+            .map((k) => ({ value: k, label: TASK_FOR_OPTIONS[k] }))}
+        />
       </div>
 
       {taskFor === "PROJECT" && (
-        <select name="projectId" required defaultValue="" className={selectClass} aria-label="Project">
-          <option value="" disabled>
-            Choose project…
-          </option>
-          {choices.projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.number ? `${p.number} — ${p.name}` : p.name}
-            </option>
-          ))}
-        </select>
+        <SelectWithOther
+          name="projectId"
+          otherName="forPerson"
+          placeholder="Choose project…"
+          otherPlaceholder="Project name"
+          ariaLabel="Project"
+          options={siteOptions(choices.projects)}
+        />
       )}
 
       {taskFor === "MAINTENANCE" && (
         <>
-          <select
-            required
+          <SelectWithOther
+            name="forDepartment"
             value={maintenanceType}
-            onChange={(e) => setMaintenanceType(e.target.value as "AMC" | "DLP")}
-            className={selectClass}
-            aria-label="AMC or DLP"
-          >
-            <option value="" disabled>
-              AMC or DLP…
-            </option>
-            {choices.amc.length > 0 && <option value="AMC">AMC</option>}
-            {choices.dlp.length > 0 && <option value="DLP">DLP</option>}
-          </select>
-          {maintenanceType && (
-            <select
+            onChange={setMaintenanceType}
+            placeholder="AMC or DLP…"
+            otherPlaceholder="Type of maintenance"
+            ariaLabel="AMC or DLP"
+            options={[
+              ...(choices.amc.length > 0 ? [{ value: "AMC", label: "AMC" }] : []),
+              ...(choices.dlp.length > 0 ? [{ value: "DLP", label: "DLP" }] : []),
+            ]}
+          />
+          {(maintenanceType === "AMC" || maintenanceType === "DLP") && (
+            <SelectWithOther
               key={maintenanceType}
               name="projectId"
-              required
-              defaultValue=""
-              className={selectClass}
-              aria-label={`${maintenanceType} site`}
-            >
-              <option value="" disabled>
-                Choose {maintenanceType} site…
-              </option>
-              {sites.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              otherName="forPerson"
+              placeholder={`Choose ${maintenanceType} site…`}
+              otherPlaceholder="Site name"
+              ariaLabel={`${maintenanceType} site`}
+              options={siteOptions(sites)}
+            />
+          )}
+          {maintenanceType === ADD_OTHER && (
+            <input name="forPerson" required placeholder="Site name" className={selectClass} />
           )}
         </>
       )}
 
       {taskFor === "OTHERS" && (
         <>
-          <select name="forDepartment" required defaultValue="" className={selectClass} aria-label="Department">
-            <option value="" disabled>
-              Accounts, HR, Sales or Purchase…
-            </option>
-            {OTHER_DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+          <SelectWithOther
+            name="forDepartment"
+            placeholder="Accounts, HR, Sales or Purchase…"
+            otherPlaceholder="Department"
+            ariaLabel="Department"
+            options={asOptions(OTHER_DEPARTMENTS)}
+          />
           <input name="forPerson" required placeholder="Who is this task for?" className={selectClass} />
         </>
       )}
@@ -128,7 +188,6 @@ const CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Office staff", "Site sta
 // "Others" opens a second pick of these, or "+ Add other…" to type a name
 // (see DEPARTMENT_CONTACT_EMAILS on the page). Saved as contactName.
 const OTHER_CONTACT_DEPARTMENTS = ["Accounts", "HR", "Sales", "Purchase"];
-const ADD_OTHER_CONTACT = "__add_other__";
 // Jayaprakash's own titles ("Phone in", "Phone out", "Emails sent", ...) are
 // interactions too — matched loosely so small wording/case differences still count.
 const LOOSE_CONTACT_TITLE = /^(phone|calls?)\s*(in|out)\b|^emails?\s+(sent|attended)\b/i;
@@ -291,7 +350,6 @@ export function AssignToColleagueForm({
   const [contactType, setContactType] = useState("");
   const showContactFields =
     CONTACT_TITLES.has(title) || (departmentContacts && LOOSE_CONTACT_TITLE.test(title.trim()));
-  const [otherContact, setOtherContact] = useState("");
   const showFollowUpField = title === "Follow Up";
   const showContactName = contactType === "Others";
 
@@ -332,74 +390,39 @@ export function AssignToColleagueForm({
         <div className="space-y-2">
           <div>
             <label className="block text-[15px] text-slate-600">Who was it with?</label>
-            <select
+            <SelectWithOther
               name="contactType"
-              required
+              otherName="contactName"
               value={contactType}
-              onChange={(e) => {
-                setContactType(e.target.value);
-                setOtherContact("");
-              }}
-              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-            >
-              <option value="" disabled>
-                Choose…
-              </option>
-              {CONTACT_TYPES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          {showContactName && departmentContacts && (
-            <select
-              name={otherContact === ADD_OTHER_CONTACT ? undefined : "contactName"}
-              required
-              value={otherContact}
-              onChange={(e) => setOtherContact(e.target.value)}
-              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-              aria-label="Which other"
-            >
-              <option value="" disabled>
-                Accounts, HR, Sales, Purchase…
-              </option>
-              {OTHER_CONTACT_DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-              <option value={ADD_OTHER_CONTACT}>+ Add other…</option>
-            </select>
-          )}
-          {showContactName && (!departmentContacts || otherContact === ADD_OTHER_CONTACT) && (
-            <input
-              name="contactName"
-              required
-              placeholder="Mention who"
-              className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+              onChange={setContactType}
+              placeholder="Choose…"
+              otherPlaceholder="Mention who"
+              options={asOptions(CONTACT_TYPES)}
             />
-          )}
+          </div>
+          {showContactName &&
+            (departmentContacts ? (
+              <SelectWithOther
+                name="contactName"
+                placeholder="Accounts, HR, Sales, Purchase…"
+                otherPlaceholder="Mention who"
+                ariaLabel="Which other"
+                options={asOptions(OTHER_CONTACT_DEPARTMENTS)}
+              />
+            ) : (
+              <input name="contactName" required placeholder="Mention who" className={selectClass} />
+            ))}
         </div>
       )}
       {showFollowUpField && (
         <div>
           <label className="block text-[15px] text-slate-600">What are they following up on?</label>
-          <select
+          <SelectWithOther
             name="followUpTopic"
-            required
-            defaultValue=""
-            className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
-          >
-            <option value="" disabled>
-              Choose…
-            </option>
-            {FOLLOW_UP_TOPICS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            placeholder="Choose…"
+            otherPlaceholder="What are they following up on?"
+            options={asOptions(FOLLOW_UP_TOPICS)}
+          />
         </div>
       )}
       {companyOptions.length > 0 && (

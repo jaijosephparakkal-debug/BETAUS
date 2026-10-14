@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { taskForLabel } from "@/lib/taskFor";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getProjectOptions } from "@/lib/queries";
@@ -136,11 +137,8 @@ export default async function TaskDetailPage({
             Following up on: {task.followUpTopic}
           </span>
         )}
-        {task.forDepartment && (
-          <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
-            For: {task.forDepartment}
-            {task.forPerson ? ` — ${task.forPerson}` : ""}
-          </span>
+        {taskForLabel(task) && (
+          <span className="mt-1 ml-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">{taskForLabel(task)}</span>
         )}
         {task.description && (
           <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>

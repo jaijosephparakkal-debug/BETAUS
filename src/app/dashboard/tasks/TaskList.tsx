@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { taskForLabel } from "@/lib/taskFor";
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 
 type BaseTask = {
@@ -17,6 +18,7 @@ type BaseTask = {
   contactType: string | null;
   contactName: string | null;
   followUpTopic: string | null;
+  taskFor?: string | null;
   forDepartment?: string | null;
   forPerson?: string | null;
   companySlug: string;
@@ -91,11 +93,8 @@ function TaskCard({
               Following up on: {task.followUpTopic}
             </span>
           )}
-          {task.forDepartment && (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">
-              For: {task.forDepartment}
-              {task.forPerson ? ` — ${task.forPerson}` : ""}
-            </span>
+          {taskForLabel(task) && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[15px] text-slate-600">{taskForLabel(task)}</span>
           )}
         </div>
         {task.description && (

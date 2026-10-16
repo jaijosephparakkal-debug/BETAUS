@@ -154,6 +154,7 @@ export function SiteTasks({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [toAdd, setToAdd] = useState("");
+  const [newTask, setNewTask] = useState("");
   const [adding, startAdding] = useTransition();
   const fulfilledPct = Math.min(100, summary.fulfilled);
 
@@ -226,39 +227,71 @@ export function SiteTasks({
         </div>
       )}
 
-      {canEdit && missingStandard.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-brand-100 pt-3">
-          <select
-            value={toAdd}
-            onChange={(e) => setToAdd(e.target.value)}
-            className="rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
-          >
-            <option value="">Add back a removed task…</option>
-            {missingStandard.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={!toAdd || adding}
-            onClick={() =>
+      {canEdit && (
+        <div className="mt-4 space-y-2 border-t border-brand-100 pt-3">
+          {missingStandard.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={toAdd}
+                onChange={(e) => setToAdd(e.target.value)}
+                className="rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+              >
+                <option value="">Add back a removed task…</option>
+                {missingStandard.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!toAdd || adding}
+                onClick={() =>
+                  startAdding(async () => {
+                    setError(null);
+                    const result = await addSiteTaskAction(projectId, toAdd);
+                    if (result.error) setError(result.error);
+                    else setToAdd("");
+                  })
+                }
+                className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                {adding ? "Adding…" : "Add"}
+              </button>
+            </div>
+          )}
+          <form
+            className="flex flex-wrap items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
               startAdding(async () => {
                 setError(null);
-                const result = await addSiteTaskAction(projectId, toAdd);
+                const result = await addSiteTaskAction(projectId, newTask);
                 if (result.error) setError(result.error);
-                else setToAdd("");
-              })
-            }
-            className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                else setNewTask("");
+              });
+            }}
           >
-            {adding ? "Adding…" : "Add"}
-          </button>
+            <input
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder="+ Add a new task for this project…"
+              maxLength={120}
+              className="min-w-0 flex-1 rounded-md border border-brand-300 px-2 py-1.5 text-[17px]"
+              aria-label="New site task"
+            />
+            <button
+              type="submit"
+              disabled={!newTask.trim() || adding}
+              className="rounded-lg bg-brand-600 px-3 py-1.5 text-[17px] font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            >
+              {adding ? "Adding…" : "Add task"}
+            </button>
+          </form>
         </div>
       )}
       <p className="mt-3 text-[15px] text-slate-400">
-        Weights: Ram, Abraham or Saroj. Progress: Ram, Abraham, Saroj or Jiyad. Removing/adding tasks: Ram, Abraham or Saroj.
+        Weights: Ram, Abraham or Saroj. Progress: Ram, Abraham, Saroj or Jiyad. Removing or adding tasks: Ram, Abraham or Saroj.
       </p>
     </div>
   );

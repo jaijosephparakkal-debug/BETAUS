@@ -138,18 +138,29 @@ export async function deleteSiteTaskAction(projectId: string, siteTaskId: string
   return {};
 }
 
-/** Adds back a standard site task that was deleted from this project. */
-export async function addSiteTaskAction(projectId: string, title: string) {
+/**
+ * Adds a task to this project's site checklist: a standard one that was
+ * removed (keeps its usual position), or a new one typed in (goes last).
+ */
+export async function addSiteTaskAction(projectId: string, rawTitle: string) {
   const access = await assertCanEditSiteTasks(projectId);
   if ("error" in access) return { error: access.error };
-  const index = STANDARD_SITE_TASKS.indexOf(title as (typeof STANDARD_SITE_TASKS)[number]);
-  if (index === -1) return { error: "Unknown task." };
+  const title = rawTitle.replace(/\s+/g, " ").trim();
+  if (!title) return { error: "Type the task name." };
+  if (title.length > 120) return { error: "Keep the task name under 120 characters." };
 
-  await prisma.projectSiteTask.upsert({
-    where: { projectId_title: { projectId, title } },
-    update: {},
-    create: { projectId, title, sortOrder: index + 1 },
+  const existing = await prisma.projectSiteTask.findFirst({
+    where: { projectId, title: { equals: title, mode: "insensitive" } },
   });
+  if (existing) return { error: `"${existing.title}" is already on this project.` };
+
+  const index = STANDARD_SITE_TASKS.indexOf(title as (typeof STANDARD_SITE_TASKS)[number]);
+  let sortOrder = index + 1;
+  if (index === -1) {
+    const last = await prisma.projectSiteTask.aggregate({ where: { projectId }, _max: { sortOrder: true } });
+    sortOrder = Math.max(last._max.sortOrder ?? 0, STANDARD_SITE_TASKS.length) + 1;
+  }
+  await prisma.projectSiteTask.create({ data: { projectId, title, sortOrder } });
   revalidateProject(projectId);
   return {};
 }

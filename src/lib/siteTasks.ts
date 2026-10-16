@@ -59,8 +59,12 @@ const SITE_TASK_EDITOR_EMAILS = [
   "saroj@flaretechnical.com",
 ];
 
-/** Who can set each task's weight — not Ram. */
-const SITE_TASK_WEIGHT_EMAILS = ["abraham@flaretechnical.com", "saroj@flaretechnical.com"];
+/** Who can set each task's weight. */
+const SITE_TASK_WEIGHT_EMAILS = [
+  "ram@flaretechnical.com", // Projects Manager
+  "abraham@flaretechnical.com",
+  "saroj@flaretechnical.com",
+];
 
 export function canEditSiteTasks(user: { email: string }) {
   return SITE_TASK_EDITOR_EMAILS.includes(user.email.toLowerCase());

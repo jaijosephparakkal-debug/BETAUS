@@ -258,7 +258,7 @@ export function SiteTasks({
         </div>
       )}
       <p className="mt-3 text-[15px] text-slate-400">
-        Weights: Abraham or Saroj. Progress: Ram, Abraham, Saroj or Jiyad. Removing/adding tasks: Ram, Abraham or Saroj.
+        Weights: Ram, Abraham or Saroj. Progress: Ram, Abraham, Saroj or Jiyad. Removing/adding tasks: Ram, Abraham or Saroj.
       </p>
     </div>
   );

@@ -80,7 +80,7 @@ async function assertCanEditSiteTasks(
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." as const };
   if (need === "weights" && !canSetSiteTaskWeights(membership.user)) {
-    return { error: "Only Abraham or Saroj can set weights." as const };
+    return { error: "Only Ram, Abraham or Saroj can set weights." as const };
   }
   if (need === "progress" && !canUpdateSiteTaskProgress(membership.user)) {
     return { error: "Only Ram, Abraham, Saroj or Jiyad can update progress." as const };

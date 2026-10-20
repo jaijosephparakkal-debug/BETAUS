@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 async function assertCanManage(membershipId: string) {
   const membership = await getCurrentMembership();
@@ -30,7 +31,7 @@ export async function assignTaskAction(
   const target = await prisma.membership.findUnique({ where: { id: membershipId } });
   if (!target) return { error: "Person not found." };
 
-  await prisma.task.create({
+  const task = await prisma.task.create({
     data: {
       companyId: target.companyId,
       title,
@@ -42,7 +43,10 @@ export async function assignTaskAction(
     },
   });
 
+  await notifyTaskAssigned(access.membership.id, membershipId, task.id, title);
+
   revalidatePath(`/dashboard/team/${membershipId}`);
+  revalidatePath(`/director/staff/${target.userId}`);
   revalidatePath("/dashboard/team");
   return {};
 }

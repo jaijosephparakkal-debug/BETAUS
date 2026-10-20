@@ -10,6 +10,7 @@ import {
   dubaiMinutesOfDay,
   formatDubaiTime,
 } from "@/lib/attendance";
+import { AssignTaskForm } from "@/app/dashboard/team/[id]/ManageForms";
 import { Card, CompanyTag, ProgressBar, StatusBadge, formatDate, isOverdue } from "@/components/ui";
 
 const TASK_FILTERS = {
@@ -177,6 +178,18 @@ export default async function StaffProfilePage({
       timeZone: "UTC",
     });
   };
+  const projectsByMembership = new Map<string, { id: string; name: string; number: string | null }[]>();
+  for (const m of memberships) {
+    projectsByMembership.set(
+      m.id,
+      await prisma.project.findMany({
+        where: { companyId: m.companyId },
+        select: { id: true, name: true, number: true },
+        orderBy: { number: "asc" },
+      })
+    );
+  }
+
   const officeStartLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_START.hour - 4, OFFICE_START.minute)));
   const officeEndLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_END.hour - 4, OFFICE_END.minute)));
 
@@ -215,6 +228,22 @@ export default async function StaffProfilePage({
           ))}
         </div>
       </div>
+
+      {/* Assign a task to this person, per company they belong to */}
+      <Card>
+        <div className="space-y-3">
+          {memberships.map((m) => (
+            <div key={m.id}>
+              {memberships.length > 1 && (
+                <div className="mb-1">
+                  <CompanyTag slug={m.company.slug} />
+                </div>
+              )}
+              <AssignTaskForm membershipId={m.id} projects={projectsByMembership.get(m.id) ?? []} />
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Numbers — each one opens the matching task list below */}
       <Card>

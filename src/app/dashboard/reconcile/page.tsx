@@ -43,7 +43,7 @@ export default async function ReconcilePage() {
         <h1 className="text-[23px] font-semibold text-slate-900">Reconcile my attendance</h1>
         <p className="text-[19px] text-slate-500">
           {open
-            ? `The window is open until 12:30 PM. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as a manual change and shows that way in attendance reports.`
+            ? `The window is open until ${RECONCILE_WINDOW.endLabel}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as a manual change and shows that way in attendance reports.`
             : `Reconciliation window: ${RECONCILE_WINDOW.label} on 22 Oct 2026. It is closed right now, so these records are read-only.`}
         </p>
       </div>

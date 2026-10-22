@@ -1,7 +1,8 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { saveEntryAction, addEntryAction } from "./actions";
+import { useState, useTransition } from "react";
+import { saveEntryAction, addEntryAction, deleteManualEntryAction } from "./actions";
 
 const input = "rounded-md border border-brand-300 px-2 py-1 text-[17px]";
 
@@ -35,7 +36,7 @@ export function EntryForm({ entryId, inTime, outTime, canEditOut, note, disabled
   );
 }
 
-export function AddForm({ date, memberships, disabled }: { date: string; memberships: { id: string; label: string }[]; disabled: boolean }) {
+export function AddForm({ date, memberships, disabled, openEnded }: { date: string; memberships: { id: string; label: string }[]; disabled: boolean; openEnded?: boolean }) {
   const [state, action] = useFormState(addEntryAction, {});
   if (disabled) return null;
   return (
@@ -49,12 +50,42 @@ export function AddForm({ date, memberships, disabled }: { date: string; members
         <input type="hidden" name="membershipId" value={memberships[0].id} />
       )}
       <input name="in" type="time" required className={input} />
-      <span className="text-slate-400">to</span>
-      <input name="out" type="time" required className={input} />
+      {openEnded ? (
+        <span className="text-[15px] text-slate-500">logout comes when you sign out</span>
+      ) : (
+        <>
+          <span className="text-slate-400">to</span>
+          <input name="out" type="time" required className={input} />
+        </>
+      )}
       <input name="note" placeholder="Reason (e.g. forgot to log in)" required className={`${input} w-56`} />
       <Save label="Add shift" />
       {state.error && <span className="text-[15px] text-red-600">{state.error}</span>}
       {state.ok && <span className="text-[15px] text-emerald-600">Added — flagged as manual</span>}
     </form>
+  );
+}
+
+export function RemoveButton({ entryId }: { entryId: string }) {
+  const [pending, start] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => {
+          if (!window.confirm("Remove this entry that was added by hand?")) return;
+          start(async () => {
+            const r = await deleteManualEntryAction(entryId);
+            if (r.error) setErr(r.error);
+          });
+        }}
+        className="text-[15px] text-red-600 hover:underline disabled:opacity-60"
+      >
+        {pending ? "Removing…" : "Remove this manual entry"}
+      </button>
+      {err && <span className="ml-2 text-[15px] text-red-600">{err}</span>}
+    </span>
   );
 }

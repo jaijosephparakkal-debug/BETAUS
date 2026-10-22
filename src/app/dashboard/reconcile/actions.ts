@@ -73,7 +73,9 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
   if (dateKey < RECONCILE_FROM || dateKey > dubaiDateKey(now)) return { error: "Pick a date from 26 Sep to today." };
 
   const note = String(formData.get("note") || "");
-  const checked = checkTimes(dateKey, String(formData.get("in") || ""), String(formData.get("out") || ""), note, now, true);
+  // Today's shift can be added with just a login time — the logout then comes from signing out as normal.
+  const isToday = dateKey === dubaiDateKey(now);
+  const checked = checkTimes(dateKey, String(formData.get("in") || ""), String(formData.get("out") || ""), note, now, !isToday);
   if ("error" in checked) return { error: checked.error };
 
   await prisma.attendanceEntry.create({
@@ -81,7 +83,7 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
       membershipId,
       clockIn: checked.clockIn,
       clockOut: checked.clockOut,
-      reason: "SHIFT_ENDED",
+      reason: checked.clockOut ? "SHIFT_ENDED" : null,
       isManual: true,
       manualNote: note.trim(),
       manualAt: now,
@@ -120,4 +122,20 @@ export async function addBulkEntriesAction(rows: { date: string; in: string; out
   revalidatePath("/dashboard/reconcile");
   revalidatePath("/director/attendance");
   return { added: data.length };
+}
+
+/** Removes an entry that was added by hand — never a system-recorded one. Only the person it belongs to, inside the window. */
+export async function deleteManualEntryAction(entryId: string): Promise<State> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
+
+  const entry = await prisma.attendanceEntry.findUnique({ where: { id: entryId }, include: { membership: true } });
+  if (!entry || entry.membership.userId !== me.userId) return { error: "Entry not found." };
+  if (!entry.isManual || entry.origClockIn) return { error: "Only an entry added by hand can be removed." };
+
+  await prisma.attendanceEntry.delete({ where: { id: entryId } });
+  revalidatePath("/dashboard/reconcile");
+  revalidatePath("/director/attendance");
+  return { ok: true };
 }

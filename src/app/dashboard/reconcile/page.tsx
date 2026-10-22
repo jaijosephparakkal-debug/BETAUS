@@ -4,7 +4,7 @@ import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { DUBAI_OFFSET_MS, dubaiDateKey, formatDubaiTime } from "@/lib/attendance";
 import { isReconcileOpen, reconcileEndLabel, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
-import { EntryForm, AddForm } from "./ReconcileForms";
+import { EntryForm, AddForm, RemoveButton } from "./ReconcileForms";
 
 function hhmm(d: Date) {
   const s = new Date(d.getTime() + DUBAI_OFFSET_MS);
@@ -68,15 +68,16 @@ export default async function ReconcilePage() {
                       disabled={!open}
                     />
                     {e.isManual && (
-                      <div className="text-[15px] text-amber-700">
-                        Manual change{e.origClockIn ? ` — was ${formatDubaiTime(e.origClockIn)}${e.origClockOut ? ` to ${formatDubaiTime(e.origClockOut)}` : ""}` : " — added by hand"}
+                      <div className="flex flex-wrap items-center gap-3 text-[15px] text-amber-700">
+                        <span>Manual change{e.origClockIn ? ` — was ${formatDubaiTime(e.origClockIn)}${e.origClockOut ? ` to ${formatDubaiTime(e.origClockOut)}` : ""}` : " — added by hand"}</span>
+                        {open && !e.origClockIn && <RemoveButton entryId={e.id} />}
                       </div>
                     )}
                   </div>
                 );
               })}
               {list.length === 0 && <div className="text-[17px] text-slate-500">No login recorded.</div>}
-              <AddForm date={day} memberships={options} disabled={!open} />
+              <AddForm date={day} memberships={options} disabled={!open} openEnded={day === today} />
             </div>
           </Card>
         );

@@ -2,7 +2,7 @@ import { dubaiDateKey, dubaiMinutesOfDay } from "@/lib/attendance";
 
 // One-off window in which staff may correct their own attendance. Every
 // change made in it is flagged as manual and shows that way in reports.
-export const RECONCILE_WINDOW = { date: "2026-10-22", startMin: 12 * 60, endMin: 13 * 60, label: "12:00 – 1:00 PM", endLabel: "1:00 PM" };
+export const RECONCILE_WINDOW = { date: "2026-10-22", startMin: 12 * 60, endMin: 22 * 60, label: "12:00 PM – 10:00 PM", endLabel: "10:00 PM" };
 export const RECONCILE_FROM = "2026-09-26";
 
 // People whose window runs later than everyone else's, by sign-in email (minutes after midnight, Dubai).

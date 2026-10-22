@@ -58,8 +58,8 @@ function MergedAttendanceTable({ entries, now }: { entries: Entry[]; now: Date }
                     {entry.membership.user.name}
                   </Link>
                   {entry.isManual && (
-                    <span title={entry.manualNote ?? "Manual change"} className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[15px] text-amber-800">
-                      Manual
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[15px] text-amber-800">
+                      Corrected manually
                     </span>
                   )}
                 </td>

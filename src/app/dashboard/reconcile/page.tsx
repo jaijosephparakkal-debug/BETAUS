@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
-import { DUBAI_OFFSET_MS, dubaiDateKey, formatDubaiTime } from "@/lib/attendance";
+import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
 import { isReconcileOpen, reconcileEndLabel, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
 import { EntryForm, AddForm, RemoveButton } from "./ReconcileForms";
 
@@ -43,7 +43,7 @@ export default async function ReconcilePage() {
         <h1 className="text-[23px] font-semibold text-slate-900">Reconcile my attendance</h1>
         <p className="text-[19px] text-slate-500">
           {open
-            ? `The window is open until ${reconcileEndLabel(me.user.email)}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as a manual change and shows that way in attendance reports.`
+            ? `The window is open until ${reconcileEndLabel(me.user.email)}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as “Corrected manually” in attendance reports.`
             : `Reconciliation window: ${RECONCILE_WINDOW.label} on 22 Oct 2026. It is closed right now, so these records are read-only.`}
         </p>
       </div>
@@ -69,7 +69,7 @@ export default async function ReconcilePage() {
                     />
                     {e.isManual && (
                       <div className="flex flex-wrap items-center gap-3 text-[15px] text-amber-700">
-                        <span>Manual change{e.origClockIn ? ` — was ${formatDubaiTime(e.origClockIn)}${e.origClockOut ? ` to ${formatDubaiTime(e.origClockOut)}` : ""}` : " — added by hand"}</span>
+                        <span>Corrected manually</span>
                         {open && !e.origClockIn && <RemoveButton entryId={e.id} />}
                       </div>
                     )}

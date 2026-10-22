@@ -7,7 +7,10 @@ export const RECONCILE_FROM = "2026-09-26";
 
 // People whose window runs later than everyone else's, by sign-in email (minutes after midnight, Dubai).
 const EXTENDED: Record<string, { endMin: number; label: string }> = {
-  "sales@gasneeds.com": { endMin: 22 * 60, label: "10:00 PM" },
+  "sales@gasneeds.com": { endMin: 22 * 60, label: "10:00 PM" }, // Antony
+  "alerts@flaretechnical.com": { endMin: 22 * 60, label: "10:00 PM" }, // Flexie
+  "jiyad.m@flaretechnical.com": { endMin: 22 * 60, label: "10:00 PM" }, // Jiyad
+  "ram@flaretechnical.com": { endMin: 22 * 60, label: "10:00 PM" }, // Ram
 };
 
 export function reconcileEndLabel(email: string) {

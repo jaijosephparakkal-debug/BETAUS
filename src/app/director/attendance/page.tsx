@@ -130,6 +130,12 @@ export default async function AttendanceSheetPage({
         </div>
         <div className="flex items-center gap-2 text-[19px]">
           <a
+            href="/api/reports/attendance-log"
+            className="rounded-md bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700"
+          >
+            Download full log (Excel)
+          </a>
+          <a
             href={`/director/attendance?date=${toIso(prevDate)}`}
             className="rounded-md border border-brand-200 px-3 py-1.5 text-brand-600 hover:bg-brand-50"
           >

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import EmailForm from "./EmailForm";
+import AddEmployeeForm from "./AddEmployeeForm";
 
 export default async function EmployeesPage() {
   const membership = await getCurrentMembership();
@@ -12,6 +13,16 @@ export default async function EmployeesPage() {
   const employees = await prisma.membership.findMany({
     where: { companyId: membership.companyId },
     include: { user: true, manager: { include: { user: true } } },
+    orderBy: { title: "asc" },
+  });
+
+  const mine = await prisma.membership.findMany({
+    where: { userId: membership.userId },
+    include: { company: true },
+  });
+  const managerRows = await prisma.membership.findMany({
+    where: { companyId: { in: mine.map((m) => m.companyId) } },
+    include: { user: true },
     orderBy: { title: "asc" },
   });
 
@@ -26,6 +37,10 @@ export default async function EmployeesPage() {
           emails to the real ones before employees try to sign in.
         </p>
       </div>
+      <AddEmployeeForm
+        companies={mine.map((m) => ({ id: m.companyId, name: m.company.name }))}
+        managers={managerRows.map((m) => ({ id: m.id, name: m.user.name, companyId: m.companyId }))}
+      />
       <Card className="!p-0">
         <table className="w-full text-[19px]">
           <thead>

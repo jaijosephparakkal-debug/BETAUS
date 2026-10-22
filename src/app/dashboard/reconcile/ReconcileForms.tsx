@@ -68,24 +68,35 @@ export function AddForm({ date, memberships, disabled, openEnded }: { date: stri
 
 export function RemoveButton({ entryId }: { entryId: string }) {
   const [pending, start] = useTransition();
+  const [confirming, setConfirming] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  if (!confirming) {
+    return (
+      <button type="button" onClick={() => setConfirming(true)} className="text-[15px] text-red-600 hover:underline">
+        Remove this manual entry
+      </button>
+    );
+  }
   return (
-    <span>
+    <span className="flex items-center gap-2 text-[15px]">
+      <span className="text-slate-700">Remove this entry that was added by hand?</span>
       <button
         type="button"
         disabled={pending}
-        onClick={() => {
-          if (!window.confirm("Remove this entry that was added by hand?")) return;
+        onClick={() =>
           start(async () => {
             const r = await deleteManualEntryAction(entryId);
             if (r.error) setErr(r.error);
-          });
-        }}
-        className="text-[15px] text-red-600 hover:underline disabled:opacity-60"
+          })
+        }
+        className="rounded bg-red-600 px-2 py-0.5 text-white disabled:opacity-60"
       >
-        {pending ? "Removing…" : "Remove this manual entry"}
+        {pending ? "Removing…" : "Yes, remove"}
       </button>
-      {err && <span className="ml-2 text-[15px] text-red-600">{err}</span>}
+      <button type="button" onClick={() => setConfirming(false)} className="text-slate-500 hover:underline">
+        Cancel
+      </button>
+      {err && <span className="text-red-600">{err}</span>}
     </span>
   );
 }

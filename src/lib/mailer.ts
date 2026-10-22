@@ -11,6 +11,16 @@ const resend = process.env.RESEND_API_KEY
 // and codes will go straight to each person's real address again.
 const REDIRECT_TO = process.env.EMAIL_REDIRECT_TO;
 
+const SENDER_NAME = "OWN IT";
+
+// Always send under the product name; only the address comes from EMAIL_FROM,
+// so a stale display name in that setting can't leak into inboxes.
+function fromAddress() {
+  const raw = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const match = raw.match(/<([^>]+)>/);
+  return `${SENDER_NAME} <${(match ? match[1] : raw).trim()}>`;
+}
+
 /** Sends a sign-in code by email, or logs it to the console when no email service is configured. */
 export async function sendCodeEmail(email: string, code: string) {
   if (!resend) {
@@ -27,7 +37,7 @@ export async function sendCodeEmail(email: string, code: string) {
     : `Your OWN IT sign-in code is ${code}. It expires in 10 minutes.`;
 
   const result = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "OWN IT <onboarding@resend.dev>",
+    from: fromAddress(),
     to,
     subject,
     text,
@@ -53,7 +63,7 @@ export async function sendReportEmail(
   }
 
   const result = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "OWN IT <onboarding@resend.dev>",
+    from: fromAddress(),
     to,
     subject,
     html,

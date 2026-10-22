@@ -91,3 +91,32 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
   revalidatePath("/director/attendance");
   return { ok: true };
 }
+
+export async function addBulkEntriesAction(rows: { date: string; in: string; out: string }[]): Promise<{ error?: string; added?: number }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!isReconcileOpen()) return { error: closedMsg };
+  if (rows.length === 0 || rows.length > 40) return { error: "Nothing to save." };
+
+  const now = new Date();
+  const note = "Manual entry by director: worked but did not log in; usual hours entered manually";
+  const data = [];
+  for (const r of rows) {
+    if (r.date < RECONCILE_FROM || r.date >= dubaiDateKey(now)) return { error: `${r.date}: pick a date from 26 Sep up to yesterday.` };
+    const checked = checkTimes(r.date, r.in, r.out, note, now, true);
+    if ("error" in checked) return { error: `${r.date}: ${checked.error}` };
+    data.push({
+      membershipId: me.id,
+      clockIn: checked.clockIn,
+      clockOut: checked.clockOut,
+      reason: "SHIFT_ENDED",
+      isManual: true,
+      manualNote: note,
+      manualAt: now,
+    });
+  }
+  await prisma.attendanceEntry.createMany({ data });
+  revalidatePath("/dashboard/reconcile");
+  revalidatePath("/director/attendance");
+  return { added: data.length };
+}

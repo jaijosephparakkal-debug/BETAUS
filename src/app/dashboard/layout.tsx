@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { getCompanyTheme } from "@/lib/theme";
 import { clockInIfNeeded } from "@/lib/attendance";
 import { getUnreadTaskNotificationCount } from "@/lib/notifications";
+import { isReconcileOpen } from "@/lib/reconcile";
 
 export default async function DashboardLayout({
   children,
@@ -42,6 +43,11 @@ export default async function DashboardLayout({
         taskNotificationCount={taskNotificationCount}
         clockInIso={attendanceEntry.clockIn.toISOString()}
       />
+      {isReconcileOpen() && (
+        <a href="/dashboard/reconcile" className="block bg-amber-100 px-4 py-2 text-center text-[19px] font-medium text-amber-900 hover:bg-amber-200">
+          Attendance reconciliation is open until 12:30 PM — tap to review and correct your shifts
+        </a>
+      )}
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
   );

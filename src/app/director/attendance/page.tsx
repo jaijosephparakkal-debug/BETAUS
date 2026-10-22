@@ -23,6 +23,8 @@ type Entry = {
   clockIn: Date;
   clockOut: Date | null;
   reason: string | null;
+  isManual: boolean;
+  manualNote: string | null;
   membership: { title: string; userId: string; user: { name: string }; company: { slug: string } };
 };
 
@@ -55,6 +57,11 @@ function MergedAttendanceTable({ entries, now }: { entries: Entry[]; now: Date }
                   >
                     {entry.membership.user.name}
                   </Link>
+                  {entry.isManual && (
+                    <span title={entry.manualNote ?? "Manual change"} className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[15px] text-amber-800">
+                      Manual
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <CompanyTag slug={entry.membership.company.slug} />

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { getRecipients } from "./actions";
-import SendButton from "./SendButton";
+import SendButton, { FlexieButton } from "./SendButton";
 
 export default async function NotifyReconcilePage() {
   const me = await getCurrentMembership();
@@ -24,6 +24,13 @@ export default async function NotifyReconcilePage() {
           ))}
         </ul>
         <SendButton count={recipients.length} />
+      </Card>
+      <Card>
+        <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Window open until 10 PM — Flexie</h2>
+        <p className="mb-3 text-[19px] text-slate-500">
+          Antony, Jiyad and Ram get the same reminder automatically at about 3 PM today.
+        </p>
+        <FlexieButton />
       </Card>
     </div>
   );

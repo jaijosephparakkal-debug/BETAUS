@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { sendReportEmail } from "@/lib/mailer";
 import { RECONCILE_WINDOW } from "@/lib/reconcile";
+import { sendExtendedWindowNotice } from "@/lib/reconcileNotice";
 
 const EXCLUDED_EMAILS = ["abraham@flaretechnical.com", "alerts@flaretechnical.com"];
 
@@ -37,4 +38,12 @@ export async function sendReconcileNoticeAction(): Promise<{ error?: string; sen
     await new Promise((res) => setTimeout(res, 600));
   }
   return { sent, failed };
+}
+
+export async function sendFlexieReminderAction(): Promise<{ error?: string; sent?: number }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!me.isDirector) return { error: "Only a director can send this." };
+  const r = await sendExtendedWindowNotice(["alerts@flaretechnical.com"]);
+  return r.sent ? { sent: r.sent } : { error: "The email could not be sent." };
 }

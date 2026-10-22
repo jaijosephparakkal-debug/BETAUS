@@ -5,7 +5,22 @@ import { dubaiDateKey, dubaiMinutesOfDay } from "@/lib/attendance";
 export const RECONCILE_WINDOW = { date: "2026-10-22", startMin: 12 * 60, endMin: 13 * 60, label: "12:00 – 1:00 PM", endLabel: "1:00 PM" };
 export const RECONCILE_FROM = "2026-09-26";
 
-export function isReconcileOpen(now = new Date()) {
+// People whose window runs later than everyone else's, by sign-in email (minutes after midnight, Dubai).
+const EXTENDED: Record<string, { endMin: number; label: string }> = {
+  "sales@gasneeds.com": { endMin: 22 * 60, label: "10:00 PM" },
+};
+
+export function reconcileEndLabel(email: string) {
+  return EXTENDED[email.toLowerCase()]?.label ?? RECONCILE_WINDOW.endLabel;
+}
+
+export function isReconcileOpen(email: string, now = new Date()) {
   const m = dubaiMinutesOfDay(now);
-  return dubaiDateKey(now) === RECONCILE_WINDOW.date && m >= RECONCILE_WINDOW.startMin && m < RECONCILE_WINDOW.endMin;
+  const endMin = EXTENDED[email.toLowerCase()]?.endMin ?? RECONCILE_WINDOW.endMin;
+  return dubaiDateKey(now) === RECONCILE_WINDOW.date && m >= RECONCILE_WINDOW.startMin && m < endMin;
+}
+
+// The "usual hours" bulk page is for the director's own record only.
+export function canBulkReconcile(email: string) {
+  return email.toLowerCase() === "jai@gasneeds.com";
 }

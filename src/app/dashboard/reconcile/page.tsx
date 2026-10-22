@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { DUBAI_OFFSET_MS, dubaiDateKey, formatDubaiTime } from "@/lib/attendance";
-import { isReconcileOpen, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
+import { isReconcileOpen, reconcileEndLabel, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
 import { EntryForm, AddForm } from "./ReconcileForms";
 
 function hhmm(d: Date) {
@@ -23,7 +23,7 @@ export default async function ReconcilePage() {
     orderBy: { clockIn: "asc" },
   });
 
-  const open = isReconcileOpen();
+  const open = isReconcileOpen(me.user.email);
   const now = new Date();
   const today = dubaiDateKey(now);
   const days: string[] = [];
@@ -43,7 +43,7 @@ export default async function ReconcilePage() {
         <h1 className="text-[23px] font-semibold text-slate-900">Reconcile my attendance</h1>
         <p className="text-[19px] text-slate-500">
           {open
-            ? `The window is open until ${RECONCILE_WINDOW.endLabel}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as a manual change and shows that way in attendance reports.`
+            ? `The window is open until ${reconcileEndLabel(me.user.email)}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as a manual change and shows that way in attendance reports.`
             : `Reconciliation window: ${RECONCILE_WINDOW.label} on 22 Oct 2026. It is closed right now, so these records are read-only.`}
         </p>
       </div>

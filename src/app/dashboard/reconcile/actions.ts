@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
-import { isReconcileOpen, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
+import { isReconcileOpen, canBulkReconcile, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
 
 type State = { error?: string; ok?: boolean };
 
@@ -31,7 +31,7 @@ const closedMsg = `The reconciliation window (${RECONCILE_WINDOW.label}) is clos
 export async function saveEntryAction(entryId: string, _prev: State | undefined, formData: FormData): Promise<State> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen()) return { error: closedMsg };
+  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
 
   const entry = await prisma.attendanceEntry.findUnique({ where: { id: entryId }, include: { membership: true } });
   if (!entry || entry.membership.userId !== me.userId) return { error: "Entry not found." };
@@ -62,7 +62,7 @@ export async function saveEntryAction(entryId: string, _prev: State | undefined,
 export async function addEntryAction(_prev: State | undefined, formData: FormData): Promise<State> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen()) return { error: closedMsg };
+  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
 
   const membershipId = String(formData.get("membershipId") || "");
   const mine = await prisma.membership.findFirst({ where: { id: membershipId, userId: me.userId } });
@@ -95,7 +95,8 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
 export async function addBulkEntriesAction(rows: { date: string; in: string; out: string }[]): Promise<{ error?: string; added?: number }> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen()) return { error: closedMsg };
+  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
+  if (!canBulkReconcile(me.user.email)) return { error: "Not available for your account." };
   if (rows.length === 0 || rows.length > 40) return { error: "Nothing to save." };
 
   const now = new Date();

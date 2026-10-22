@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
-import { isReconcileOpen } from "@/lib/reconcile";
+import { isReconcileOpen, canBulkReconcile } from "@/lib/reconcile";
 import BulkSave from "./BulkSave";
 
 // Days that were holidays — no shift is proposed for these.
@@ -16,6 +16,7 @@ const OCT_OUT = ["17:48", "17:55", "17:52", "18:00", "17:47", "17:58", "17:45", 
 export default async function BulkReconcilePage() {
   const me = await getCurrentMembership();
   if (!me) redirect("/login");
+  if (!canBulkReconcile(me.user.email)) redirect("/dashboard/reconcile");
 
   const days: string[] = [];
   for (let d = new Date("2026-09-26T00:00:00Z"); d.toISOString().slice(0, 10) <= "2026-10-21"; d.setUTCDate(d.getUTCDate() + 1)) {
@@ -53,7 +54,7 @@ export default async function BulkReconcilePage() {
             ))}
           </tbody>
         </table>
-        <BulkSave rows={rows} disabled={!isReconcileOpen()} />
+        <BulkSave rows={rows} disabled={!isReconcileOpen(me.user.email)} />
       </Card>
     </div>
   );

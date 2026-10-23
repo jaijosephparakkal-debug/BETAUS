@@ -76,3 +76,34 @@ export async function sendReportEmail(
   }
   return true;
 }
+
+/** Schedules an email for a later time (Resend holds it). Returns its id, or null if it couldn't be scheduled. */
+export async function scheduleEmail(to: string, subject: string, html: string, at: Date): Promise<string | null> {
+  if (!resend) {
+    console.log(`\n[team-portal] Scheduled email skipped (no Resend configured): ${subject} @ ${at.toISOString()}\n`);
+    return null;
+  }
+  const result = await resend.emails.send({
+    from: fromAddress(),
+    to,
+    subject,
+    html,
+    scheduledAt: at.toISOString(),
+  });
+  if (result.error || !result.data) {
+    console.error(`[team-portal] Resend error scheduling email to ${to}:`, result.error);
+    return null;
+  }
+  return result.data.id;
+}
+
+/** Cancels an email scheduled with scheduleEmail. Never throws. */
+export async function cancelScheduledEmail(id: string) {
+  if (!resend) return;
+  try {
+    const result = await resend.emails.cancel(id);
+    if (result.error) console.error(`[team-portal] Resend error cancelling ${id}:`, result.error);
+  } catch (e) {
+    console.error(`[team-portal] Resend error cancelling ${id}:`, e);
+  }
+}

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
+import { cancelClockOutReminder } from "@/lib/clockOutReminder";
 import { isReconcileOpen, canBulkReconcile, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
 
 type State = { error?: string; ok?: boolean };
@@ -135,6 +136,7 @@ export async function deleteManualEntryAction(entryId: string): Promise<State> {
   if (!entry.isManual || entry.origClockIn) return { error: "Only an entry added by hand can be removed." };
 
   await prisma.attendanceEntry.delete({ where: { id: entryId } });
+  await cancelClockOutReminder(entry);
   revalidatePath("/dashboard/reconcile");
   revalidatePath("/director/attendance");
   return { ok: true };

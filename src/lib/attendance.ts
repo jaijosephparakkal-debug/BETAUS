@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { ensureClockOutReminder, cancelClockOutReminder } from "@/lib/clockOutReminder";
 
 export const SIGN_OUT_REASONS = {
   OFFICE_USE: "Going out for office use",
@@ -8,13 +9,14 @@ export const SIGN_OUT_REASONS = {
 
 export type SignOutReason = keyof typeof SIGN_OUT_REASONS;
 
-/** Opens a new attendance entry unless one is already open for this membership. */
+/** Opens a new attendance entry unless one is already open for this membership, and makes sure today's clock-out reminder is scheduled. */
 export async function clockInIfNeeded(membershipId: string) {
   const open = await prisma.attendanceEntry.findFirst({
     where: { membershipId, clockOut: null },
   });
-  if (open) return open;
-  return prisma.attendanceEntry.create({ data: { membershipId } });
+  const entry = open ?? (await prisma.attendanceEntry.create({ data: { membershipId } }));
+  await ensureClockOutReminder(entry);
+  return entry;
 }
 
 /** Closes the currently-open attendance entry for this membership, if any. */
@@ -28,6 +30,7 @@ export async function clockOut(membershipId: string, reason: SignOutReason) {
     where: { id: open.id },
     data: { clockOut: new Date(), reason },
   });
+  await cancelClockOutReminder(open);
 }
 
 export function getOpenEntry(membershipId: string) {
@@ -76,7 +79,7 @@ export function formatDubaiTime(date: Date) {
 // Office hours used to flag "late in" / "left late" on the director's staff
 // profile (Dubai time). Change here if the office timing changes.
 export const OFFICE_START = { hour: 9, minute: 0 };
-export const OFFICE_END = { hour: 18, minute: 0 };
+export const OFFICE_END = { hour: 17, minute: 0 };
 
 /** "YYYY-MM-DD" of the Dubai calendar day this moment falls on. */
 export function dubaiDateKey(date: Date) {

@@ -111,6 +111,8 @@ model AttendanceEntry {
   manualAt     DateTime? // when the manual change was made
   origClockIn  DateTime? // the recorded times before the first manual change (null for entries added by hand)
   origClockOut DateTime?
+  reminderDay  String? // "YYYY-MM-DD" (Dubai) a clock-out reminder email was scheduled for — see src/lib/clockOutReminder.ts
+  reminderEmailId String? // Resend id of that scheduled email, so signing out early can cancel it
 
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 }

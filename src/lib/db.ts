@@ -8,8 +8,11 @@ import { PrismaClient } from "@prisma/client";
 // DATABASE_URL) is a separate, better-provisioned connection meant for
 // runtime queries. Falls back to DATABASE_URL locally, where that var
 // isn't set.
+// SUPABASE_POOLER_URL (Supabase transaction pooler) takes priority: the
+// database moved to Supabase after Prisma Postgres' free-plan operation cap
+// blocked all queries.
 function datasourceUrl() {
-  return process.env.STORAGE_DATABASE_URL || process.env.DATABASE_URL;
+  return process.env.SUPABASE_POOLER_URL || process.env.STORAGE_DATABASE_URL || process.env.DATABASE_URL;
 }
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };

@@ -37,13 +37,13 @@ export async function verifyCodeAction(
   const director = await getDirectorMembership(userId);
   if (director) {
     setActiveCompanyCookie(director.companyId);
-    await clockInIfNeeded(director.id);
+    await clockInIfNeeded(director.id, { explicit: true });
     redirect("/director");
   }
 
   const memberships = await prisma.membership.findMany({ where: { userId } });
   if (memberships.length === 1) {
-    await clockInIfNeeded(memberships[0].id);
+    await clockInIfNeeded(memberships[0].id, { explicit: true });
   }
   redirect(memberships.length > 1 ? "/select-company" : "/dashboard");
 }

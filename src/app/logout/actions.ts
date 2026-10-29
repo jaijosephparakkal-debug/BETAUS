@@ -1,8 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { destroySession, getCurrentMembership } from "@/lib/auth";
-import { clockOut, type SignOutReason } from "@/lib/attendance";
+import { clockOut, clockInIfNeeded, type SignOutReason } from "@/lib/attendance";
 
 export async function signOutWithReasonAction(
   _prev: { error?: string } | undefined,
@@ -20,4 +21,12 @@ export async function signOutWithReasonAction(
 
   await destroySession();
   redirect("/login");
+}
+
+/** After the automatic 6 PM clock-out: the person chooses to keep working, which starts a new attendance entry. */
+export async function continueWorkingAction(): Promise<void> {
+  const membership = await getCurrentMembership();
+  if (!membership) return;
+  await clockInIfNeeded(membership.id, { explicit: true });
+  revalidatePath("/", "layout");
 }

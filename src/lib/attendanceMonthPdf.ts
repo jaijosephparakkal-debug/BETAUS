@@ -12,7 +12,7 @@ const FONT_BUFFER = Buffer.from(NOTO_SANS_REGULAR_BASE64, "base64");
 const OFF_SATURDAYS = new Set(["2026-10-03", "2026-10-17", "2026-10-31"]);
 const LATE_AFTER_MIN = 8 * 60 + 15;
 
-export type DayRecord = { first: string; last: string; late: boolean; corrected: boolean };
+export type DayRecord = { first: string; last: string; late: boolean; corrected: boolean; auto: boolean };
 
 function keyOf(y: number, m: number, d: number) {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -68,6 +68,7 @@ export async function getMonthAttendance(userId: string, year: number, month: nu
       last,
       late: minutesOfDay(first.clockIn) > LATE_AFTER_MIN,
       corrected: list.some((e) => e.isManual),
+      auto: list.some((e) => e.reason === "AUTO_6PM" || e.reason === "AUTO_EOD"),
     });
   }
 
@@ -163,6 +164,7 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
         doc.fillColor(rec.late ? "#B45309" : "#166534").fontSize(9.5).text(`In  ${rec.first}`, x + 5, y + 20, { width: cw - 10 });
         doc.fillColor("#166534").fontSize(9.5).text(`Out ${rec.last}`, x + 5, y + 33, { width: cw - 10 });
         if (rec.corrected) doc.fillColor("#475569").fontSize(7).text("Corrected manually", x + 5, y + 54, { width: cw - 10 });
+        if (rec.auto) doc.fillColor("#475569").fontSize(7).text("Auto clocked out", x + 5, y + (rec.corrected ? 46 : 54), { width: cw - 10 });
       } else if (holiday) {
         doc.fillColor("#94a3b8").fontSize(9).text("Holiday", x + 5, y + 28, { width: cw - 10, align: "center" });
       } else if (working && k < d.todayKey) {

@@ -16,6 +16,6 @@ export async function selectCompanyAction(formData: FormData) {
   if (!membership) redirect("/select-company");
 
   setActiveCompanyCookie(companyId);
-  await clockInIfNeeded(membership.id);
+  await clockInIfNeeded(membership.id, { explicit: true });
   redirect("/dashboard");
 }

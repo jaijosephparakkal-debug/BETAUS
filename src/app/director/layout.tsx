@@ -37,7 +37,8 @@ export default async function DirectorLayout({
         membershipCount={membershipCount}
         pendingApprovalCount={pendingApprovalCount}
         taskNotificationCount={taskNotificationCount}
-        clockInIso={attendanceEntry.clockIn.toISOString()}
+        clockInIso={attendanceEntry ? attendanceEntry.clockIn.toISOString() : null}
+        autoClockedOut={!attendanceEntry}
       />
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>

@@ -41,7 +41,8 @@ export default async function DashboardLayout({
         membershipCount={membershipCount}
         pendingApprovalCount={pendingApprovalCount}
         taskNotificationCount={taskNotificationCount}
-        clockInIso={attendanceEntry.clockIn.toISOString()}
+        clockInIso={attendanceEntry ? attendanceEntry.clockIn.toISOString() : null}
+        autoClockedOut={!attendanceEntry}
       />
       {isReconcileOpen(membership.user.email) && (
         <a href="/dashboard/reconcile" className="block bg-amber-100 px-4 py-2 text-center text-[19px] font-medium text-amber-900 hover:bg-amber-200">

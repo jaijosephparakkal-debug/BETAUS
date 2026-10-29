@@ -11,6 +11,7 @@ export function AppHeader({
   pendingApprovalCount = 0,
   taskNotificationCount = 0,
   clockInIso = null,
+  autoClockedOut = false,
 }: {
   membership: FullMembership;
   reportCount: number;
@@ -18,6 +19,7 @@ export function AppHeader({
   pendingApprovalCount?: number;
   taskNotificationCount?: number;
   clockInIso?: string | null;
+  autoClockedOut?: boolean;
 }) {
   const theme = getCompanyTheme(membership.company.slug);
 
@@ -82,7 +84,7 @@ export function AppHeader({
               Switch company
             </Link>
           )}
-          <AttendanceClock clockInIso={clockInIso} />
+          <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
         </div>
       </div>
       <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2">

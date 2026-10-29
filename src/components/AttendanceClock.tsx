@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
-import { signOutWithReasonAction } from "@/app/logout/actions";
+import { signOutWithReasonAction, continueWorkingAction } from "@/app/logout/actions";
 
 function formatElapsed(ms: number) {
   const totalMinutes = Math.max(0, Math.floor(ms / 60000));
@@ -26,7 +27,9 @@ function SubmitButton() {
 
 const NINE_HOURS_MS = 9 * 60 * 60 * 1000;
 
-export function AttendanceClock({ clockInIso }: { clockInIso: string | null }) {
+export function AttendanceClock({ clockInIso, autoClockedOut = false }: { clockInIso: string | null; autoClockedOut?: boolean }) {
+  const router = useRouter();
+  const [continuing, startContinue] = useTransition();
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(signOutWithReasonAction, {});
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -67,6 +70,19 @@ export function AttendanceClock({ clockInIso }: { clockInIso: string | null }) {
           <span>In {clockInTime}</span>
           <span className="opacity-75">· {formatElapsed(elapsedMs)}</span>
           {overNine && <span className="font-semibold">· over 9h</span>}
+        </div>
+      )}
+      {autoClockedOut && !clockInIso && (
+        <div className="flex items-center gap-2 rounded-full bg-amber-100 px-2.5 py-1 text-[17px] text-amber-900">
+          <span>Clocked out automatically at 6 PM</span>
+          <button
+            type="button"
+            disabled={continuing}
+            onClick={() => startContinue(async () => { await continueWorkingAction(); router.refresh(); })}
+            className="rounded-md bg-brand-600 px-2 py-0.5 text-[15px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            {continuing ? "Logging in…" : "Continue working"}
+          </button>
         </div>
       )}
       <button

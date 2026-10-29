@@ -75,27 +75,29 @@ export function OrgChart({
   );
 }
 
-/** One person in the director's chart — full name and title, never cut off. */
-function PersonCard({ node, href, color }: { node: OrgNode; href: string | null; color: string }) {
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+/** One person in the director's chart — avatar, full name and title, never cut off. */
+function PersonRow({ node, href, color, lead }: { node: OrgNode; href: string | null; color: string; lead: boolean }) {
   const body = (
-    <div
-      className="rounded-lg border bg-surface px-3 py-2 shadow-sm transition hover:shadow-md"
-      style={{ borderColor: `${color}55` }}
-    >
-      <div className="break-words text-[17px] font-semibold leading-snug text-slate-900">{node.name}</div>
-      <div className="break-words text-[15px] leading-snug text-slate-500">{node.title}</div>
-      {node.department && (
-        <div
-          className="mt-1 inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold uppercase tracking-wide"
-          style={{ color, background: `${color}14` }}
-        >
-          {node.department}
-        </div>
-      )}
+    <div className="flex items-center gap-3">
+      <div
+        className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${lead ? "h-11 w-11 text-[16px] text-white" : "h-9 w-9 text-[13px]"}`}
+        style={lead ? { background: color } : { background: `${color}1a`, color }}
+      >
+        {initials(node.name)}
+      </div>
+      <div className="min-w-0">
+        <div className={`break-words leading-snug text-slate-900 ${lead ? "text-[18px] font-semibold" : "text-[16px] font-medium"}`}>{node.name}</div>
+        <div className="break-words text-[14px] leading-snug text-slate-500">{node.title}</div>
+      </div>
     </div>
   );
   return href ? (
-    <Link href={href} className="block">
+    <Link href={href} className="block rounded-lg hover:bg-slate-50">
       {body}
     </Link>
   ) : (
@@ -103,28 +105,54 @@ function PersonCard({ node, href, color }: { node: OrgNode; href: string | null;
   );
 }
 
-/** A manager and everyone under them, nested downward with a guide line — wraps instead of scrolling sideways. */
-function TeamBranch({ node, staffLinks, color }: { node: OrgNode; staffLinks: boolean; color: string }) {
-  const href = staffLinks && !node.isDirector ? `/director/staff/${node.userId}` : null;
+/** Reports nested under a manager, joined by elbow connectors. */
+function Reports({ nodes, staffLinks, color }: { nodes: OrgNode[]; staffLinks: boolean; color: string }) {
   return (
-    <div>
-      <PersonCard node={node} href={href} color={color} />
-      {node.children.length > 0 && (
-        <div className="ml-3 mt-2 space-y-2 border-l-2 pl-3" style={{ borderColor: `${color}33` }}>
-          {node.children.map((child) => (
-            <TeamBranch key={child.id} node={child} staffLinks={staffLinks} color={color} />
-          ))}
-        </div>
-      )}
+    <div className="mt-3 space-y-3">
+      {nodes.map((child, i) => {
+        const last = i === nodes.length - 1;
+        return (
+          <div key={child.id} className="relative pl-6">
+            <span className="absolute left-2 top-0 w-px" style={{ background: `${color}55`, height: last ? "18px" : "100%" }} />
+            <span className="absolute left-2 top-[18px] h-px w-4" style={{ background: `${color}55` }} />
+            <PersonRow node={child} href={staffLinks && !child.isDirector ? `/director/staff/${child.userId}` : null} color={color} lead={false} />
+            {child.children.length > 0 && <Reports nodes={child.children} staffLinks={staffLinks} color={color} />}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
+/** A manager and their team as one card. */
+function TeamCard({ node, staffLinks, color }: { node: OrgNode; staffLinks: boolean; color: string }) {
+  const href = staffLinks && !node.isDirector ? `/director/staff/${node.userId}` : null;
+  return (
+    <div className="overflow-hidden rounded-xl border bg-surface shadow-sm" style={{ borderColor: `${color}33` }}>
+      <div className="h-1" style={{ background: color }} />
+      <div className="p-4">
+        {node.department && (
+          <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider" style={{ color }}>
+            {node.department}
+          </div>
+        )}
+        <PersonRow node={node} href={href} color={color} lead />
+        {node.children.length > 0 && <Reports nodes={node.children} staffLinks={staffLinks} color={color} />}
+      </div>
+    </div>
+  );
+}
+
+/** A thin vertical connector between levels. */
+function Drop({ color = "#94a3b8" }: { color?: string }) {
+  return <div className="mx-auto h-6 w-px" style={{ background: color }} />;
+}
+
 /**
  * One chart spanning two companies that share the same director — the
- * director once at the top, then each company as a labelled section whose
- * teams sit side by side and wrap to the screen width (no sideways
- * scrolling, no cut-off names).
+ * director once at the top, a connector down to each company, and each
+ * company as a coloured panel whose teams sit side by side and wrap to the
+ * screen width (no sideways scrolling, no cut-off names).
  */
 export function MergedOrgChart({
   directorName,
@@ -139,33 +167,34 @@ export function MergedOrgChart({
   staffLinks?: boolean;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center">
-        <div className="rounded-xl border border-brand-500 bg-brand-50 px-5 py-3 text-center shadow-sm">
-          <div className="text-[19px] font-semibold text-slate-900">{directorName}</div>
-          <div className="text-[17px] text-slate-500">{directorTitle}</div>
-        </div>
+    <div>
+      <div className="mx-auto w-fit rounded-xl border border-slate-800 bg-slate-900 px-6 py-3 text-center shadow-md">
+        <div className="text-[19px] font-semibold text-white">{directorName}</div>
+        <div className="text-[15px] text-slate-300">{directorTitle}</div>
       </div>
       {branches.map((b) => {
         const teams = b.tree?.children ?? [];
         return (
-          <section key={b.label} className="rounded-xl border p-4" style={{ borderColor: `${b.color}33` }}>
-            <div
-              className="mb-3 inline-block rounded-full px-3 py-1 text-[14px] font-semibold uppercase tracking-wide"
-              style={{ color: b.color, background: `${b.color}1a` }}
-            >
-              {b.label}
-            </div>
-            {teams.length === 0 ? (
-              <p className="text-[15px] text-slate-500">No reports.</p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {teams.map((t) => (
-                  <TeamBranch key={t.id} node={t} staffLinks={staffLinks} color={b.color} />
-                ))}
+          <div key={b.label}>
+            <Drop />
+            <section className="rounded-2xl border p-4 sm:p-5" style={{ borderColor: `${b.color}40`, background: `${b.color}08` }}>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="h-8 w-1.5 rounded-full" style={{ background: b.color }} />
+                <h3 className="text-[20px] font-semibold uppercase tracking-wide" style={{ color: b.color }}>
+                  {b.label}
+                </h3>
               </div>
-            )}
-          </section>
+              {teams.length === 0 ? (
+                <p className="text-[15px] text-slate-500">No reports.</p>
+              ) : (
+                <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {teams.map((t) => (
+                    <TeamCard key={t.id} node={t} staffLinks={staffLinks} color={b.color} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
         );
       })}
     </div>

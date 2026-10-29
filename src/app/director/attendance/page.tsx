@@ -17,7 +17,7 @@ const REASON_LABELS: Record<string, string> = {
   SICKNESS: "Sickness",
   SHIFT_ENDED: "Shift ended",
   AUTO_6PM: "Auto clocked out — login once more to continue work",
-  AUTO_EOD: "Auto clocked out (midnight)",
+  AUTO_EOD: "Auto clocked out — login once more to continue work",
 };
 
 type Entry = {

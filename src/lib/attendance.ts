@@ -15,7 +15,7 @@ export type SignOutReason = keyof typeof SIGN_OUT_REASONS;
 // is flagged with an AUTO_* reason so reports show it was automatic.
 export const AUTO_REASONS = {
   AUTO_6PM: "Auto clocked out — login once more to continue work",
-  AUTO_EOD: "Auto clocked out (midnight)",
+  AUTO_EOD: "Auto clocked out — login once more to continue work",
 } as const;
 
 /** When an entry that started at `clockIn` is automatically closed, and why. */

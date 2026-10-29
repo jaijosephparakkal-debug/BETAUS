@@ -44,7 +44,7 @@ export default async function ReconcilePage() {
         <p className="text-[19px] text-slate-500">
           {open
             ? `The window is open until ${reconcileEndLabel(me.user.email)}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as “Corrected manually” in attendance reports.`
-            : `Reconciliation window: ${RECONCILE_WINDOW.label} on 22 Oct 2026. It is closed right now, so these records are read-only.`}
+            : `The reconciliation window is open ${RECONCILE_WINDOW.label} (29 Oct 2026). It is closed right now, so these records are read-only.`}
         </p>
       </div>
       {days.map((day) => {

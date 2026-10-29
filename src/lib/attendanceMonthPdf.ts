@@ -4,22 +4,17 @@ import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/db";
 import { DUBAI_OFFSET_MS, dubaiDateKey, formatDubaiTime } from "@/lib/attendance";
 import { getCompanyTheme } from "@/lib/theme";
+import { isHoliday } from "@/lib/attendanceCalendar";
 import { NOTO_SANS_REGULAR_BASE64 } from "./pdf/fonts/notoSansBase64";
 
 const FONT_BUFFER = Buffer.from(NOTO_SANS_REGULAR_BASE64, "base64");
 
-// Holidays: every Sunday, plus the alternate Saturdays that are off.
-const OFF_SATURDAYS = new Set(["2026-10-03", "2026-10-17", "2026-10-31"]);
 const LATE_AFTER_MIN = 8 * 60 + 15;
 
 export type DayRecord = { first: string; last: string; late: boolean; corrected: boolean; auto: boolean };
 
 function keyOf(y: number, m: number, d: number) {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-function isHoliday(key: string) {
-  const dow = new Date(`${key}T00:00:00Z`).getUTCDay();
-  return dow === 0 || OFF_SATURDAYS.has(key);
 }
 function minutesOfDay(d: Date) {
   const s = new Date(d.getTime() + DUBAI_OFFSET_MS);

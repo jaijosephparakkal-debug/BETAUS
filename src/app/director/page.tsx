@@ -208,12 +208,12 @@ export default async function DirectorPage() {
       <Card>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-[21px] font-semibold text-slate-900">
-            <Link href="/director/attendance" className="hover:text-brand-600 hover:underline">
+            <Link href="/director/calendar" className="hover:text-brand-600 hover:underline">
               Staff attendance — today
             </Link>
           </h2>
-          <Link href="/director/attendance" className="text-[17px] text-brand-600 hover:underline">
-            Full attendance sheet →
+          <Link href="/director/calendar" className="text-[17px] text-brand-600 hover:underline">
+            Full attendance calendar →
           </Link>
         </div>
         <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -252,7 +252,7 @@ export default async function DirectorPage() {
             {presentToday.map((p, i) => (
               <Link
                 key={i}
-                href={`/director/staff/${p.userId}/attendance`}
+                href={`/director/staff/${p.userId}/calendar`}
                 className="flex items-center justify-between gap-3 py-2 hover:bg-brand-50/40"
               >
                 <div className="flex min-w-0 items-center gap-2">

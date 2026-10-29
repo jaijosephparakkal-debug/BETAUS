@@ -14,7 +14,7 @@ export type SignOutReason = keyof typeof SIGN_OUT_REASONS;
 // of the day. This applies to everyone, directors included. The closed entry
 // is flagged with an AUTO_* reason so reports show it was automatic.
 export const AUTO_REASONS = {
-  AUTO_6PM: "Auto clocked out (6 PM)",
+  AUTO_6PM: "Auto clocked out — login once more to continue work",
   AUTO_EOD: "Auto clocked out (midnight)",
 } as const;
 

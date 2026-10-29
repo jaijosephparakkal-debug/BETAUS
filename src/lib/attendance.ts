@@ -11,7 +11,7 @@ export type SignOutReason = keyof typeof SIGN_OUT_REASONS;
 
 // Staff are clocked out automatically at 6 PM Dubai time (OFFICE_END). If they
 // want to work later they log in again, and that session is closed at the end
-// of the day. Directors are never clocked out automatically. The closed entry
+// of the day. This applies to everyone, directors included. The closed entry
 // is flagged with an AUTO_* reason so reports show it was automatic.
 export const AUTO_REASONS = {
   AUTO_6PM: "Auto clocked out (6 PM)",
@@ -26,11 +26,11 @@ export function autoCutoffFor(clockIn: Date) {
   return { at: new Date(Date.UTC(y, m - 1, d, 23, 59, 59) - DUBAI_OFFSET_MS), reason: "AUTO_EOD" as const };
 }
 
-/** Sweeps every open staff entry whose automatic cut-off has passed. Used by the daily cron. */
+/** Sweeps every open entry whose automatic cut-off has passed. Used by the daily cron. */
 export async function autoClockOutAllOverdue() {
   const now = new Date();
   const open = await prisma.attendanceEntry.findMany({
-    where: { clockOut: null, membership: { isDirector: false } },
+    where: { clockOut: null },
   });
   let closed = 0;
   for (const e of open) {
@@ -47,7 +47,7 @@ export async function autoClockOutAllOverdue() {
 
 /**
  * Opens a new attendance entry unless one is already open for this
- * membership, and makes sure today's clock-out reminder is scheduled. A staff
+ * membership, and makes sure today's clock-out reminder is scheduled. An
  * entry past its automatic cut-off is closed first. After 6 PM a page load
  * does NOT start a new entry (returns null) — staff choose to continue
  * working; signing in (explicit) always does.
@@ -56,19 +56,15 @@ export async function clockInIfNeeded(membershipId: string, opts: { explicit?: b
   const now = new Date();
   let open = await prisma.attendanceEntry.findFirst({
     where: { membershipId, clockOut: null },
-    include: { membership: { select: { isDirector: true } } },
   });
-  if (open && !open.membership.isDirector) {
+  if (open) {
     const { at, reason } = autoCutoffFor(open.clockIn);
     if (at <= now) {
       await prisma.attendanceEntry.updateMany({ where: { id: open.id, clockOut: null }, data: { clockOut: at, reason } });
       open = null;
     }
   }
-  if (!open && !opts.explicit && dubaiMinutesOfDay(now) >= OFFICE_END.hour * 60 + OFFICE_END.minute) {
-    const m = await prisma.membership.findUnique({ where: { id: membershipId }, select: { isDirector: true } });
-    if (!m?.isDirector) return null;
-  }
+  if (!open && !opts.explicit && dubaiMinutesOfDay(now) >= OFFICE_END.hour * 60 + OFFICE_END.minute) return null;
   const entry = open ?? (await prisma.attendanceEntry.create({ data: { membershipId } }));
   await ensureClockOutReminder(entry);
   return entry;

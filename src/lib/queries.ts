@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { staffWhere, hasStaffProfile } from "@/lib/visibleStaff";
 
 export function getLatestDirectorMessage(companyId: string) {
   return prisma.directorMessage.findFirst({
@@ -311,6 +312,8 @@ export type OrgNode = {
   title: string;
   department: string | null;
   isDirector: boolean;
+  /** Has a staff profile page for directors to open (everyone but the Managing Director). */
+  hasProfile: boolean;
   children: OrgNode[];
 };
 
@@ -342,6 +345,7 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
       title: m.title,
       department: m.department,
       isDirector: m.isDirector,
+      hasProfile: hasStaffProfile(m.user.email),
       children: (childrenOf.get(id) ?? []).map(build),
     };
   }
@@ -358,7 +362,7 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
 export async function getKpiOverview() {
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
   const memberships = await prisma.membership.findMany({
-    where: { isDirector: false },
+    where: staffWhere,
     include: { user: true, company: true, kpis: { orderBy: { createdAt: "asc" } } },
     orderBy: { user: { name: "asc" } },
   });

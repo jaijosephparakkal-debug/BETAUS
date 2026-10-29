@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { staffWhere, hasStaffProfile } from "@/lib/visibleStaff";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -86,16 +87,16 @@ export default async function DirectorPage() {
     .flatMap((b) => b.atRiskTasks.map((t) => ({ ...t, companySlug: b.company.slug })))
     .sort((a, b) => b.daysOverdue - a.daysOverdue);
 
-  // Staff = everyone except the director, per company.
+  // Staff = everyone except the Managing Director (Jai included), per company.
   const staffCounts = perCompany.map((b) => ({
     company: b.company,
-    staff: b.rollup.memberships.filter((m) => !m.isDirector).length,
+    staff: b.rollup.memberships.filter((m) => hasStaffProfile(m.user.email)).length,
   }));
 
-  // Today's attendance (Dubai day), both companies merged, director excluded.
+  // Today's attendance (Dubai day), both companies merged, Managing Director excluded.
   const today = dubaiDayRange();
   const todayEntries = await prisma.attendanceEntry.findMany({
-    where: { clockIn: { gte: today.start, lt: today.end }, membership: { isDirector: false } },
+    where: { clockIn: { gte: today.start, lt: today.end }, membership: staffWhere },
     include: { membership: { include: { user: true, company: true } } },
     orderBy: { clockIn: "asc" },
   });

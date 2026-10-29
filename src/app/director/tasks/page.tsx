@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasStaffProfile } from "@/lib/visibleStaff";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
@@ -108,7 +109,7 @@ export default async function DirectorTasksPage({
                 <ProgressBar value={t.progress} />
               </Link>
               <div className="mt-1 text-[15px] text-slate-500">
-                {staffLinks && !t.assignedTo.isDirector ? (
+                {staffLinks && hasStaffProfile(t.assignedTo.user.email) ? (
                   <Link href={`/director/staff/${t.assignedTo.userId}`} className="font-medium text-brand-600 hover:underline">
                     {t.assignedTo.user.name}
                   </Link>

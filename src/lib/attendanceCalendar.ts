@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { staffWhere } from "@/lib/visibleStaff";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
 
 export const LATE_AFTER_MIN = 8 * 60 + 15;
@@ -55,7 +56,7 @@ function hhmm(d: Date) {
   return `${String(s.getUTCHours()).padStart(2, "0")}:${String(s.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-/** Every person's attendance for a month. With `userId`, just that person (directors included). */
+/** Every person's attendance for a month (everyone but the Managing Director). With `userId`, just that person. */
 export async function getMonthCalendar(year: number, month: number, userId?: string): Promise<CalPerson[]> {
   const startKey = keyOf(year, month, 1);
   const nextKey = month === 12 ? keyOf(year + 1, 1, 1) : keyOf(year, month + 1, 1);
@@ -63,7 +64,7 @@ export async function getMonthCalendar(year: number, month: number, userId?: str
   const end = new Date(new Date(`${nextKey}T00:00:00Z`).getTime() - DUBAI_OFFSET_MS);
 
   const memberships = await prisma.membership.findMany({
-    where: userId ? { userId } : { isDirector: false },
+    where: userId ? { userId } : staffWhere,
     include: { user: true, company: true },
     orderBy: { createdAt: "asc" },
   });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { staffWhere } from "@/lib/visibleStaff";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
@@ -70,7 +71,7 @@ export default async function StaffProfilePage({
   // Every membership this person holds, both companies merged into one
   // profile — each item below carries a small company tag.
   const memberships = await prisma.membership.findMany({
-    where: { userId: params.userId, isDirector: false },
+    where: { userId: params.userId, ...staffWhere },
     include: { user: true, company: true, manager: { include: { user: true } } },
     orderBy: { createdAt: "asc" },
   });

@@ -115,7 +115,7 @@ function Reports({ nodes, staffLinks, color }: { nodes: OrgNode[]; staffLinks: b
           <div key={child.id} className="relative pl-6">
             <span className="absolute left-2 top-0 w-px" style={{ background: `${color}55`, height: last ? "18px" : "100%" }} />
             <span className="absolute left-2 top-[18px] h-px w-4" style={{ background: `${color}55` }} />
-            <PersonRow node={child} href={staffLinks && !child.isDirector ? `/director/staff/${child.userId}` : null} color={color} lead={false} />
+            <PersonRow node={child} href={staffLinks && child.hasProfile ? `/director/staff/${child.userId}` : null} color={color} lead={false} />
             {child.children.length > 0 && <Reports nodes={child.children} staffLinks={staffLinks} color={color} />}
           </div>
         );
@@ -126,7 +126,7 @@ function Reports({ nodes, staffLinks, color }: { nodes: OrgNode[]; staffLinks: b
 
 /** A manager and their team as one card. */
 function TeamCard({ node, staffLinks, color }: { node: OrgNode; staffLinks: boolean; color: string }) {
-  const href = staffLinks && !node.isDirector ? `/director/staff/${node.userId}` : null;
+  const href = staffLinks && node.hasProfile ? `/director/staff/${node.userId}` : null;
   return (
     <div className="overflow-hidden rounded-xl border bg-surface shadow-sm" style={{ borderColor: `${color}33` }}>
       <div className="h-1" style={{ background: color }} />

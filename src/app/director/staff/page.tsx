@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { staffWhere } from "@/lib/visibleStaff";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
@@ -25,7 +26,7 @@ export default async function ManageStaffPage({
   // membership at each company — they're one row (one person), tagged with
   // both companies, and their profile merges both memberships.
   const memberships = await prisma.membership.findMany({
-    where: { isDirector: false },
+    where: staffWhere,
     include: { user: true, company: true },
     orderBy: { user: { name: "asc" } },
   });
@@ -35,14 +36,14 @@ export default async function ManageStaffPage({
   // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
   const taskCounts = await prisma.task.groupBy({
     by: ["assignedToId", "status"],
-    where: { parentTaskId: null, assignedTo: { isDirector: false } },
+    where: { parentTaskId: null, assignedTo: staffWhere },
     _count: { _all: true },
   });
   const overdueCounts = await prisma.task.groupBy({
     by: ["assignedToId"],
     where: {
       parentTaskId: null,
-      assignedTo: { isDirector: false },
+      assignedTo: staffWhere,
       status: { not: "COMPLETED" },
       deadline: { lt: now },
     },

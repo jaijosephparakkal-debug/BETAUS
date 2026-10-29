@@ -78,7 +78,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
                 <div className="text-[15px] text-slate-500">{d}</div>
                 {rec ? (
                   <div className="mt-1 text-[17px] leading-snug">
-                    <div className="text-emerald-800">In {rec.first}{rec.corrected ? "*" : ""}</div>
+                    <div className="text-emerald-800">In {rec.first}</div>
                     <div className="text-emerald-800">Out {rec.last}</div>
                     {onLeave && <div className="mt-0.5 text-[12px] font-medium text-sky-700">Annual leave</div>}
                   </div>
@@ -95,7 +95,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
         </div>
       </Card>
       <p className="text-[15px] text-slate-500">
-        Green = logged in (first login and last logout, * = time entered by hand). Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
+        Green = logged in (first login and last logout). Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
       </p>
 
       <Card>

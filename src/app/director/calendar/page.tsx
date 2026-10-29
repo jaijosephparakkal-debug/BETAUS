@@ -85,7 +85,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
                         body = (
                           <>
                             <div>{rec.first}</div>
-                            <div>{rec.last === "still in" ? "in" : rec.last === "not recorded" ? "—" : rec.last}{rec.corrected ? "*" : ""}</div>
+                            <div>{rec.last === "still in" ? "in" : rec.last === "not recorded" ? "—" : rec.last}</div>
                           </>
                         );
                       } else if (p.leave.has(k)) { cls = "bg-sky-100 text-sky-700"; body = <span className="font-semibold">AL</span>; }
@@ -112,7 +112,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
       </Card>
 
       <p className="text-[15px] text-slate-500">
-        Top time is the first login, bottom time the last logout. “in” = still logged in, “—” = no logout recorded, * = time entered by hand. A = no login on a working day, AL = annual leave, H = holiday (Sundays and alternate Saturdays).
+        Top time is the first login, bottom time the last logout. “in” = still logged in, “—” = no logout recorded. A = no login on a working day, AL = annual leave, H = holiday (Sundays and alternate Saturdays).
       </p>
     </div>
   );

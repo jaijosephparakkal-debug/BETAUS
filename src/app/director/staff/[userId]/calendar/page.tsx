@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card, CompanyTag } from "@/components/ui";
 import { dubaiDateKey } from "@/lib/attendance";
+import { addLeaveAction, removeLeaveAction } from "@/app/director/leave/actions";
 import { daysInMonth, getMonthCalendar, isHoliday, isWorkingDay, keyOf, monthKey, monthLabel, parseMonth, shiftMonth, summarize } from "@/lib/attendanceCalendar";
 
 export default async function StaffCalendarPage({ params, searchParams }: { params: { userId: string }; searchParams: { month?: string } }) {
@@ -41,12 +42,11 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         {[
           ["Days present", s.present, "text-emerald-700"],
           ["Absent", s.absent, s.absent ? "text-red-600" : "text-slate-400"],
-          ["First login after 8:15", s.late, s.late ? "text-amber-700" : "text-slate-400"],
-          ["Corrected or auto clocked out", s.corrected + s.auto, "text-slate-600"],
+          ["Annual leave", s.leave, s.leave ? "text-sky-700" : "text-slate-400"],
         ].map(([label, value, color]) => (
           <div key={String(label)} className="rounded-lg bg-slate-50 p-3">
             <div className={`text-[23px] font-semibold ${color}`}>{value}</div>
@@ -66,8 +66,9 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
             if (d === null) return <div key={i} className="min-h-[92px] border border-white bg-white" />;
             const k = keyOf(year, month, d);
             const rec = person.days.get(k);
-            const absent = !rec && isWorkingDay(k) && k >= person.joined && k < todayKey;
-            const cls = rec ? "bg-emerald-50" : absent ? "bg-red-50" : isHoliday(k) ? "bg-slate-100" : "bg-slate-50";
+            const onLeave = person.leave.has(k);
+            const absent = !rec && !onLeave && isWorkingDay(k) && k >= person.joined && k < todayKey;
+            const cls = rec ? "bg-emerald-50" : onLeave ? "bg-sky-50" : absent ? "bg-red-50" : isHoliday(k) ? "bg-slate-100" : "bg-slate-50";
             return (
               <Link
                 key={i}
@@ -77,11 +78,12 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
                 <div className="text-[15px] text-slate-500">{d}</div>
                 {rec ? (
                   <div className="mt-1 text-[17px] leading-snug">
-                    <div className={rec.late ? "font-medium text-amber-700" : "text-emerald-800"}>In {rec.first}</div>
+                    <div className="text-emerald-800">In {rec.first}{rec.corrected ? "*" : ""}</div>
                     <div className="text-emerald-800">Out {rec.last}</div>
-                    {rec.corrected && <div className="mt-0.5 text-[12px] text-slate-500">Corrected manually</div>}
-                    {rec.auto && <div className="mt-0.5 text-[12px] text-slate-500">Auto clocked out</div>}
+                    {onLeave && <div className="mt-0.5 text-[12px] font-medium text-sky-700">Annual leave</div>}
                   </div>
+                ) : onLeave ? (
+                  <div className="mt-3 text-center text-[17px] font-medium text-sky-700">Annual leave</div>
                 ) : absent ? (
                   <div className="mt-3 text-center text-[17px] font-medium text-red-600">Absent</div>
                 ) : isHoliday(k) ? (
@@ -93,8 +95,37 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
         </div>
       </Card>
       <p className="text-[15px] text-slate-500">
-        Green = logged in (first login and last logout). Amber login = after 8:15. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
+        Green = logged in (first login and last logout, * = time entered by hand). Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
       </p>
+
+      <Card>
+        <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Annual leave</h2>
+        <form action={addLeaveAction} className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="userId" value={person.userId} />
+          <label className="text-[17px] text-slate-600">
+            From
+            <input type="date" name="from" required className="mt-1 block rounded-md border border-brand-300 px-2 py-1.5 text-[19px]" />
+          </label>
+          <label className="text-[17px] text-slate-600">
+            To
+            <input type="date" name="to" className="mt-1 block rounded-md border border-brand-300 px-2 py-1.5 text-[19px]" />
+          </label>
+          <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-[19px] font-medium text-white hover:bg-brand-700">Mark annual leave</button>
+        </form>
+        <p className="mt-1 text-[15px] text-slate-500">Leave one date for a single day. Sundays and alternate Saturdays are skipped.</p>
+        {person.leave.size > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[...person.leave].sort().map((d) => (
+              <form key={d} action={removeLeaveAction} className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-[17px] text-sky-800">
+                <input type="hidden" name="userId" value={person.userId} />
+                <input type="hidden" name="date" value={d} />
+                {new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}
+                <button type="submit" className="text-[15px] text-slate-500 hover:text-red-600" title="Remove this leave day">✕</button>
+              </form>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

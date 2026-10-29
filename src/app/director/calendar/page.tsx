@@ -58,7 +58,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
                 })}
                 <th className="min-w-[44px] px-1 text-center text-slate-500">Present</th>
                 <th className="min-w-[44px] px-1 text-center text-slate-500">Absent</th>
-                <th className="min-w-[44px] px-1 text-center text-slate-500">Late</th>
+                <th className="min-w-[44px] px-1 text-center text-slate-500">Leave</th>
               </tr>
             </thead>
             <tbody>
@@ -84,11 +84,12 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
                         cls = "bg-emerald-100 text-emerald-800";
                         body = (
                           <>
-                            <div className={rec.late ? "font-semibold text-amber-700" : ""}>{rec.first}</div>
-                            <div>{rec.last === "still in" ? "in" : rec.last === "not recorded" ? "—" : rec.last}{rec.corrected || rec.auto ? "*" : ""}</div>
+                            <div>{rec.first}</div>
+                            <div>{rec.last === "still in" ? "in" : rec.last === "not recorded" ? "—" : rec.last}{rec.corrected ? "*" : ""}</div>
                           </>
                         );
-                      } else if (isHoliday(k)) { cls = "bg-slate-100 text-slate-400"; body = "H"; }
+                      } else if (p.leave.has(k)) { cls = "bg-sky-100 text-sky-700"; body = <span className="font-semibold">AL</span>; }
+                      else if (isHoliday(k)) { cls = "bg-slate-100 text-slate-400"; body = "H"; }
                       else if (isWorkingDay(k) && k >= p.joined && k < todayKey) { cls = "bg-red-500 text-white"; body = <span className="font-semibold">A</span>; }
                       else if (k > todayKey || k < p.joined) cls = "bg-white";
                       else cls = "bg-slate-50";
@@ -98,7 +99,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
                     })}
                     <td className="border-t border-slate-100 px-1 text-center text-[15px] font-semibold text-slate-900">{s.present}</td>
                     <td className={`border-t border-slate-100 px-1 text-center text-[15px] font-semibold ${s.absent ? "text-red-600" : "text-slate-400"}`}>{s.absent}</td>
-                    <td className={`border-t border-slate-100 px-1 text-center text-[15px] font-semibold ${s.late ? "text-amber-700" : "text-slate-400"}`}>{s.late}</td>
+                    <td className={`border-t border-slate-100 px-1 text-center text-[15px] font-semibold ${s.leave ? "text-sky-700" : "text-slate-400"}`}>{s.leave}</td>
                   </tr>
                 );
               })}
@@ -111,7 +112,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
       </Card>
 
       <p className="text-[15px] text-slate-500">
-        Top time is the first login, bottom time the last logout. Amber login = after 8:15. “in” = still logged in, “—” = no logout recorded, * = corrected manually or auto clocked out. A = no login on a working day, H = holiday (Sundays and alternate Saturdays).
+        Top time is the first login, bottom time the last logout. “in” = still logged in, “—” = no logout recorded, * = time entered by hand. A = no login on a working day, AL = annual leave, H = holiday (Sundays and alternate Saturdays).
       </p>
     </div>
   );

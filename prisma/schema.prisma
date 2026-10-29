@@ -15,6 +15,7 @@ model User {
   createdAt   DateTime     @default(now())
   memberships Membership[]
   otpCodes    OtpCode[]
+  leaveDays   LeaveDay[]
 }
 
 model Company {
@@ -287,4 +288,18 @@ model OtpCode {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// A day a person is on leave (marked by a director) — shown as "Annual leave" on the attendance calendars and not counted as absent.
+model LeaveDay {
+  id          String   @id @default(cuid())
+  userId      String
+  date        String // Dubai calendar date, YYYY-MM-DD
+  type        String   @default("ANNUAL")
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
 }

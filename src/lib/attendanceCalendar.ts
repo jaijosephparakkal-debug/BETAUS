@@ -12,6 +12,7 @@ export type CalPerson = {
   companyName: string;
   joined: string; // Dubai date the person was added
   days: Map<string, CalDay>;
+  leave: Set<string>; // dates marked as annual leave
 };
 
 export const keyOf = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -80,12 +81,17 @@ export async function getMonthCalendar(year: number, month: number, userId?: str
     if (!existing) {
       people.set(m.userId, {
         userId: m.userId, name: m.user.name, title: m.title, companySlug: m.company.slug, companyName: m.company.name,
-        joined: dubaiDateKey(m.createdAt), days: new Map(),
+        joined: dubaiDateKey(m.createdAt), days: new Map(), leave: new Set(),
       });
     } else if (m.company.slug === "gasneeds") {
       existing.title = m.title; existing.companySlug = m.company.slug; existing.companyName = m.company.name;
     }
   }
+
+  const leaveRows = await prisma.leaveDay.findMany({
+    where: { userId: { in: [...people.keys()] }, date: { gte: startKey, lt: nextKey } },
+  });
+  for (const l of leaveRows) people.get(l.userId)?.leave.add(l.date);
 
   const byPersonDay = new Map<string, typeof entries>();
   for (const e of entries) {
@@ -112,7 +118,7 @@ export async function getMonthCalendar(year: number, month: number, userId?: str
 
 export function summarize(p: CalPerson, year: number, month: number) {
   const todayKey = dubaiDateKey(new Date());
-  let present = 0, absent = 0, late = 0, corrected = 0, auto = 0;
+  let present = 0, absent = 0, late = 0, corrected = 0, auto = 0, leave = 0;
   for (let d = 1; d <= daysInMonth(year, month); d++) {
     const k = keyOf(year, month, d);
     const rec = p.days.get(k);
@@ -121,7 +127,10 @@ export function summarize(p: CalPerson, year: number, month: number) {
       if (rec.late) late++;
       if (rec.corrected) corrected++;
       if (rec.auto) auto++;
+    } else if (p.leave.has(k)) {
+      if (isWorkingDay(k)) leave++;
     } else if (isWorkingDay(k) && k >= p.joined && k < todayKey) absent++;
+    if (rec && p.leave.has(k) && isWorkingDay(k)) leave++;
   }
-  return { present, absent, late, corrected, auto };
+  return { present, absent, late, corrected, auto, leave };
 }

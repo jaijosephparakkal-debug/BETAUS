@@ -43,6 +43,8 @@ export async function getMonthAttendance(userId: string, year: number, month: nu
   });
 
   const todayKey = dubaiDateKey(new Date());
+  const leaveRows = await prisma.leaveDay.findMany({ where: { userId, date: { gte: startKey, lt: next } } });
+  const leave = new Set(leaveRows.map((l) => l.date));
   const byDay = new Map<string, typeof entries>();
   for (const e of entries) {
     const k = dubaiDateKey(e.clockIn);
@@ -70,7 +72,7 @@ export async function getMonthAttendance(userId: string, year: number, month: nu
   // The primary membership for branding: Gasneeds if they hold it, otherwise their first.
   const primary = memberships.find((m) => m.company.slug === "gasneeds") ?? memberships[0];
   const joined = dubaiDateKey(memberships[0].createdAt);
-  return { name: primary.user.name, title: primary.title, companySlug: primary.company.slug, companyName: primary.company.name, joined, days, year, month, todayKey };
+  return { name: primary.user.name, title: primary.title, companySlug: primary.company.slug, companyName: primary.company.name, joined, days, leave, year, month, todayKey };
 }
 
 type MonthData = NonNullable<Awaited<ReturnType<typeof getMonthAttendance>>>;
@@ -119,7 +121,7 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
         if (working) present++;
         if (rec.late) late++;
         if (rec.corrected) corrected++;
-      } else if (working && k < d.todayKey) absent++;
+      } else if (working && k < d.todayKey && !d.leave.has(k)) absent++;
     }
     const stats: [string, string, string][] = [["Days present", String(present), "#166534"], ["Absent", String(absent), absent ? "#B91C1C" : "#6B7280"], ["First login after 8:15", String(late), late ? "#B45309" : "#6B7280"], ["Corrected manually", String(corrected), "#6B7280"]];
     const boxW = (W - L * 2 - 30) / 4;
@@ -151,6 +153,7 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
       const working = weekday >= 1 && weekday <= 5 && !holiday && k >= d.joined;
       let bg = "#f1f5f9";
       if (rec) bg = "#dcfce7";
+      else if (d.leave.has(k)) bg = "#e0f2fe";
       else if (working && k < d.todayKey) bg = "#fee2e2";
       doc.rect(x, y, cw, ch).fill(bg);
       doc.rect(x, y, cw, ch).lineWidth(0.6).stroke("#ffffff");
@@ -162,6 +165,8 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
         if (rec.auto) doc.fillColor("#475569").fontSize(7).text("Auto clocked out", x + 5, y + (rec.corrected ? 46 : 54), { width: cw - 10 });
       } else if (holiday) {
         doc.fillColor("#94a3b8").fontSize(9).text("Holiday", x + 5, y + 28, { width: cw - 10, align: "center" });
+      } else if (d.leave.has(k)) {
+        doc.fillColor("#0369a1").fontSize(10).text("Annual leave", x + 5, y + 28, { width: cw - 10, align: "center" });
       } else if (working && k < d.todayKey) {
         doc.fillColor("#B91C1C").fontSize(10).text("Absent", x + 5, y + 28, { width: cw - 10, align: "center" });
       }

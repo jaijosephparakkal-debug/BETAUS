@@ -54,14 +54,20 @@ export async function autoClockOutAllOverdue() {
  */
 export async function clockInIfNeeded(membershipId: string, opts: { explicit?: boolean } = {}) {
   const now = new Date();
-  let open = await prisma.attendanceEntry.findFirst({
+  // Close every open entry that is past its automatic cut-off, then reuse the
+  // latest one that is still within its day (a person can have a stale one
+  // and a current one open at the same time).
+  const openList = await prisma.attendanceEntry.findMany({
     where: { membershipId, clockOut: null },
+    orderBy: { clockIn: "desc" },
   });
-  if (open) {
-    const { at, reason } = autoCutoffFor(open.clockIn);
+  let open: (typeof openList)[number] | null = null;
+  for (const e of openList) {
+    const { at, reason } = autoCutoffFor(e.clockIn);
     if (at <= now) {
-      await prisma.attendanceEntry.updateMany({ where: { id: open.id, clockOut: null }, data: { clockOut: at, reason } });
-      open = null;
+      await prisma.attendanceEntry.updateMany({ where: { id: e.id, clockOut: null }, data: { clockOut: at, reason } });
+    } else if (!open) {
+      open = e;
     }
   }
   if (!open && !opts.explicit && dubaiMinutesOfDay(now) >= OFFICE_END.hour * 60 + OFFICE_END.minute) return null;

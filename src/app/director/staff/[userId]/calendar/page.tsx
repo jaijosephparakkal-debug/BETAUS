@@ -68,7 +68,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
             const rec = person.days.get(k);
             const onLeave = person.leave.has(k);
             const absent = !rec && !onLeave && isWorkingDay(k) && k >= person.joined && k < todayKey;
-            const cls = rec ? "bg-emerald-50" : onLeave ? "bg-sky-50" : absent ? "bg-red-50" : isHoliday(k) ? "bg-slate-100" : "bg-slate-50";
+            const cls = rec ? (rec.late ? "bg-amber-50" : "bg-emerald-50") : onLeave ? "bg-sky-50" : absent ? "bg-red-50" : isHoliday(k) ? "bg-slate-100" : "bg-slate-50";
             return (
               <Link
                 key={i}
@@ -78,7 +78,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
                 <div className="text-[15px] text-slate-500">{d}</div>
                 {rec ? (
                   <div className="mt-1 text-[17px] leading-snug">
-                    <div className="text-emerald-800">In {rec.first}</div>
+                    <div className={rec.late ? "text-amber-800" : "text-emerald-800"}>In {rec.first}</div>
                     <div className="text-emerald-800">Out {rec.last}</div>
                     {onLeave && <div className="mt-0.5 text-[12px] font-medium text-sky-700">Annual leave</div>}
                   </div>
@@ -95,7 +95,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
         </div>
       </Card>
       <p className="text-[15px] text-slate-500">
-        Green = logged in (first login and last logout). Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
+        Green = logged in (first login and last logout). Amber = logged in after 8:15 AM. Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
       </p>
 
       <Card>

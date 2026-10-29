@@ -13,12 +13,21 @@ const EXTENDED: Record<string, { endMin: number; label: string }> = {
   "ram@flaretechnical.com": { endMin: 22 * 60, label: "10:00 PM" }, // Ram
 };
 
+// One-day windows for a single person (e.g. the director correcting their own days).
+const SPECIAL: Record<string, { date: string; startMin: number; endMin: number; label: string }> = {
+  "jai@gasneeds.com": { date: "2026-10-29", startMin: 0, endMin: 23 * 60, label: "11:00 PM" },
+};
+
 export function reconcileEndLabel(email: string) {
+  const sp = SPECIAL[email.toLowerCase()];
+  if (sp && dubaiDateKey(new Date()) === sp.date) return sp.label;
   return EXTENDED[email.toLowerCase()]?.label ?? RECONCILE_WINDOW.endLabel;
 }
 
 export function isReconcileOpen(email: string, now = new Date()) {
   const m = dubaiMinutesOfDay(now);
+  const sp = SPECIAL[email.toLowerCase()];
+  if (sp && dubaiDateKey(now) === sp.date && m >= sp.startMin && m < sp.endMin) return true;
   const endMin = EXTENDED[email.toLowerCase()]?.endMin ?? RECONCILE_WINDOW.endMin;
   return dubaiDateKey(now) === RECONCILE_WINDOW.date && m >= RECONCILE_WINDOW.startMin && m < endMin;
 }

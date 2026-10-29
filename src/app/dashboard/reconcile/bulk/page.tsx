@@ -18,38 +18,27 @@ export default async function BulkReconcilePage() {
   if (!me) redirect("/login");
   if (!canBulkReconcile(me.user.email)) redirect("/dashboard/reconcile");
 
-  const days: string[] = [];
-  for (let d = new Date("2026-09-26T00:00:00Z"); d.toISOString().slice(0, 10) <= "2026-10-21"; d.setUTCDate(d.getUTCDate() + 1)) {
-    const k = d.toISOString().slice(0, 10);
-    if (!HOLIDAYS.has(k)) days.push(k);
-  }
-  let si = 0;
-  let oi = 0;
-  const rows = days.map((date) => {
-    if (date < "2026-10-01") {
-      const r = { date, in: SEP_IN[si % SEP_IN.length], out: SEP_OUT[si % SEP_OUT.length] };
-      si++;
-      return r;
-    }
-    const r = { date, in: OCT_IN[oi % OCT_IN.length], out: OCT_OUT[oi % OCT_OUT.length] };
-    oi++;
-    return r;
-  });
+  // The director's own days, with the times they gave. Today has a login only; the logout is recorded when they sign out.
+  const rows = [
+    { date: "2026-10-23", in: "07:42", out: "18:00" },
+    { date: "2026-10-24", in: "07:47", out: "18:00" },
+    { date: "2026-10-26", in: "07:49", out: "17:45" },
+    { date: "2026-10-27", in: "07:39", out: "17:32" },
+    { date: "2026-10-28", in: "07:30", out: "17:50" },
+    { date: "2026-10-29", in: "07:48", out: "" },
+  ];
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[23px] font-semibold text-slate-900">Add my usual hours — manual entries</h1>
-      <p className="text-[19px] text-slate-500">
-        One shift per day from 26 Sep to 21 Oct, except the holidays (3, 4, 11, 17, 18 Oct). Every shift is saved as a manual entry with the note
-        “worked but did not log in; usual hours entered manually”. Your existing recorded entries are left as they are.
-      </p>
+      <h1 className="text-[23px] font-semibold text-slate-900">Add my days — manual entries</h1>
+      <p className="text-[19px] text-slate-500">These shifts are saved as manual entries, flagged as “Corrected manually”. Today has a login only; the logout is recorded when you sign out. Your existing recorded entries are left as they are.</p>
       <Card>
         <table className="mb-4 w-full text-[19px]">
           <tbody>
             {rows.map((r) => (
               <tr key={r.date} className="border-b border-slate-100 last:border-0">
                 <td className="py-1.5 text-slate-900">{new Date(`${r.date}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}</td>
-                <td className="py-1.5 text-slate-600">{r.in} → {r.out}</td>
+                <td className="py-1.5 text-slate-600">{r.in} → {r.out || "still in"}</td>
               </tr>
             ))}
           </tbody>

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { staffWhere, hasStaffProfile } from "@/lib/visibleStaff";
+import { staffWhere, hasStaffProfile, shownInCompany } from "@/lib/visibleStaff";
 
 export function getLatestDirectorMessage(companyId: string) {
   return prisma.directorMessage.findFirst({
@@ -320,14 +320,15 @@ export type OrgNode = {
 export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
   const memberships = await prisma.membership.findMany({
     where: { companyId },
-    include: { user: true },
+    include: { user: true, company: true },
   });
+  const shown = memberships.filter((m) => shownInCompany(m.user.email, m.company.slug));
 
-  const byId = new Map(memberships.map((m) => [m.id, m]));
+  const byId = new Map(shown.map((m) => [m.id, m]));
   const childrenOf = new Map<string, string[]>();
   let rootId: string | null = null;
 
-  for (const m of memberships) {
+  for (const m of shown) {
     if (m.managerId) {
       childrenOf.set(m.managerId, [...(childrenOf.get(m.managerId) ?? []), m.id]);
     } else if (m.isDirector) {

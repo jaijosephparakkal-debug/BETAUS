@@ -68,16 +68,21 @@ export async function getMonthCalendar(year: number, month: number, userId?: str
     include: { user: true, company: true },
     orderBy: { createdAt: "asc" },
   });
+  // A person's attendance counts whichever of their memberships they clocked in under.
+  const allMemberships = await prisma.membership.findMany({
+    where: { userId: { in: memberships.map((m) => m.userId) } },
+    select: { id: true, userId: true },
+  });
   const entries = await prisma.attendanceEntry.findMany({
-    where: { membershipId: { in: memberships.map((m) => m.id) }, clockIn: { gte: start, lt: end } },
+    where: { membershipId: { in: allMemberships.map((m) => m.id) }, clockIn: { gte: start, lt: end } },
     orderBy: { clockIn: "asc" },
   });
 
   const todayKey = dubaiDateKey(new Date());
   const people = new Map<string, CalPerson>();
   const owner = new Map<string, string>(); // membershipId -> userId
+  for (const m of allMemberships) owner.set(m.id, m.userId);
   for (const m of memberships) {
-    owner.set(m.id, m.userId);
     const existing = people.get(m.userId);
     if (!existing) {
       people.set(m.userId, {

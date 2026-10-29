@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { staffWhere, hasStaffProfile } from "@/lib/visibleStaff";
+import { staffWhere, hasStaffProfile, shownInCompany } from "@/lib/visibleStaff";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -90,7 +90,7 @@ export default async function DirectorPage() {
   // Staff = everyone except the Managing Director (Jai included), per company.
   const staffCounts = perCompany.map((b) => ({
     company: b.company,
-    staff: b.rollup.memberships.filter((m) => hasStaffProfile(m.user.email)).length,
+    staff: b.rollup.memberships.filter((m) => hasStaffProfile(m.user.email) && shownInCompany(m.user.email, b.company.slug)).length,
   }));
 
   // Today's attendance (Dubai day), both companies merged, Managing Director excluded.

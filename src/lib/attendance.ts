@@ -9,7 +9,7 @@ export const SIGN_OUT_REASONS = {
 
 export type SignOutReason = keyof typeof SIGN_OUT_REASONS;
 
-// Staff are clocked out automatically at 6 PM Dubai time (OFFICE_END). If they
+// Staff are clocked out automatically at 6 PM Dubai time (AUTO_CLOCKOUT). If they
 // want to work later they log in again, and that session is closed at the end
 // of the day. This applies to everyone, directors included. The closed entry
 // is flagged with an AUTO_* reason so reports show it was automatic.
@@ -21,7 +21,7 @@ export const AUTO_REASONS = {
 /** When an entry that started at `clockIn` is automatically closed, and why. */
 export function autoCutoffFor(clockIn: Date) {
   const [y, m, d] = dubaiDateKey(clockIn).split("-").map(Number);
-  const sixPm = new Date(Date.UTC(y, m - 1, d, OFFICE_END.hour, OFFICE_END.minute) - DUBAI_OFFSET_MS);
+  const sixPm = new Date(Date.UTC(y, m - 1, d, AUTO_CLOCKOUT.hour, AUTO_CLOCKOUT.minute) - DUBAI_OFFSET_MS);
   if (clockIn < sixPm) return { at: sixPm, reason: "AUTO_6PM" as const };
   return { at: new Date(Date.UTC(y, m - 1, d, 23, 59, 59) - DUBAI_OFFSET_MS), reason: "AUTO_EOD" as const };
 }
@@ -70,7 +70,7 @@ export async function clockInIfNeeded(membershipId: string, opts: { explicit?: b
       open = e;
     }
   }
-  if (!open && !opts.explicit && dubaiMinutesOfDay(now) >= OFFICE_END.hour * 60 + OFFICE_END.minute) return null;
+  if (!open && !opts.explicit && dubaiMinutesOfDay(now) >= AUTO_CLOCKOUT.hour * 60 + AUTO_CLOCKOUT.minute) return null;
   const entry = open ?? (await prisma.attendanceEntry.create({ data: { membershipId } }));
   await ensureClockOutReminder(entry);
   return entry;
@@ -137,6 +137,8 @@ export function formatDubaiTime(date: Date) {
 // profile (Dubai time). Change here if the office timing changes.
 export const OFFICE_START = { hour: 9, minute: 0 };
 export const OFFICE_END = { hour: 17, minute: 0 };
+/** Open sessions are closed automatically at 6 PM Dubai (not the 5 PM shift end above). */
+export const AUTO_CLOCKOUT = { hour: 18, minute: 0 };
 
 /** "YYYY-MM-DD" of the Dubai calendar day this moment falls on. */
 export function dubaiDateKey(date: Date) {

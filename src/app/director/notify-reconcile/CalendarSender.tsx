@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { sendCalendarEmailAction } from "./actions";
+import { sendCalendarEmailAction, sendFinalTimesheetEmailAction } from "./actions";
 
-export default function CalendarSender() {
+export default function CalendarSender({ final = false }: { final?: boolean }) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [msg, setMsg] = useState("");
 
   async function send() {
     setState("sending");
-    const res = await sendCalendarEmailAction();
+    const res = final ? await sendFinalTimesheetEmailAction() : await sendCalendarEmailAction();
     if (res.ok) {
       setState("done");
       setMsg(`Sent to ${res.sent} people`);
@@ -27,7 +27,7 @@ export default function CalendarSender() {
         onClick={send}
         className="rounded-lg bg-brand-600 px-4 py-2 text-[19px] font-medium text-white hover:bg-brand-700 disabled:opacity-60"
       >
-        {state === "sending" ? "Sending…" : state === "done" ? "Done" : "Send the whole calendar to all staff"}
+        {state === "sending" ? "Sending…" : state === "done" ? "Done" : final ? "Send the final October timesheet to all staff" : "Send the whole calendar to all staff"}
       </button>
       {msg && <p className="text-[17px] text-slate-500">{msg}</p>}
     </div>

@@ -181,3 +181,27 @@ export async function sendCalendarEmailAction(): Promise<{ ok?: boolean; error?:
   });
   return ok ? { ok: true, sent: users.length } : { error: "The email could not be sent." };
 }
+
+/** The final October timesheet to all staff, stating it is the version going to Mr. Abraham tomorrow. */
+export async function sendFinalTimesheetEmailAction(): Promise<{ ok?: boolean; error?: string; sent?: number }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!me.isDirector) return { error: "Only a director can send this." };
+  const users = await prisma.user.findMany({
+    where: { memberships: { some: {} }, email: { notIn: OCT_EXCLUDED } },
+    orderBy: { name: "asc" },
+  });
+  const ids = users.map((u) => u.id);
+  const table = await renderCalendarHtml(2026, 10, ids);
+  const pdf = await generateAllStaffCalendarPdf(2026, 10, ids);
+  const html = `
+    <p>Hi all,</p>
+    <p>Here is the October timesheet for all staff. This is the <strong>final timesheet</strong>, and it is the one being sent to Mr. Abraham tomorrow.</p>
+    ${table}
+    <p>— OWN IT</p>`;
+  const ok = await sendGroupEmail(users.map((u) => u.email), "October timesheet — final, going to Mr. Abraham tomorrow", html, {
+    filename: "October timesheet - final.pdf",
+    content: pdf,
+  });
+  return ok ? { ok: true, sent: users.length } : { error: "The email could not be sent." };
+}

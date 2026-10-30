@@ -19,6 +19,11 @@ export default async function NotifyReconcilePage() {
         Tells each person the reconciliation window is open today until 6:00 PM, with their own October attendance attached as a PDF. Abraham and the Maintenance Manager placeholder are not included.
       </p>
       <Card>
+        <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Final October timesheet to all staff</h2>
+        <p className="mb-3 text-[17px] text-slate-500">The October timesheet for everyone, stating it is the final one going to Mr. Abraham tomorrow. Calendar in the message plus the PDF.</p>
+        <CalendarSender final />
+      </Card>
+      <Card>
         <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Whole calendar to all staff</h2>
         <p className="mb-3 text-[17px] text-slate-500">One email with everyone's day-in and day-out for October in the message (late first logins in amber), plus the PDF.</p>
         <CalendarSender />

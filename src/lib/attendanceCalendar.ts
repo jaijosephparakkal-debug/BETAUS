@@ -3,6 +3,8 @@ import { staffWhere } from "@/lib/visibleStaff";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
 
 export const LATE_AFTER_MIN = 8 * 60 + 15;
+/** Working Saturdays run 9 AM–3 PM, so a first login after 9:15 is late; other days after 8:15. */
+export const lateAfterMin = (key: string) => (new Date(`${key}T00:00:00Z`).getUTCDay() === 6 ? 9 * 60 + 15 : LATE_AFTER_MIN);
 
 export type CalDay = { first: string; last: string; late: boolean; corrected: boolean; auto: boolean };
 export type CalPerson = {
@@ -114,7 +116,7 @@ export async function getMonthCalendar(year: number, month: number, userId?: str
     people.get(uid)!.days.set(day, {
       first: hhmm(first.clockIn),
       last: outs.length ? hhmm(new Date(Math.max(...outs))) : open && day === todayKey ? "still in" : "not recorded",
-      late: minutesOfDay(first.clockIn) > LATE_AFTER_MIN,
+      late: minutesOfDay(first.clockIn) > lateAfterMin(day),
       corrected: list.some((e) => e.isManual),
       auto: list.some((e) => e.reason === "AUTO_6PM" || e.reason === "AUTO_EOD"),
     });

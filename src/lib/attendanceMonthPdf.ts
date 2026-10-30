@@ -9,7 +9,7 @@ import { NOTO_SANS_REGULAR_BASE64 } from "./pdf/fonts/notoSansBase64";
 
 const FONT_BUFFER = Buffer.from(NOTO_SANS_REGULAR_BASE64, "base64");
 
-const LATE_AFTER_MIN = 8 * 60 + 15;
+const lateAfterMin = (key: string) => (new Date(`${key}T00:00:00Z`).getUTCDay() === 6 ? 9 * 60 + 15 : 8 * 60 + 15);
 
 export type DayRecord = { first: string; last: string; late: boolean; corrected: boolean; auto: boolean };
 
@@ -63,7 +63,7 @@ export async function getMonthAttendance(userId: string, year: number, month: nu
     days.set(k, {
       first: hhmm(first.clockIn),
       last,
-      late: minutesOfDay(first.clockIn) > LATE_AFTER_MIN,
+      late: minutesOfDay(first.clockIn) > lateAfterMin(k),
       corrected: list.some((e) => e.isManual),
       auto: list.some((e) => e.reason === "AUTO_6PM" || e.reason === "AUTO_EOD"),
     });

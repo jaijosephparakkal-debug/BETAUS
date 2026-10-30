@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
-import { sendReportEmail } from "@/lib/mailer";
+import { sendReportEmail, sendGroupEmail } from "@/lib/mailer";
 import { RECONCILE_WINDOW } from "@/lib/reconcile";
 import { sendExtendedWindowNotice } from "@/lib/reconcileNotice";
 
@@ -143,4 +143,33 @@ export async function sendOutstandingReminderAction(email: string): Promise<{ ok
     <p>— OWN IT</p>`;
   const ok = await sendReportEmail(user.email, `Attendance still needs your correction — window open until ${FOLLOW_UP_LABEL} today`, html);
   return ok ? { ok: true } : { error: "The email could not be sent." };
+}
+
+// ---- One common email to all staff listing who still has days without a logout ----
+export async function getCommonEmailPlan() {
+  const people = (await getOutstandingRecipients()).filter((p) => p.days.length > 0);
+  const users = await prisma.user.findMany({
+    where: { memberships: { some: {} }, email: { notIn: OCT_EXCLUDED } },
+    orderBy: { name: "asc" },
+  });
+  return { people: people.map((p) => ({ name: p.name, days: p.days })), recipients: users.map((u) => u.email) };
+}
+
+export async function sendCommonEmailAction(): Promise<{ ok?: boolean; error?: string; sent?: number }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!me.isDirector) return { error: "Only a director can send this." };
+  const plan = await getCommonEmailPlan();
+  if (plan.people.length === 0) return { error: "Nobody has days outstanding." };
+  const rows = plan.people.map((p) => `<li><strong>${p.name}</strong> — ${p.days.join(", ")}</li>`).join("");
+  const html = `
+    <p>Hi all,</p>
+    <p>Despite our repeated emails and reminders, the attendance reconciliation has not been given enough attention. Only the staff who made their corrections properly have managed to complete it.</p>
+    <p>These people still have days with no logout recorded:</p>
+    <ul>${rows}</ul>
+    <p>The reconciliation window is open for them until <strong>${FOLLOW_UP_LABEL} today</strong>. Open the app, tap <strong>Reconcile my attendance</strong>, and correct each day with a short reason.</p>
+    <p>Corrections made in the window are recorded as “Corrected manually”. After the window closes the days stay as recorded.</p>
+    <p>— OWN IT</p>`;
+  const ok = await sendGroupEmail(plan.recipients, `Attendance reconciliation — days still without a logout (open until ${FOLLOW_UP_LABEL} today)`, html);
+  return ok ? { ok: true, sent: plan.recipients.length } : { error: "The email could not be sent." };
 }

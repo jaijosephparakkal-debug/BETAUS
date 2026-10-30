@@ -77,6 +77,20 @@ export async function sendReportEmail(
   return true;
 }
 
+/** Sends one email to a group (a normal "to everyone" message). Returns whether it sent successfully. */
+export async function sendGroupEmail(to: string[], subject: string, html: string): Promise<boolean> {
+  if (!resend) {
+    console.log(`\n[team-portal] Group email skipped (no Resend configured): ${subject}\n`);
+    return false;
+  }
+  const result = await resend.emails.send({ from: fromAddress(), to, subject, html });
+  if (result.error) {
+    console.error(`[team-portal] Resend error sending group email:`, result.error);
+    return false;
+  }
+  return true;
+}
+
 /** Schedules an email for a later time (Resend holds it). Returns its id, or null if it couldn't be scheduled. */
 export async function scheduleEmail(to: string, subject: string, html: string, at: Date): Promise<string | null> {
   if (!resend) {

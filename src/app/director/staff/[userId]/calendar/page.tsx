@@ -95,7 +95,7 @@ export default async function StaffCalendarPage({ params, searchParams }: { para
         </div>
       </Card>
       <p className="text-[15px] text-slate-500">
-        Green = logged in (first login and last logout). Amber = logged in after 8:15 AM. Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
+        Green = logged in (first login and last logout). Amber = first login after 8:15 AM (9:15 AM on Saturdays). Blue = annual leave. Red = no login on a working day. Grey = holiday (every Sunday and alternate Saturdays). Tap a day for that day's full sheet.
       </p>
 
       <Card>

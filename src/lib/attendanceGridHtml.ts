@@ -36,6 +36,6 @@ export async function renderCalendarHtml(year: number, month: number, userIds: s
     })
     .join("");
   return `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse">${head}${body}</table>
-    <p style="font:12px Arial,sans-serif;color:#475569">Top time = first login, bottom time = last logout (Dubai). <span style="background:#bbf7d0;padding:0 4px">green</span> on time, <span style="background:#fde68a;padding:0 4px">amber</span> first login after 8:15 AM, <span style="background:#ef4444;color:#fff;padding:0 4px">A</span> absent, <span style="background:#bae6fd;padding:0 4px">AL</span> annual leave, <span style="background:#f1f5f9;padding:0 4px">H</span> holiday, — no logout recorded.</p>
+    <p style="font:12px Arial,sans-serif;color:#475569">Top time = first login, bottom time = last logout (Dubai). <span style="background:#bbf7d0;padding:0 4px">green</span> on time, <span style="background:#fde68a;padding:0 4px">amber</span> first login after 8:15 AM (9:15 on Saturdays), <span style="background:#ef4444;color:#fff;padding:0 4px">A</span> absent, <span style="background:#bae6fd;padding:0 4px">AL</span> annual leave, <span style="background:#f1f5f9;padding:0 4px">H</span> holiday, — no logout recorded.</p>
     <p style="font:12px Arial,sans-serif;color:#475569">${monthLabel(year, month)}</p>`;
 }

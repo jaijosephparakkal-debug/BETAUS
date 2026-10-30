@@ -112,7 +112,7 @@ export default async function AttendanceCalendarPage({ searchParams }: { searchP
       </Card>
 
       <p className="text-[15px] text-slate-500">
-        Top time is the first login, bottom time the last logout. “in” = still logged in, “—” = no logout recorded. Amber = logged in after 8:15 AM. A = no login on a working day, AL = annual leave, H = holiday (Sundays and alternate Saturdays).
+        Top time is the first login, bottom time the last logout. “in” = still logged in, “—” = no logout recorded. Amber = first login after 8:15 AM (9:15 AM on Saturdays). A = no login on a working day, AL = annual leave, H = holiday (Sundays and alternate Saturdays).
       </p>
     </div>
   );

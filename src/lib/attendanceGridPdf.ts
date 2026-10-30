@@ -97,7 +97,7 @@ export async function generateAllStaffCalendarPdf(year: number, month: number, u
 
     const ly = top + hh + people.length * rh + 12;
     doc.fillColor("#475569").fontSize(8.5).text(
-      "Green: logged in. Amber: first login after 8:15 AM. Red A: no login on a working day. Blue AL: annual leave. Grey H: holiday (every Sunday and alternate Saturdays). — means no logout was recorded that day. Please correct any red A or — day in the app (Reconcile my attendance).",
+      "Green: logged in. Amber: first login after 8:15 AM (9:15 on Saturdays). Red A: no login on a working day. Blue AL: annual leave. Grey H: holiday (every Sunday and alternate Saturdays). — means no logout was recorded that day. Please correct any red A or — day in the app (Reconcile my attendance).",
       L, ly, { width: W - L * 2 }
     );
     doc.end();

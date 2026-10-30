@@ -13,6 +13,21 @@ const SPECIAL: Record<string, { date: string; startMin: number; endMin: number; 
   "jai@gasneeds.com": { date: "2026-10-29", startMin: 0, endMin: 23 * 60, label: "11:00 PM" },
 };
 
+// Follow-up window for the people who still had days without a logout recorded.
+const FOLLOW_UP = { date: "2026-10-30", startMin: 0, endMin: 11 * 60, label: "11:00 AM" };
+export const OUTSTANDING_EMAILS = [
+  "alerts@flaretechnical.com", // Flexie
+  "accounts@flaretechnical.com", // Hashim
+  "service@flaretechnical.com", // Jayaprakash
+  "jiyad.m@flaretechnical.com",
+  "jashim@flaretechnical.com",
+  "saroj@flaretechnical.com",
+  "finance@flaretechnical.com", // Shafeek
+  "simi@flaretechnical.com",
+];
+for (const e of OUTSTANDING_EMAILS) SPECIAL[e] = FOLLOW_UP;
+export const FOLLOW_UP_LABEL = FOLLOW_UP.label;
+
 export function reconcileEndLabel(email: string) {
   const sp = SPECIAL[email.toLowerCase()];
   if (sp && dubaiDateKey(new Date()) === sp.date) return sp.label;

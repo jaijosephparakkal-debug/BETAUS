@@ -88,3 +88,59 @@ export async function sendOctoberAttendanceAction(email: string): Promise<{ ok?:
   );
   return ok ? { ok: true } : { error: "The email could not be sent." };
 }
+
+// ---- Follow-up: people with days still missing a logout ----
+import { getMonthCalendar, isWorkingDay, keyOf } from "@/lib/attendanceCalendar";
+import { dubaiDateKey } from "@/lib/attendance";
+import { OUTSTANDING_EMAILS, FOLLOW_UP_LABEL } from "@/lib/reconcile";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dayLabel = (key: string) => `${Number(key.slice(8))} ${MONTHS[Number(key.slice(5, 7)) - 1]}`;
+
+async function outstandingFor(userId: string) {
+  const [p] = await getMonthCalendar(2026, 10, userId);
+  const today = dubaiDateKey(new Date());
+  const missing: string[] = [];
+  let autoFivePm = false;
+  for (let d = 1; d <= 31; d++) {
+    const k = keyOf(2026, 10, d);
+    const rec = p?.days.get(k);
+    if (!rec || k >= today || !isWorkingDay(k)) continue;
+    if (rec.last === "not recorded") missing.push(k);
+    if (k === "2026-10-29" && rec.auto && rec.last === "17:00") autoFivePm = true;
+  }
+  return { missing, autoFivePm };
+}
+
+export async function getOutstandingRecipients() {
+  const users = await prisma.user.findMany({ where: { email: { in: OUTSTANDING_EMAILS } }, orderBy: { name: "asc" } });
+  const out: { name: string; email: string; days: string[]; autoFivePm: boolean }[] = [];
+  for (const u of users) {
+    const o = await outstandingFor(u.id);
+    out.push({ name: u.name, email: u.email, days: o.missing.map(dayLabel), autoFivePm: o.autoFivePm });
+  }
+  return out;
+}
+
+export async function sendOutstandingReminderAction(email: string): Promise<{ ok?: boolean; error?: string }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!me.isDirector) return { error: "Only a director can send this." };
+  if (!OUTSTANDING_EMAILS.includes(email.toLowerCase())) return { error: "Not a recipient." };
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { error: "Person not found." };
+  const o = await outstandingFor(user.id);
+  if (o.missing.length === 0 && !o.autoFivePm) return { error: "Nothing outstanding." };
+
+  const list = o.missing.length ? `<ul>${o.missing.map((k) => `<li>${dayLabel(k)}</li>`).join("")}</ul>` : "";
+  const html = `
+    <p>Hi ${user.name.split(" ")[0]},</p>
+    <p>Despite our repeated emails and reminders, the attendance reconciliation has not been given enough attention. Only the staff who made their corrections properly have managed to complete it.</p>
+    ${o.missing.length ? `<p>Your record still has no logout time on:</p>${list}` : ""}
+    ${o.autoFivePm ? `<p>Your logout on <strong>29 Oct</strong> was set automatically at 5:00 PM. If you worked later, please correct it.</p>` : ""}
+    <p>The reconciliation window is open for you until <strong>${FOLLOW_UP_LABEL} today</strong>. Please open the app, tap <strong>Reconcile my attendance</strong>, and correct each day with a short reason.</p>
+    <p>Corrections made in the window are recorded as “Corrected manually”. After the window closes the days stay as recorded.</p>
+    <p>— OWN IT</p>`;
+  const ok = await sendReportEmail(user.email, `Attendance still needs your correction — window open until ${FOLLOW_UP_LABEL} today`, html);
+  return ok ? { ok: true } : { error: "The email could not be sent." };
+}

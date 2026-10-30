@@ -93,6 +93,7 @@ export async function sendOctoberAttendanceAction(email: string): Promise<{ ok?:
 import { getMonthCalendar, isWorkingDay, keyOf } from "@/lib/attendanceCalendar";
 import { dubaiDateKey } from "@/lib/attendance";
 import { generateAllStaffCalendarPdf } from "@/lib/attendanceGridPdf";
+import { renderCalendarHtml } from "@/lib/attendanceGridHtml";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const dayLabel = (key: string) => `${Number(key.slice(8))} ${MONTHS[Number(key.slice(5, 7)) - 1]}`;
@@ -155,4 +156,28 @@ export async function sendCommonEmailAction(): Promise<{ ok?: boolean; error?: s
     { filename: "October attendance calendar.pdf", content: pdf }
   );
   return ok ? { ok: true, sent: plan.recipients.length } : { error: "The email could not be sent." };
+}
+
+/** One email to all staff with the whole October calendar in the body (late logins in amber) and as a PDF. */
+export async function sendCalendarEmailAction(): Promise<{ ok?: boolean; error?: string; sent?: number }> {
+  const me = await getCurrentMembership();
+  if (!me) return { error: "Not signed in." };
+  if (!me.isDirector) return { error: "Only a director can send this." };
+  const users = await prisma.user.findMany({
+    where: { memberships: { some: {} }, email: { notIn: OCT_EXCLUDED } },
+    orderBy: { name: "asc" },
+  });
+  const ids = users.map((u) => u.id);
+  const table = await renderCalendarHtml(2026, 10, ids);
+  const pdf = await generateAllStaffCalendarPdf(2026, 10, ids);
+  const html = `
+    <p>Hi all,</p>
+    <p>Here is the whole October attendance calendar for everyone: the day-in and day-out time for each day, with late first logins (after 8:15 AM) in amber. The same calendar is attached as a PDF.</p>
+    ${table}
+    <p>— OWN IT</p>`;
+  const ok = await sendGroupEmail(users.map((u) => u.email), "October attendance calendar — all staff", html, {
+    filename: "October attendance calendar.pdf",
+    content: pdf,
+  });
+  return ok ? { ok: true, sent: users.length } : { error: "The email could not be sent." };
 }

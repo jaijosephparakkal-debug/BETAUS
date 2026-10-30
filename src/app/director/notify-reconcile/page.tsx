@@ -3,6 +3,7 @@ import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { getOctoberRecipients, getCommonEmailPlan } from "./actions";
 import CommonSender from "./CommonSender";
+import CalendarSender from "./CalendarSender";
 import OctoberSender from "./OctoberSender";
 
 export default async function NotifyReconcilePage() {
@@ -17,6 +18,11 @@ export default async function NotifyReconcilePage() {
       <p className="text-[19px] text-slate-500">
         Tells each person the reconciliation window is open today until 6:00 PM, with their own October attendance attached as a PDF. Abraham and the Maintenance Manager placeholder are not included.
       </p>
+      <Card>
+        <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Whole calendar to all staff</h2>
+        <p className="mb-3 text-[17px] text-slate-500">One email with everyone's day-in and day-out for October in the message (late first logins in amber), plus the PDF.</p>
+        <CalendarSender />
+      </Card>
       <Card>
         <h2 className="mb-2 text-[21px] font-semibold text-slate-900">One common email to all staff</h2>
         <p className="mb-3 text-[17px] text-slate-500">One email to everyone with the whole October calendar attached and a list of who still has absent days or days with no logout. The reconciliation window is open for everyone until 11:00 AM today. Goes to everyone except Abraham and the Maintenance Manager placeholder.</p>

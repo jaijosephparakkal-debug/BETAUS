@@ -103,7 +103,9 @@ export async function getCommonEmailPlan() {
     orderBy: { name: "asc" },
   });
   const ids = users.map((u) => u.id);
-  const calendar = (await getMonthCalendar(2026, 10)).filter((p) => ids.includes(p.userId));
+  // Ram is on annual leave from Tuesday and is not chased in the list.
+  const listed = new Set(users.filter((u) => u.email.toLowerCase() !== "ram@flaretechnical.com").map((u) => u.id));
+  const calendar = (await getMonthCalendar(2026, 10)).filter((p) => listed.has(p.userId));
   const today = dubaiDateKey(new Date());
   const people: { name: string; absent: string[]; noLogout: string[] }[] = [];
   for (const p of calendar) {

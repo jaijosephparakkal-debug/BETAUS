@@ -144,6 +144,7 @@ export async function sendCommonEmailAction(): Promise<{ ok?: boolean; error?: s
     <ul>${rows}</ul>
     <p>Please fix them now. The reconciliation window is open for everyone until <strong>${RECONCILE_WINDOW.endLabel} today</strong>. Open the app, tap <strong>Reconcile my attendance</strong>, and correct or add each day with a short reason. If you were on leave, say so in the reason.</p>
     <p>Corrections made in the window are recorded as “Corrected manually”. After the window closes the days stay as recorded.</p>
+    <p><em>If you have already made your corrections, please ignore this email.</em></p>
     <p>— OWN IT</p>`;
   const ok = await sendGroupEmail(
     plan.recipients,

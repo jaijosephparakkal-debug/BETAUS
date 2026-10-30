@@ -44,8 +44,8 @@ export function isOffSaturday(key: string) {
   return days % 14 === 0;
 }
 export const isHoliday = (key: string) => dow(key) === 0 || isOffSaturday(key);
-/** Monday–Friday that is not a holiday. Working Saturdays are not counted as absences. */
-export const isWorkingDay = (key: string) => dow(key) >= 1 && dow(key) <= 5 && !isHoliday(key);
+/** Monday–Friday, plus the working Saturdays (9 AM–3 PM) — every Saturday except the alternate off ones (3, 17, 31 Oct…). */
+export const isWorkingDay = (key: string) => dow(key) >= 1 && dow(key) <= 6 && !isHoliday(key);
 
 function minutesOfDay(d: Date) {
   const s = new Date(d.getTime() + DUBAI_OFFSET_MS);

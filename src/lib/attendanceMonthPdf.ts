@@ -116,7 +116,7 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
       const k = keyOf(d.year, d.month, day);
       const rec = d.days.get(k);
       const weekday = new Date(`${k}T00:00:00Z`).getUTCDay();
-      const working = weekday >= 1 && weekday <= 5 && !isHoliday(k) && k >= d.joined;
+      const working = weekday >= 1 && weekday <= 6 && !isHoliday(k) && k >= d.joined;
       if (rec) {
         if (working) present++;
         if (rec.late) late++;
@@ -150,7 +150,7 @@ export function generateAttendanceMonthPdf(d: MonthData): Promise<Buffer> {
       const rec = d.days.get(k);
       const weekday = new Date(`${k}T00:00:00Z`).getUTCDay();
       const holiday = isHoliday(k);
-      const working = weekday >= 1 && weekday <= 5 && !holiday && k >= d.joined;
+      const working = weekday >= 1 && weekday <= 6 && !holiday && k >= d.joined;
       let bg = "#f1f5f9";
       if (rec) bg = "#dcfce7";
       else if (d.leave.has(k)) bg = "#e0f2fe";

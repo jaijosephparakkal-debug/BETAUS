@@ -78,12 +78,18 @@ export async function sendReportEmail(
 }
 
 /** Sends one email to a group (a normal "to everyone" message). Returns whether it sent successfully. */
-export async function sendGroupEmail(to: string[], subject: string, html: string): Promise<boolean> {
+export async function sendGroupEmail(to: string[], subject: string, html: string, attachment?: { filename: string; content: Buffer }): Promise<boolean> {
   if (!resend) {
     console.log(`\n[team-portal] Group email skipped (no Resend configured): ${subject}\n`);
     return false;
   }
-  const result = await resend.emails.send({ from: fromAddress(), to, subject, html });
+  const result = await resend.emails.send({
+    from: fromAddress(),
+    to,
+    subject,
+    html,
+    ...(attachment ? { attachments: [{ filename: attachment.filename, content: attachment.content }] } : {}),
+  });
   if (result.error) {
     console.error(`[team-portal] Resend error sending group email:`, result.error);
     return false;

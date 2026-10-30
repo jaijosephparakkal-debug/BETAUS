@@ -89,70 +89,37 @@ export async function sendOctoberAttendanceAction(email: string): Promise<{ ok?:
   return ok ? { ok: true } : { error: "The email could not be sent." };
 }
 
-// ---- Follow-up: people with days still missing a logout ----
+// ---- One common email to all staff: the whole calendar plus who still has days to fix ----
 import { getMonthCalendar, isWorkingDay, keyOf } from "@/lib/attendanceCalendar";
 import { dubaiDateKey } from "@/lib/attendance";
-import { OUTSTANDING_EMAILS, FOLLOW_UP_LABEL } from "@/lib/reconcile";
+import { generateAllStaffCalendarPdf } from "@/lib/attendanceGridPdf";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const dayLabel = (key: string) => `${Number(key.slice(8))} ${MONTHS[Number(key.slice(5, 7)) - 1]}`;
 
-async function outstandingFor(userId: string) {
-  const [p] = await getMonthCalendar(2026, 10, userId);
-  const today = dubaiDateKey(new Date());
-  const missing: string[] = [];
-  let autoFivePm = false;
-  for (let d = 1; d <= 31; d++) {
-    const k = keyOf(2026, 10, d);
-    const rec = p?.days.get(k);
-    if (!rec || k >= today || !isWorkingDay(k)) continue;
-    if (rec.last === "not recorded") missing.push(k);
-    if (k === "2026-10-29" && rec.auto && rec.last === "17:00") autoFivePm = true;
-  }
-  return { missing, autoFivePm };
-}
-
-export async function getOutstandingRecipients() {
-  const users = await prisma.user.findMany({ where: { email: { in: OUTSTANDING_EMAILS } }, orderBy: { name: "asc" } });
-  const out: { name: string; email: string; days: string[]; autoFivePm: boolean }[] = [];
-  for (const u of users) {
-    const o = await outstandingFor(u.id);
-    out.push({ name: u.name, email: u.email, days: o.missing.map(dayLabel), autoFivePm: o.autoFivePm });
-  }
-  return out;
-}
-
-export async function sendOutstandingReminderAction(email: string): Promise<{ ok?: boolean; error?: string }> {
-  const me = await getCurrentMembership();
-  if (!me) return { error: "Not signed in." };
-  if (!me.isDirector) return { error: "Only a director can send this." };
-  if (!OUTSTANDING_EMAILS.includes(email.toLowerCase())) return { error: "Not a recipient." };
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return { error: "Person not found." };
-  const o = await outstandingFor(user.id);
-  if (o.missing.length === 0 && !o.autoFivePm) return { error: "Nothing outstanding." };
-
-  const list = o.missing.length ? `<ul>${o.missing.map((k) => `<li>${dayLabel(k)}</li>`).join("")}</ul>` : "";
-  const html = `
-    <p>Hi ${user.name.split(" ")[0]},</p>
-    <p>Despite our repeated emails and reminders, the attendance reconciliation has not been given enough attention. Only the staff who made their corrections properly have managed to complete it.</p>
-    ${o.missing.length ? `<p>Your record still has no logout time on:</p>${list}` : ""}
-    ${o.autoFivePm ? `<p>Your logout on <strong>29 Oct</strong> was set automatically at 5:00 PM. If you worked later, please correct it.</p>` : ""}
-    <p>The reconciliation window is open for you until <strong>${FOLLOW_UP_LABEL} today</strong>. Please open the app, tap <strong>Reconcile my attendance</strong>, and correct each day with a short reason.</p>
-    <p>Corrections made in the window are recorded as “Corrected manually”. After the window closes the days stay as recorded.</p>
-    <p>— OWN IT</p>`;
-  const ok = await sendReportEmail(user.email, `Attendance still needs your correction — window open until ${FOLLOW_UP_LABEL} today`, html);
-  return ok ? { ok: true } : { error: "The email could not be sent." };
-}
-
-// ---- One common email to all staff listing who still has days without a logout ----
 export async function getCommonEmailPlan() {
-  const people = (await getOutstandingRecipients()).filter((p) => p.days.length > 0);
   const users = await prisma.user.findMany({
     where: { memberships: { some: {} }, email: { notIn: OCT_EXCLUDED } },
     orderBy: { name: "asc" },
   });
-  return { people: people.map((p) => ({ name: p.name, days: p.days })), recipients: users.map((u) => u.email) };
+  const ids = users.map((u) => u.id);
+  const calendar = (await getMonthCalendar(2026, 10)).filter((p) => ids.includes(p.userId));
+  const today = dubaiDateKey(new Date());
+  const people: { name: string; absent: string[]; noLogout: string[] }[] = [];
+  for (const p of calendar) {
+    const absent: string[] = [];
+    const noLogout: string[] = [];
+    for (let d = 1; d <= 31; d++) {
+      const k = keyOf(2026, 10, d);
+      if (k >= today || !isWorkingDay(k) || k < p.joined) continue;
+      const rec = p.days.get(k);
+      if (!rec) {
+        if (!p.leave.has(k)) absent.push(k);
+      } else if (rec.last === "not recorded") noLogout.push(k);
+    }
+    if (absent.length || noLogout.length) people.push({ name: p.name, absent: absent.map(dayLabel), noLogout: noLogout.map(dayLabel) });
+  }
+  return { people, userIds: ids, recipients: users.map((u) => u.email) };
 }
 
 export async function sendCommonEmailAction(): Promise<{ ok?: boolean; error?: string; sent?: number }> {
@@ -161,15 +128,28 @@ export async function sendCommonEmailAction(): Promise<{ ok?: boolean; error?: s
   if (!me.isDirector) return { error: "Only a director can send this." };
   const plan = await getCommonEmailPlan();
   if (plan.people.length === 0) return { error: "Nobody has days outstanding." };
-  const rows = plan.people.map((p) => `<li><strong>${p.name}</strong> — ${p.days.join(", ")}</li>`).join("");
+  const pdf = await generateAllStaffCalendarPdf(2026, 10, plan.userIds);
+  const rows = plan.people
+    .map((p) => {
+      const parts = [];
+      if (p.absent.length) parts.push(`absent: ${p.absent.join(", ")}`);
+      if (p.noLogout.length) parts.push(`no logout recorded: ${p.noLogout.join(", ")}`);
+      return `<li><strong>${p.name}</strong> — ${parts.join("; ")}</li>`;
+    })
+    .join("");
   const html = `
     <p>Hi all,</p>
     <p>Despite our repeated emails and reminders, the attendance reconciliation has not been given enough attention. Only the staff who made their corrections properly have managed to complete it.</p>
-    <p>These people still have days with no logout recorded:</p>
+    <p>The full October attendance calendar for everyone is attached. These are the days still showing as absent or without a logout:</p>
     <ul>${rows}</ul>
-    <p>The reconciliation window is open for them until <strong>${FOLLOW_UP_LABEL} today</strong>. Open the app, tap <strong>Reconcile my attendance</strong>, and correct each day with a short reason.</p>
+    <p>Please fix them now. The reconciliation window is open for everyone until <strong>${RECONCILE_WINDOW.endLabel} today</strong>. Open the app, tap <strong>Reconcile my attendance</strong>, and correct or add each day with a short reason. If you were on leave, say so in the reason.</p>
     <p>Corrections made in the window are recorded as “Corrected manually”. After the window closes the days stay as recorded.</p>
     <p>— OWN IT</p>`;
-  const ok = await sendGroupEmail(plan.recipients, `Attendance reconciliation — days still without a logout (open until ${FOLLOW_UP_LABEL} today)`, html);
+  const ok = await sendGroupEmail(
+    plan.recipients,
+    `Attendance calendar — please fix your absent days (window open until ${RECONCILE_WINDOW.endLabel} today)`,
+    html,
+    { filename: "October attendance calendar.pdf", content: pdf }
+  );
   return ok ? { ok: true, sent: plan.recipients.length } : { error: "The email could not be sent." };
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { sendCommonEmailAction } from "./actions";
 
-export default function CommonSender({ people, recipientCount }: { people: { name: string; days: string[] }[]; recipientCount: number }) {
+export default function CommonSender({ people, recipientCount }: { people: { name: string; absent: string[]; noLogout: string[] }[]; recipientCount: number }) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [msg, setMsg] = useState("");
 
@@ -24,7 +24,11 @@ export default function CommonSender({ people, recipientCount }: { people: { nam
       <ul className="space-y-1 text-[19px] text-slate-700">
         {people.map((p) => (
           <li key={p.name}>
-            {p.name} <span className="text-slate-400">· {p.days.join(", ")}</span>
+            {p.name}{" "}
+            <span className="text-slate-400">
+              {p.absent.length ? `· absent ${p.absent.join(", ")} ` : ""}
+              {p.noLogout.length ? `· no logout ${p.noLogout.join(", ")}` : ""}
+            </span>
           </li>
         ))}
       </ul>

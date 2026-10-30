@@ -1,17 +1,15 @@
 import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
-import { getOctoberRecipients, getOutstandingRecipients, getCommonEmailPlan } from "./actions";
+import { getOctoberRecipients, getCommonEmailPlan } from "./actions";
 import CommonSender from "./CommonSender";
 import OctoberSender from "./OctoberSender";
-import OutstandingSender from "./OutstandingSender";
 
 export default async function NotifyReconcilePage() {
   const me = await getCurrentMembership();
   if (!me) redirect("/login");
   if (!me.isDirector) redirect("/dashboard");
   const recipients = await getOctoberRecipients();
-  const outstanding = await getOutstandingRecipients();
   const common = await getCommonEmailPlan();
   return (
     <div className="space-y-4">
@@ -21,13 +19,8 @@ export default async function NotifyReconcilePage() {
       </p>
       <Card>
         <h2 className="mb-2 text-[21px] font-semibold text-slate-900">One common email to all staff</h2>
-        <p className="mb-3 text-[17px] text-slate-500">A single email listing who still has days with no logout. Goes to everyone except Abraham and the Maintenance Manager placeholder.</p>
+        <p className="mb-3 text-[17px] text-slate-500">One email to everyone with the whole October calendar attached and a list of who still has absent days or days with no logout. The reconciliation window is open for everyone until 11:00 AM today. Goes to everyone except Abraham and the Maintenance Manager placeholder.</p>
         <CommonSender people={common.people} recipientCount={common.recipients.length} />
-      </Card>
-      <Card>
-        <h2 className="mb-2 text-[21px] font-semibold text-slate-900">Follow-up: days still missing a logout</h2>
-        <p className="mb-3 text-[17px] text-slate-500">Window open for these people until 11:00 AM today. Each email lists their own days.</p>
-        <OutstandingSender people={outstanding} />
       </Card>
       <Card>
         <OctoberSender recipients={recipients} />

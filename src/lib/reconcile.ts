@@ -12,6 +12,7 @@ const EXTENDED: Record<string, { endMin: number; label: string }> = {};
 // One-day windows for a single person (e.g. the director correcting their own days).
 const SPECIAL: Record<string, { date: string; startMin: number; endMin: number; label: string }> = {
   "jai@gasneeds.com": { date: "2026-10-29", startMin: 0, endMin: 23 * 60, label: "11:00 PM" },
+  "jiyad.m@flaretechnical.com": { date: "2026-10-30", startMin: 0, endMin: 23 * 60, label: "11:00 PM" },
 };
 
 export function reconcileEndLabel(email: string) {

@@ -15,6 +15,14 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Digital Marketing": ["Social post", "Website update", "Email campaign", "Product photos", "Content planning"],
     Confidential: ["Agreement / legal document", "Business proposal", "Data report", "Letterhead / formal notice", "Presentation"],
   },
+  // Antony — Operations Manager
+  "sales@gasneeds.com": {
+    "Quotations & Sales": ["Product quotation sent", "Quotation revised", "Price & availability enquiry", "Customer order confirmed", "Quotation follow-up"],
+    "Customer Visits": ["Customer visit", "Site / meeting", "Visit report"],
+    "PRO & Government Work": ["PRO work", "RTA work", "Visa / residency", "Emirates ID / medical", "Trade licence / renewal"],
+    "HR & Admin": ["HR work", "Insurance / benefits", "Employee documents", "Vehicle / branding", "Office admin"],
+    "Follow-ups & Coordination": ["Payment follow-up", "Quotation follow-up", "Supplier / purchase coordination", "Emails Attended", "Calls in", "Calls out"],
+  },
   // Manu Johny — Purchase Engineer
   "business@gasneeds.com": {
     Quotations: ["Customer quotation sent", "Revised quotation", "Supplier quotation requested", "Quotation follow-up", "Quotation approved / lost"],

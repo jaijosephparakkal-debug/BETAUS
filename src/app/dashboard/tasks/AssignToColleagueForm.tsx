@@ -326,7 +326,11 @@ function TitlePicker({
   );
 }
 
-/** Category + sub dropdown: the sub item becomes the task title, filed under the chosen category task. */
+/**
+ * Category + sub dropdown: the sub item becomes the task title, filed under the chosen category task.
+ * Both have "+ Add other…": a new category creates a new category task, and a typed sub item is
+ * remembered in that category's list next time.
+ */
 function CategorySubPicker({
   categories,
   onTitleChange,
@@ -336,46 +340,50 @@ function CategorySubPicker({
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [sub, setSub] = useState("");
+  const newCategory = categoryId === ADD_OTHER;
   const subs = categories.find((c) => c.id === categoryId)?.subs ?? [];
   return (
     <div className="space-y-2">
       <div>
         <label className="block text-[15px] text-slate-600">Category</label>
-        <select
+        <SelectWithOther
           name="parentTaskId"
-          required
+          otherName="newCategory"
           value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
+          onChange={(v) => {
+            setCategoryId(v);
             setSub("");
             onTitleChange("");
           }}
-          className={selectClass}
-        >
-          <option value="" disabled>
-            Choose category…
-          </option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
+          placeholder="Choose category…"
+          otherPlaceholder="New category name"
+          options={categories.map((c) => ({ value: c.id, label: c.title }))}
+        />
       </div>
       {categoryId && (
         <div>
           <label className="block text-[15px] text-slate-600">What did you do?</label>
-          <SelectWithOther
-            name="title"
-            value={sub}
-            onChange={(v) => {
-              setSub(v);
-              onTitleChange(v);
-            }}
-            placeholder="Choose…"
-            otherPlaceholder="Describe it"
-            options={asOptions(subs)}
-          />
+          {newCategory ? (
+            <input
+              name="title"
+              required
+              placeholder="Describe it"
+              onChange={(e) => onTitleChange(e.target.value)}
+              className={selectClass}
+            />
+          ) : (
+            <SelectWithOther
+              name="title"
+              value={sub}
+              onChange={(v) => {
+                setSub(v);
+                onTitleChange(v);
+              }}
+              placeholder="Choose…"
+              otherPlaceholder="Describe it"
+              options={asOptions(subs)}
+            />
+          )}
         </div>
       )}
     </div>

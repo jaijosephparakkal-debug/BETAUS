@@ -2,6 +2,9 @@
  * Sub dropdowns for the add-task form: per person, each category task (by its title)
  * lists the sub items they can pick. Picking one creates a daily task under that category.
  */
+/** Typed sub items are stored as task-title presets named "sub:<category>|<item>". */
+export const SUB_PREFIX = "sub:";
+
 export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
   // Jai — Marketing & Content Manager
   "jai@gasneeds.com": {

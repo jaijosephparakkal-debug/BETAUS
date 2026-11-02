@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SUB_CATEGORIES } from "@/lib/subCategories";
+import { SUB_CATEGORIES, SUB_PREFIX } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getTasksFor, getAssignedTasksFor, getTaskForChoices } from "@/lib/queries";
@@ -54,14 +54,27 @@ export default async function MyTasksPage() {
     select: { title: true },
   });
   const subConfig = SUB_CATEGORIES[membership.user.email.toLowerCase()];
+  const remembered = titlePresets.map((p) => p.title).filter((t) => t.startsWith(SUB_PREFIX));
+  // Category tasks: the configured ones, plus any category this person added themselves.
   const categories = subConfig
     ? (
         await prisma.task.findMany({
-          where: { assignedToId: membership.id, parentTaskId: null, title: { in: Object.keys(subConfig) } },
+          where: {
+            assignedToId: membership.id,
+            parentTaskId: null,
+            OR: [{ title: { in: Object.keys(subConfig) } }, { subtasks: { some: {} }, category: { not: null } }],
+          },
           select: { id: true, title: true },
           orderBy: { title: "asc" },
         })
-      ).map((c) => ({ id: c.id, title: c.title, subs: subConfig[c.title] ?? [] }))
+      ).map((c) => ({
+        id: c.id,
+        title: c.title,
+        subs: [
+          ...(subConfig[c.title] ?? []),
+          ...remembered.filter((r) => r.startsWith(`${SUB_PREFIX}${c.title}|`)).map((r) => r.slice(SUB_PREFIX.length + c.title.length + 1)),
+        ],
+      }))
     : [];
   const companies = showCompanyField
     ? await prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
@@ -72,7 +85,7 @@ export default async function MyTasksPage() {
       <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
       <AssignToColleagueForm
         selfId={membership.id}
-        titleOptions={titlePresets.map((p) => p.title)}
+        titleOptions={titlePresets.map((p) => p.title).filter((t) => !t.startsWith(SUB_PREFIX))}
         categories={categories}
         taskForChoices={taskForChoices}
         companyOptions={companies}

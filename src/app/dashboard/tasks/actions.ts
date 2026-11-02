@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { notifyNewTask } from "@/lib/notifications";
 import { TASK_FOR_OPTIONS, ADD_OTHER } from "@/lib/taskFor";
+import { SUB_CATEGORIES, SUB_PREFIX } from "@/lib/subCategories";
 
 /**
  * Assigns a plain ad-hoc task from the signed-in employee to any colleague at
@@ -73,14 +74,40 @@ export async function assignTaskToColleagueAction(
   const contactTypeValue = contactType === ADD_OTHER ? "Others" : contactType;
 
   // A sub item picked under one of the person's own category tasks files the new task beneath it.
-  const parentTaskId = String(formData.get("parentTaskId") || "");
+  let parentTaskId = String(formData.get("parentTaskId") || "");
   let parentCategory: string | null = null;
-  if (parentTaskId) {
+  let parentTitle = "";
+  if (parentTaskId === ADD_OTHER) {
+    // A new category: create its category task first, then file this task under it.
+    const name = String(formData.get("newCategory") || "").trim();
+    if (!name) return { error: "Name the new category." };
+    if (assigneeId !== membership.id) return { error: "Choose one of your own categories." };
+    const existing = await prisma.task.findFirst({
+      where: { assignedToId: membership.id, parentTaskId: null, title: { equals: name, mode: "insensitive" }, subtasks: { some: {} } },
+    });
+    const parent =
+      existing ??
+      (await prisma.task.create({
+        data: {
+          companyId: membership.companyId,
+          title: name,
+          category: name,
+          description: `${name} work, from ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}.`,
+          assignedToId: membership.id,
+          assignedById: membership.managerId ?? membership.id,
+          status: "IN_PROGRESS",
+        },
+      }));
+    parentTaskId = parent.id;
+    parentCategory = parent.category ?? parent.title;
+    parentTitle = parent.title;
+  } else if (parentTaskId) {
     const parent = await prisma.task.findUnique({ where: { id: parentTaskId } });
     if (!parent || parent.assignedToId !== membership.id || parent.parentTaskId || assigneeId !== membership.id) {
       return { error: "Choose one of your own categories." };
     }
     parentCategory = parent.category ?? parent.title;
+    parentTitle = parent.title;
   }
 
   const task = await prisma.task.create({
@@ -104,6 +131,18 @@ export async function assignTaskToColleagueAction(
     },
   });
   await notifyNewTask(assigneeId, task.id, title);
+
+  // A typed sub item is remembered in that category's list for next time.
+  if (parentTaskId && parentTitle) {
+    const known = SUB_CATEGORIES[membership.user.email.toLowerCase()]?.[parentTitle] ?? [];
+    if (!known.includes(title)) {
+      await prisma.taskTitlePreset.upsert({
+        where: { membershipId_title: { membershipId: membership.id, title: `${SUB_PREFIX}${parentTitle}|${title}` } },
+        update: {},
+        create: { membershipId: membership.id, title: `${SUB_PREFIX}${parentTitle}|${title}` },
+      });
+    }
+  }
 
   revalidatePath("/dashboard/tasks");
   revalidatePath(`/dashboard/team/${assigneeId}`);

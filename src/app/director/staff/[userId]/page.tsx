@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { groupKpis } from "@/lib/kpiSections";
 import { staffWhere } from "@/lib/visibleStaff";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -271,21 +272,30 @@ export default async function StaffProfilePage({
         {kpis.length === 0 ? (
           <p className="text-[17px] text-slate-500">No KPIs set.</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {kpis.map((k) => (
-              <div key={k.id}>
-                <div className="flex items-center justify-between gap-2 text-[17px]">
-                  <span className="flex items-center gap-2 font-medium text-slate-900">
-                    <CompanyTag slug={k.companySlug} />
-                    {k.name}
-                  </span>
-                  <span className="shrink-0 text-slate-500">
-                    {k.current}
-                    {k.unit ?? ""} / {k.target}
-                    {k.unit ?? ""} · {kpiScore(k)}%
-                  </span>
+          <div className="space-y-5">
+            {groupKpis(kpis).map((sec) => (
+              <div key={sec.label}>
+                {sec.label !== "General" && (
+                  <div className="mb-2 border-b border-brand-100 pb-1 text-[15px] font-semibold uppercase tracking-wide text-slate-500">{sec.label}</div>
+                )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {sec.items.map((k) => (
+                    <div key={k.id}>
+                      <div className="flex items-center justify-between gap-2 text-[17px]">
+                        <span className="flex items-center gap-2 font-medium text-slate-900">
+                          <CompanyTag slug={k.companySlug} />
+                          {k.shortName}
+                        </span>
+                        <span className="shrink-0 text-slate-500">
+                          {k.current}
+                          {k.unit ?? ""} / {k.target}
+                          {k.unit ?? ""} · {kpiScore(k)}%
+                        </span>
+                      </div>
+                      <ProgressBar value={kpiScore(k)} />
+                    </div>
+                  ))}
                 </div>
-                <ProgressBar value={kpiScore(k)} />
               </div>
             ))}
           </div>

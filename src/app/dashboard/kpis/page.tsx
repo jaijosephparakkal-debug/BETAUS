@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { groupKpis } from "@/lib/kpiSections";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getKpisFor, getCompletionsFor, kpiScore } from "@/lib/queries";
@@ -43,17 +44,23 @@ export default async function MyKpisPage() {
           Download my report (PDF)
         </a>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {kpis.map((kpi) => {
+      <div className="space-y-5">
+        {groupKpis(kpis).map((sec) => (
+          <div key={sec.label}>
+            {sec.label !== "General" && (
+              <h2 className="mb-2 border-b border-brand-100 pb-1 text-[17px] font-semibold uppercase tracking-wide text-slate-500">{sec.label}</h2>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+        {sec.items.map((kpi) => {
           const score = kpiScore(kpi);
           return (
             <Card key={kpi.id} className="flex items-center gap-4">
               <DonutChart value={score} size={72} strokeWidth={8} />
               <div>
-                <h2 className="flex items-center gap-2 text-[21px] font-medium text-slate-900">
+                <h3 className="flex items-center gap-2 text-[21px] font-medium text-slate-900">
                   {showCompanyTag && <CompanyTag slug={kpi.companySlug} />}
-                  {kpi.name}
-                </h2>
+                  {kpi.shortName}
+                </h3>
                 {kpi.period && (
                   <div className="text-[17px] text-slate-500">{kpi.period}</div>
                 )}
@@ -66,6 +73,9 @@ export default async function MyKpisPage() {
             </Card>
           );
         })}
+            </div>
+          </div>
+        ))}
         {kpis.length === 0 && (
           <p className="text-[19px] text-slate-500">No KPIs set yet.</p>
         )}

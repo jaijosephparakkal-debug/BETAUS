@@ -3,6 +3,15 @@
  * lists the sub items they can pick. Picking one creates a daily task under that category.
  */
 export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
+  // Jai — Marketing & Content Manager
+  "jai@gasneeds.com": {
+    "Apps & Systems": ["App development", "App testing / fixes", "Store listing / release", "System setup / admin"],
+    "Campaigns & SEO": ["Campaign planned", "Campaign launched", "SEO / blog published", "Ranking tracking", "Video upload & SEO"],
+    Design: ["Brochure / catalogue", "Brand / identity", "Packaging / print", "Certificate / form / document", "Presentation", "Signage / sticker", "Revision / re-edit"],
+    Video: ["Pre-production / storyboard", "Shoot", "Edit", "Final delivery / upload", "Rework / revision"],
+    "Digital Marketing": ["Social post", "Website update", "Email campaign", "Product photos", "Content planning"],
+    Confidential: ["Agreement / legal document", "Business proposal", "Data report", "Letterhead / formal notice", "Presentation"],
+  },
   // Manu Johny — Purchase Engineer
   "business@gasneeds.com": {
     Quotations: ["Customer quotation sent", "Revised quotation", "Supplier quotation requested", "Quotation follow-up", "Quotation approved / lost"],

@@ -17,7 +17,6 @@ import { Card, CompanyTag, ProgressBar, StatusBadge, formatDate, isOverdue } fro
 
 const TASK_FILTERS = {
   all: "All tasks",
-  others: "Assigned by others",
   completed: "Completed",
   pending: "Pending",
   overdue: "Overdue",
@@ -249,13 +248,12 @@ export default async function StaffProfilePage({
 
       {/* Numbers — each one opens the matching task list below */}
       <Card>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           <div className="rounded-lg bg-slate-50 p-3">
             <div className="text-[23px] font-semibold text-slate-900">{avgKpi === null ? "—" : `${avgKpi}%`}</div>
             <div className="text-[15px] text-slate-500">KPI</div>
           </div>
           <StatLink href={filterHref("all")} value={tasks.length} label="Tasks allotted" active={filter === "all"} />
-          <StatLink href={filterHref("others")} value={byOthers.length} label="Assigned by others" active={filter === "others"} />
           <StatLink href={filterHref("completed")} value={completed.length} label="Completed" active={filter === "completed"} color="text-emerald-600" />
           <StatLink href={filterHref("pending")} value={pending.length} label="Pending" active={filter === "pending"} color="text-amber-600" />
           <StatLink href={filterHref("overdue")} value={overdue.length} label="Overdue" active={filter === "overdue"} color="text-red-600" />

@@ -85,7 +85,7 @@ export async function assignTaskToColleagueAction(
 
   const task = await prisma.task.create({
     data: {
-      companyId: parentTaskId ? membership.companyId : membership.companyId,
+      companyId: membership.companyId,
       parentTaskId: parentTaskId || null,
       category: parentCategory,
       title,

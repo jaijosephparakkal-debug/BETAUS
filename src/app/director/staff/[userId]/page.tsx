@@ -119,6 +119,19 @@ export default async function StaffProfilePage({
   const completed = tasks.filter((t) => t.status === "COMPLETED");
   const pending = tasks.filter((t) => t.status !== "COMPLETED");
   const overdue = tasks.filter(isOverdueTask);
+  const kpiGroups = new Map<string, (typeof kpis[number] & { shortName: string })[]>();
+  for (const k of kpis) {
+    const [head, ...rest] = k.name.split(" — ");
+    const label = rest.length ? head : "General";
+    const shortName = rest.length ? rest.join(" — ") : k.name;
+    kpiGroups.set(label, [...(kpiGroups.get(label) ?? []), { ...k, shortName }]);
+  }
+  const kpiSections = [...kpiGroups.entries()].map(([label, items]) => ({
+    label,
+    items,
+    avg: Math.round(items.reduce((sum, k) => sum + kpiScore(k), 0) / items.length),
+  }));
+
   const avgKpi = kpis.length ? Math.round(kpis.reduce((s, k) => s + kpiScore(k), 0) / kpis.length) : null;
 
   const filter: TaskFilter =
@@ -194,6 +207,44 @@ export default async function StaffProfilePage({
   const officeStartLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_START.hour - 4, OFFICE_START.minute)));
   const officeEndLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_END.hour - 4, OFFICE_END.minute)));
 
+  const TaskRow = ({ t }: { t: (typeof tasks)[number] }) => (
+    <Link href={`/dashboard/tasks/${t.id}`} className="block py-2.5 hover:bg-brand-50/40">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2">
+          <CompanyTag slug={t.companySlug} />
+          <span className="truncate text-[17px] font-medium text-slate-900">{t.title}</span>
+        </span>
+        <StatusBadge status={t.status} />
+      </div>
+      <div className="mt-1.5">
+        <ProgressBar value={t.progress} />
+      </div>
+      <div className="mt-1 text-[15px] text-slate-500">
+        {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
+        {" · "}
+        <span className={isOverdueTask(t) ? "font-medium text-red-600" : ""}>Due {formatDate(t.deadline)}</span>
+        {t.completedAt && ` · Completed ${formatDate(t.completedAt)}`}
+      </div>
+    </Link>
+  );
+
+  // Long task lists are sectioned by task type: open work first, finished types collapsed.
+  const groupMap = new Map<string, { key: string; title: string; items: typeof shownTasks }>();
+  for (const t of shownTasks) {
+    const key = t.title.trim().toLowerCase();
+    const g = groupMap.get(key) ?? { key, title: t.title.trim(), items: [] as typeof shownTasks };
+    g.items.push(t);
+    groupMap.set(key, g);
+  }
+  const taskGroups = [...groupMap.values()]
+    .map((g) => {
+      const done = g.items.filter((t) => t.status === "COMPLETED").length;
+      const overdueCount = g.items.filter(isOverdueTask).length;
+      return { ...g, done, openCount: g.items.length - done, overdueCount, open: g.items.length - done > 0 };
+    })
+    .sort((a, b) => Number(b.open) - Number(a.open) || b.items.length - a.items.length);
+
+
   return (
     <div className="space-y-6">
       <Link href="/director/staff" className="text-[17px] text-brand-600 hover:underline">
@@ -265,27 +316,40 @@ export default async function StaffProfilePage({
         </div>
       </Card>
 
-      {/* KPIs */}
+      {/* KPIs — grouped into sections by the "Section — Name" convention */}
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">KPIs</h2>
         {kpis.length === 0 ? (
           <p className="text-[17px] text-slate-500">No KPIs set.</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {kpis.map((k) => (
-              <div key={k.id}>
-                <div className="flex items-center justify-between gap-2 text-[17px]">
-                  <span className="flex items-center gap-2 font-medium text-slate-900">
-                    <CompanyTag slug={k.companySlug} />
-                    {k.name}
-                  </span>
-                  <span className="shrink-0 text-slate-500">
-                    {k.current}
-                    {k.unit ?? ""} / {k.target}
-                    {k.unit ?? ""} · {kpiScore(k)}%
-                  </span>
+          <div className="space-y-5">
+            {kpiSections.map((sec) => (
+              <div key={sec.label}>
+                {kpiSections.length > 1 && (
+                  <div className="mb-2 flex items-center justify-between border-b border-brand-100 pb-1 text-[15px] font-semibold uppercase tracking-wide text-slate-500">
+                    <span>{sec.label}</span>
+                    <span className="text-slate-400">{sec.avg}%</span>
+                  </div>
+                )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {sec.items.map((k) => (
+                    <div key={k.id}>
+                      <div className="flex items-center justify-between gap-2 text-[17px]">
+                        <span className="flex items-center gap-2 font-medium text-slate-900">
+                          <CompanyTag slug={k.companySlug} />
+                          {k.shortName}
+                        </span>
+                        <span className="shrink-0 text-slate-500">
+                          {k.current}
+                          {k.unit ?? ""} / {k.target}
+                          {k.unit ?? ""} · {kpiScore(k)}%
+                        </span>
+                      </div>
+                      <ProgressBar value={kpiScore(k)} />
+                      {k.period && <div className="mt-0.5 text-[13px] text-slate-400">{k.period}{k.lowerIsBetter ? " · lower is better" : ""}</div>}
+                    </div>
+                  ))}
                 </div>
-                <ProgressBar value={kpiScore(k)} />
               </div>
             ))}
           </div>
@@ -315,31 +379,32 @@ export default async function StaffProfilePage({
         </div>
         {shownTasks.length === 0 ? (
           <p className="text-[17px] text-slate-500">No tasks here.</p>
-        ) : (
+        ) : shownTasks.length <= 12 ? (
           <div className="divide-y divide-brand-100">
             {shownTasks.map((t) => (
-              <Link
-                key={t.id}
-                href={`/dashboard/tasks/${t.id}`}
-                className="block py-2.5 hover:bg-brand-50/40"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <CompanyTag slug={t.companySlug} />
-                    <span className="truncate text-[17px] font-medium text-slate-900">{t.title}</span>
+              <TaskRow key={t.id} t={t} />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {taskGroups.map((g) => (
+              <details key={g.key} open={g.open} className="rounded-lg border border-brand-100">
+                <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[18px] font-semibold text-slate-900">
+                    {g.title} <span className="font-normal text-slate-400">· {g.items.length}</span>
                   </span>
-                  <StatusBadge status={t.status} />
+                  <span className="text-[15px] text-slate-500">
+                    <span className="font-medium text-emerald-600">{g.done} done</span>
+                    {g.openCount > 0 && <span className="font-medium text-amber-600"> · {g.openCount} open</span>}
+                    {g.overdueCount > 0 && <span className="font-medium text-red-600"> · {g.overdueCount} overdue</span>}
+                  </span>
+                </summary>
+                <div className="divide-y divide-brand-100 border-t border-brand-100 px-3">
+                  {g.items.map((t) => (
+                    <TaskRow key={t.id} t={t} />
+                  ))}
                 </div>
-                <div className="mt-1.5">
-                  <ProgressBar value={t.progress} />
-                </div>
-                <div className="mt-1 text-[15px] text-slate-500">
-                  {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
-                  {" · "}
-                  <span className={isOverdueTask(t) ? "font-medium text-red-600" : ""}>Due {formatDate(t.deadline)}</span>
-                  {t.completedAt && ` · Completed ${formatDate(t.completedAt)}`}
-                </div>
-              </Link>
+              </details>
             ))}
           </div>
         )}

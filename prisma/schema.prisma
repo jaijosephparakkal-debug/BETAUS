@@ -205,6 +205,7 @@ model Kpi {
   current      Float    @default(0)
   unit         String?
   period       String?
+  lowerIsBetter Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

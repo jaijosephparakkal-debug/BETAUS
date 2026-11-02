@@ -150,8 +150,10 @@ export async function getTimelineFor(membershipId: string) {
   }));
 }
 
-export function kpiScore(kpi: { target: number; current: number }) {
+export function kpiScore(kpi: { target: number; current: number; lowerIsBetter?: boolean }) {
   if (kpi.target <= 0) return 0;
+  // Turnaround-style KPIs: at or under the target is 100%, slower scores less.
+  if (kpi.lowerIsBetter) return kpi.current <= 0 ? 100 : Math.min(100, Math.round((kpi.target / kpi.current) * 100));
   return Math.min(100, Math.round((kpi.current / kpi.target) * 100));
 }
 

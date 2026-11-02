@@ -334,8 +334,12 @@ export default async function StaffProfilePage({
                   <ProgressBar value={t.progress} />
                 </div>
                 <div className="mt-1 text-[15px] text-slate-500">
-                  {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
-                  {" · "}
+                  {t.subtasks.length > 0 ? "" : (
+                    <>
+                      {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
+                      {" · "}
+                    </>
+                  )}
                   <span className={isOverdueTask(t) ? "font-medium text-red-600" : ""}>Due {formatDate(t.deadline)}</span>
                   {t.completedAt && ` · Completed ${formatDate(t.completedAt)}`}
                 </div>

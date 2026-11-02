@@ -144,7 +144,7 @@ export default async function TaskDetailPage({
           <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>
         )}
         <div className="mt-2 text-[17px] text-slate-500">
-          Assigned to {task.assignedTo.user.name} by {task.assignedBy.user.name} ·{" "}
+          {task.subtasks.length > 0 ? "" : `Assigned to ${task.assignedTo.user.name} by ${task.assignedBy.user.name} · `}
           <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
             Due {formatDate(task.deadline)}
           </span>

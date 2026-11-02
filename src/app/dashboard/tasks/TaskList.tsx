@@ -104,9 +104,7 @@ function TaskCard({
           <ProgressBar value={task.progress} />
         </div>
         <div className="mt-2 flex items-center justify-between text-[17px] text-slate-500">
-          <span>
-            {counterpartLabel} {counterpartName}
-          </span>
+          <span>{task.subtasks.length > 0 ? "" : `${counterpartLabel} ${counterpartName}`}</span>
           <span className={isOverdue(task.deadline, task.status) ? "font-medium text-red-600" : ""}>
             Due {formatDate(task.deadline)}
           </span>

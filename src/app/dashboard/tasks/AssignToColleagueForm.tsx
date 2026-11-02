@@ -326,9 +326,66 @@ function TitlePicker({
   );
 }
 
+/** Category + sub dropdown: the sub item becomes the task title, filed under the chosen category task. */
+function CategorySubPicker({
+  categories,
+  onTitleChange,
+}: {
+  categories: { id: string; title: string; subs: string[] }[];
+  onTitleChange: (title: string) => void;
+}) {
+  const [categoryId, setCategoryId] = useState("");
+  const [sub, setSub] = useState("");
+  const subs = categories.find((c) => c.id === categoryId)?.subs ?? [];
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="block text-[15px] text-slate-600">Category</label>
+        <select
+          name="parentTaskId"
+          required
+          value={categoryId}
+          onChange={(e) => {
+            setCategoryId(e.target.value);
+            setSub("");
+            onTitleChange("");
+          }}
+          className={selectClass}
+        >
+          <option value="" disabled>
+            Choose category…
+          </option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.title}
+            </option>
+          ))}
+        </select>
+      </div>
+      {categoryId && (
+        <div>
+          <label className="block text-[15px] text-slate-600">What did you do?</label>
+          <SelectWithOther
+            name="title"
+            value={sub}
+            onChange={(v) => {
+              setSub(v);
+              onTitleChange(v);
+            }}
+            placeholder="Choose…"
+            otherPlaceholder="Describe it"
+            options={asOptions(subs)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AssignToColleagueForm({
   selfId,
   titleOptions,
+  categories = [],
   taskForChoices,
   companyOptions = [],
   departmentContacts = false,
@@ -338,6 +395,8 @@ export function AssignToColleagueForm({
   /** This person's own membership id — every task added here is always for themself. */
   selfId: string;
   titleOptions: string[];
+  /** Category tasks with their sub items; when present they replace the plain title dropdown. */
+  categories?: { id: string; title: string; subs: string[] }[];
   taskForChoices: TaskForChoices;
   /** Only non-empty for the few people with responsibilities at both companies (see DUAL_COMPANY_EMAILS). */
   companyOptions?: { slug: string; name: string }[];
@@ -384,7 +443,11 @@ export function AssignToColleagueForm({
   return (
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
       <input type="hidden" name="assigneeId" value={selfId} />
-      <TitlePicker initialOptions={titleOptions} onTitleChange={setTitle} />
+      {categories.length > 0 ? (
+        <CategorySubPicker categories={categories} onTitleChange={setTitle} />
+      ) : (
+        <TitlePicker initialOptions={titleOptions} onTitleChange={setTitle} />
+      )}
       <TaskForPicker choices={taskForChoices} />
       {showContactFields && (
         <div className="space-y-2">

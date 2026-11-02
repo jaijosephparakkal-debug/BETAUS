@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SUB_CATEGORIES } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getTasksFor, getAssignedTasksFor, getTaskForChoices } from "@/lib/queries";
@@ -52,6 +53,16 @@ export default async function MyTasksPage() {
     orderBy: { createdAt: "asc" },
     select: { title: true },
   });
+  const subConfig = SUB_CATEGORIES[membership.user.email.toLowerCase()];
+  const categories = subConfig
+    ? (
+        await prisma.task.findMany({
+          where: { assignedToId: membership.id, parentTaskId: null, title: { in: Object.keys(subConfig) } },
+          select: { id: true, title: true },
+          orderBy: { title: "asc" },
+        })
+      ).map((c) => ({ id: c.id, title: c.title, subs: subConfig[c.title] ?? [] }))
+    : [];
   const companies = showCompanyField
     ? await prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
     : [];
@@ -62,6 +73,7 @@ export default async function MyTasksPage() {
       <AssignToColleagueForm
         selfId={membership.id}
         titleOptions={titlePresets.map((p) => p.title)}
+        categories={categories}
         taskForChoices={taskForChoices}
         companyOptions={companies}
         departmentContacts={DEPARTMENT_CONTACT_EMAILS.includes(membership.user.email.toLowerCase())}

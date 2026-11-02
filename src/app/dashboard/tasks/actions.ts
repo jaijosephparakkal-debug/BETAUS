@@ -72,9 +72,22 @@ export async function assignTaskToColleagueAction(
   // "+ Add other…" on "Who was it with?" means a typed name.
   const contactTypeValue = contactType === ADD_OTHER ? "Others" : contactType;
 
+  // A sub item picked under one of the person's own category tasks files the new task beneath it.
+  const parentTaskId = String(formData.get("parentTaskId") || "");
+  let parentCategory: string | null = null;
+  if (parentTaskId) {
+    const parent = await prisma.task.findUnique({ where: { id: parentTaskId } });
+    if (!parent || parent.assignedToId !== membership.id || parent.parentTaskId || assigneeId !== membership.id) {
+      return { error: "Choose one of your own categories." };
+    }
+    parentCategory = parent.category ?? parent.title;
+  }
+
   const task = await prisma.task.create({
     data: {
-      companyId: membership.companyId,
+      companyId: parentTaskId ? membership.companyId : membership.companyId,
+      parentTaskId: parentTaskId || null,
+      category: parentCategory,
       title,
       description: description || null,
       assignedToId: assigneeId,

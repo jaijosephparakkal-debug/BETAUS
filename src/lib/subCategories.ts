@@ -50,6 +50,20 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Receivables Follow-up": ["Follow-up (email / phone / WhatsApp)", "Receivables status", "Calls out", "Emails Attended"],
     "Procurement Support": ["Supplier price / offer", "Quotation prepared", "Shipment tracking", "Delivery status"],
   },
+  // Jayaprakash — Service Engineer
+  "service@flaretechnical.com": {
+    "Connections & Disconnections": ["New connection request", "Connection scheduled", "Gas disconnection request", "Disconnection completed"],
+    "Enquiries & Quotations": ["Enquiry received", "Phone IN", "Quotation sent", "Quotation follow-up"],
+    "Scheduling (FSM)": ["Daily work schedule updated on FSM", "Schedule added in FSM", "Job closed on FSM"],
+    "Billing & Payments": ["Invoice generated", "Payment link created (Zoho Billing)", "Payment follow-up"],
+  },
+  // Flexie — Gas Reading
+  "alerts@flaretechnical.com": {
+    "Meter Reading": ["Meter reading paper prepared", "Reading collected from building", "Excel updated", "Reading checked"],
+    "Gas Billing & Invoicing": ["Invoice generated", "Invoice printed / sent", "Media Pro invoice"],
+    "Collections & Payments": ["Payment link posted", "Payment collected / updated", "Outstanding balance report", "Email to building admin"],
+    "Disconnections & Refunds": ["Disconnection processed", "Disconnection updated", "Refund follow-up", "Security refund updated"],
+  },
   // Manu Johny — Purchase Engineer
   "business@gasneeds.com": {
     Quotations: ["Customer quotation sent", "Revised quotation", "Supplier quotation requested", "Quotation follow-up", "Quotation approved / lost"],

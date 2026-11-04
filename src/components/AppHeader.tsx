@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { canSeeProjects, canSeeMaintenance } from "@/lib/teams";
 import Link from "next/link";
 import { canManageAllStaff, isManagingDirector, type FullMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
@@ -33,9 +34,9 @@ export function AppHeader({
     isManagingDirector(membership)
       ? { href: "/director/kpi", label: "KPI" }
       : { href: "/dashboard/kpis", label: "My KPIs" },
-    { href: "/dashboard/projects", label: "Projects" },
+    ...(canSeeProjects(membership) ? [{ href: "/dashboard/projects", label: "Projects" }] : []),
     // Maintenance (AMC / DLP sites) is Flaretech's; directors see it from either company.
-    ...(membership.company.slug === "flaretechnical" || membership.isDirector
+    ...((membership.company.slug === "flaretechnical" || membership.isDirector) && canSeeMaintenance(membership)
       ? [{ href: "/dashboard/maintenance", label: "Maintenance" }]
       : []),
     // Abraham sees everyone through Manage My Staff instead of My Team.

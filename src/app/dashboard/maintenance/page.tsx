@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canSeeMaintenance } from "@/lib/teams";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
@@ -15,6 +16,7 @@ const TYPES = {
 export default async function MaintenancePage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (!canSeeMaintenance(membership)) redirect("/dashboard");
 
   // Maintenance sites belong to Flaretech; checked by person so a director
   // signed in through either company can open them.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canSeeProjects } from "@/lib/teams";
 import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { getProjectsFor } from "@/lib/queries";
@@ -8,6 +9,7 @@ import { AddProjectForm } from "./ProjectForms";
 export default async function ProjectsPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (!canSeeProjects(membership)) redirect("/dashboard");
 
   const projects = await getProjectsFor(membership.companyId);
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { canAddProjects } from "@/lib/teams";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
 import {
@@ -14,9 +15,8 @@ import {
 async function assertCanManageProjects() {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." as const };
-  const reportCount = await prisma.membership.count({ where: { managerId: membership.id } });
-  if (!membership.isDirector && reportCount === 0) {
-    return { error: "Only managers or the director can add projects." as const };
+  if (!canAddProjects(membership)) {
+    return { error: "Only the Projects team or the director can add projects." as const };
   }
   return { membership };
 }

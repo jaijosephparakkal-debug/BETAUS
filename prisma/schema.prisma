@@ -88,6 +88,7 @@ model Membership {
   approvalsRequested ApprovalRequest[] @relation("Requester")
   approvalsToDecide  ApprovalRequest[] @relation("Approver")
   attachmentsUploaded Attachment[]
+  taskLinks TaskLink[]
   approvalComments    ApprovalComment[]
   attendanceEntries   AttendanceEntry[]
   taskTitlePresets    TaskTitlePreset[]
@@ -152,6 +153,7 @@ model Task {
   project    Project?      @relation(fields: [projectId], references: [id])
   comments   TaskComment[]
   attachments Attachment[]
+  links TaskLink[]
   notifications Notification[]
 }
 
@@ -303,4 +305,19 @@ model LeaveDay {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+}
+
+/// A link shared on a task (Drive, e-invoice, Zoho, a drawing, anywhere) instead of an uploaded file.
+model TaskLink {
+  id        String   @id @default(cuid())
+  taskId    String
+  url       String
+  label     String?
+  addedById String
+  createdAt DateTime @default(now())
+
+  task    Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  addedBy Membership @relation(fields: [addedById], references: [id])
+
+  @@index([taskId])
 }

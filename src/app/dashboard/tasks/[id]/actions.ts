@@ -512,3 +512,60 @@ export async function deleteTaskAction(
   revalidatePath(`/dashboard/team/${task.assignedToId}`);
   redirect(task.parentTaskId ? `/dashboard/tasks/${task.parentTaskId}` : "/dashboard/tasks");
 }
+
+/** Cleans a pasted link: adds https:// if missing and only allows web links. */
+function cleanLink(raw: string) {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    if (withScheme.length > 2000) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Shares a link on a task — Drive, e-invoice, Zoho, a drawing, anywhere. Same access as uploading a file used to need. */
+export async function addTaskLinkAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || !(await hasCompanyAccess(membership, task.companyId))) {
+    return { error: "Task not found." };
+  }
+  const isOwner = await isSelfTask(membership, task);
+  const canManage = membership.isDirector || (await isManagerOf(membership.id, task.assignedToId));
+  if (!isOwner && !canManage) return { error: "You don't have access to this task." };
+
+  const url = cleanLink(String(formData.get("url") || ""));
+  if (!url) return { error: "Paste a valid web link (https://…)." };
+  const label = String(formData.get("label") || "").trim().slice(0, 120);
+
+  await prisma.taskLink.create({
+    data: { taskId, url, label: label || null, addedById: membership.id },
+  });
+
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  return {};
+}
+
+/** Removes a link — whoever added it, or someone who manages the task. */
+export async function removeTaskLinkAction(linkId: string, formData: FormData): Promise<void> {
+  void formData;
+  const membership = await getCurrentMembership();
+  if (!membership) return;
+  const link = await prisma.taskLink.findUnique({ where: { id: linkId }, include: { task: true } });
+  if (!link) return;
+  const canManage = membership.isDirector || (await isManagerOf(membership.id, link.task.assignedToId));
+  if (link.addedById !== membership.id && !canManage) return;
+  await prisma.taskLink.delete({ where: { id: linkId } });
+  revalidatePath(`/dashboard/tasks/${link.taskId}`);
+}

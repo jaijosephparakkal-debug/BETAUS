@@ -15,7 +15,7 @@ import {
 import ProgressForm from "./ProgressForm";
 import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
-import { UploadAttachmentForm } from "./UploadAttachmentForm";
+import { TaskLinks } from "./TaskLinks";
 import { DeleteTaskButton, EditTaskForm, ReassignTaskForm } from "./ManageTaskForms";
 
 export default async function TaskDetailPage({
@@ -43,6 +43,10 @@ export default async function TaskDetailPage({
       },
       attachments: {
         include: { uploadedBy: { include: { user: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      links: {
+        include: { addedBy: { include: { user: true } } },
         orderBy: { createdAt: "desc" },
       },
     },
@@ -252,12 +256,24 @@ export default async function TaskDetailPage({
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-          Attachments — quotations, drawings, site maps, letters
+          Links — Drive, e-invoice, Zoho, drawings, letters
         </h2>
-        <AttachmentList attachments={task.attachments} />
-        <div className="mt-3 border-t border-brand-100 pt-3">
-          <UploadAttachmentForm taskId={task.id} />
-        </div>
+        <TaskLinks
+          taskId={task.id}
+          links={task.links.map((l) => ({
+            id: l.id,
+            url: l.url,
+            label: l.label,
+            addedBy: l.addedBy.user.name,
+            canRemove: l.addedById === membership.id || membership.isDirector,
+          }))}
+        />
+        {task.attachments.length > 0 && (
+          <div className="mt-3 border-t border-brand-100 pt-3">
+            <h3 className="mb-1.5 text-[17px] font-semibold text-slate-700">Files uploaded earlier</h3>
+            <AttachmentList attachments={task.attachments} />
+          </div>
+        )}
       </Card>
 
       <Card>

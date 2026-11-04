@@ -256,6 +256,10 @@ export function getApprovalRequestDetail(id: string) {
         include: { uploadedBy: { include: { user: true } } },
         orderBy: { createdAt: "desc" },
       },
+      links: {
+        include: { addedBy: { include: { user: true } } },
+        orderBy: { createdAt: "desc" },
+      },
       comments: {
         include: { author: { include: { user: true } } },
         orderBy: { createdAt: "asc" },

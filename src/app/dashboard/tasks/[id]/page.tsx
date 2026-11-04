@@ -16,6 +16,7 @@ import ProgressForm from "./ProgressForm";
 import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
 import { TaskLinks } from "./TaskLinks";
+import { addTaskLinkAction, removeTaskLinkAction } from "./actions";
 import { DeleteTaskButton, EditTaskForm, ReassignTaskForm } from "./ManageTaskForms";
 
 export default async function TaskDetailPage({
@@ -259,7 +260,8 @@ export default async function TaskDetailPage({
           Links — Drive, e-invoice, Zoho, drawings, letters
         </h2>
         <TaskLinks
-          taskId={task.id}
+          addAction={addTaskLinkAction.bind(null, task.id)}
+          removeAction={removeTaskLinkAction}
           links={task.links.map((l) => ({
             id: l.id,
             url: l.url,

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
+import { cleanLink } from "@/lib/links";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const BLOCKED_EXTENSIONS = /\.(exe|sh|bat|cmd|msi|app|dll)$/i;
@@ -256,4 +257,37 @@ export async function uploadApprovalAttachmentAction(
 
   revalidatePath(`/dashboard/approvals/${id}`);
   return {};
+}
+
+/** Shares a link on an approval request — Drive, e-invoice, Zoho, anywhere. Same access as uploading used to need. */
+export async function addApprovalLinkAction(
+  id: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const access = await assertApprovalAccess(id);
+  if ("error" in access) return { error: access.error };
+
+  const url = cleanLink(String(formData.get("url") || ""));
+  if (!url) return { error: "Paste a valid web link (https://…)." };
+  const label = String(formData.get("label") || "").trim().slice(0, 120);
+
+  await prisma.approvalLink.create({
+    data: { approvalRequestId: id, url, label: label || null, addedById: access.membership.id },
+  });
+
+  revalidatePath(`/dashboard/approvals/${id}`);
+  return {};
+}
+
+/** Removes a link — whoever added it, or a director. */
+export async function removeApprovalLinkAction(linkId: string, formData: FormData): Promise<void> {
+  void formData;
+  const membership = await getCurrentMembership();
+  if (!membership) return;
+  const link = await prisma.approvalLink.findUnique({ where: { id: linkId } });
+  if (!link) return;
+  if (link.addedById !== membership.id && !membership.isDirector) return;
+  await prisma.approvalLink.delete({ where: { id: linkId } });
+  revalidatePath(`/dashboard/approvals/${link.approvalRequestId}`);
 }

@@ -89,6 +89,7 @@ model Membership {
   approvalsToDecide  ApprovalRequest[] @relation("Approver")
   attachmentsUploaded Attachment[]
   taskLinks TaskLink[]
+  approvalLinks ApprovalLink[]
   approvalComments    ApprovalComment[]
   attendanceEntries   AttendanceEntry[]
   taskTitlePresets    TaskTitlePreset[]
@@ -246,6 +247,7 @@ model ApprovalRequest {
   approver    Membership @relation("Approver", fields: [approverId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   comments    ApprovalComment[]
+  links       ApprovalLink[]
 }
 
 // A discussion comment on an approval request — lets the approver ask
@@ -320,4 +322,19 @@ model TaskLink {
   addedBy Membership @relation(fields: [addedById], references: [id])
 
   @@index([taskId])
+}
+
+/// A link shared on an approval request (Drive, e-invoice, Zoho, a drawing, anywhere) instead of an uploaded file.
+model ApprovalLink {
+  id                String   @id @default(cuid())
+  approvalRequestId String
+  url               String
+  label             String?
+  addedById         String
+  createdAt         DateTime @default(now())
+
+  approvalRequest ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  addedBy         Membership      @relation(fields: [addedById], references: [id])
+
+  @@index([approvalRequestId])
 }

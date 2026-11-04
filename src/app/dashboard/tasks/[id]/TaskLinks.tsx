@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { addTaskLinkAction, removeTaskLinkAction } from "./actions";
 
 export type TaskLinkItem = { id: string; url: string; label: string | null; addedBy: string; canRemove: boolean };
 
@@ -27,8 +26,22 @@ function AddButton() {
   );
 }
 
-export function TaskLinks({ taskId, links }: { taskId: string; links: TaskLinkItem[] }) {
-  const [state, formAction] = useFormState(addTaskLinkAction.bind(null, taskId), {});
+/**
+ * The links box — used on tasks and approval requests. The add/remove server actions are passed in already
+ * bound to the task or request; `canAdd` is false for people who may only look (e.g. a director auditing).
+ */
+export function TaskLinks({
+  links,
+  addAction,
+  removeAction,
+  canAdd = true,
+}: {
+  links: TaskLinkItem[];
+  addAction: (prev: { error?: string } | undefined, formData: FormData) => Promise<{ error?: string }>;
+  removeAction: (linkId: string, formData: FormData) => Promise<void>;
+  canAdd?: boolean;
+}) {
+  const [state, formAction] = useFormState(addAction, {});
   const formRef = useRef<HTMLFormElement>(null);
   const first = useRef(true);
   // Clear the boxes after a link is added successfully.
@@ -58,7 +71,7 @@ export function TaskLinks({ taskId, links }: { taskId: string; links: TaskLinkIt
               <span className="flex shrink-0 items-center gap-2 text-[17px] text-slate-500">
                 {hostOf(l.url)} · {l.addedBy}
                 {l.canRemove && (
-                  <form action={removeTaskLinkAction.bind(null, l.id)}>
+                  <form action={removeAction.bind(null, l.id)}>
                     <button type="submit" className="text-slate-400 hover:text-red-600" title="Remove this link" aria-label="Remove this link">
                       ✕
                     </button>
@@ -69,6 +82,7 @@ export function TaskLinks({ taskId, links }: { taskId: string; links: TaskLinkIt
           ))}
         </ul>
       )}
+      {canAdd && (
       <form
         ref={formRef}
         action={formAction}
@@ -90,6 +104,7 @@ export function TaskLinks({ taskId, links }: { taskId: string; links: TaskLinkIt
         <AddButton />
         {state.error && <p className="w-full text-[19px] text-red-600">{state.error}</p>}
       </form>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cleanLink } from "@/lib/links";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
@@ -511,21 +512,6 @@ export async function deleteTaskAction(
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/team/${task.assignedToId}`);
   redirect(task.parentTaskId ? `/dashboard/tasks/${task.parentTaskId}` : "/dashboard/tasks");
-}
-
-/** Cleans a pasted link: adds https:// if missing and only allows web links. */
-function cleanLink(raw: string) {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const url = new URL(withScheme);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-    if (withScheme.length > 2000) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
 }
 
 /** Shares a link on a task — Drive, e-invoice, Zoho, a drawing, anywhere. Same access as uploading a file used to need. */

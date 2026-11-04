@@ -5,7 +5,9 @@ import { prisma } from "@/lib/db";
 import { getApprovalRequestDetail } from "@/lib/queries";
 import { Card, StatusBadge, AttachmentList, formatDate } from "@/components/ui";
 import { DecideApprovalForm, ReassignApprovalForm } from "../ApprovalForms";
-import { CommentForm, UploadForm } from "./Forms";
+import { CommentForm } from "./Forms";
+import { TaskLinks } from "../../tasks/[id]/TaskLinks";
+import { addApprovalLinkAction, removeApprovalLinkAction } from "../actions";
 
 const REQUEST_TYPE_LABELS: Record<string, string> = {
   REVIEW: "Review only",
@@ -140,12 +142,24 @@ export default async function ApprovalDetailPage({
 
       <Card>
         <h2 className="mb-3 text-[21px] font-semibold text-slate-900">
-          Documents — quotations, drawings, site maps, submission plans
+          Links — Drive, e-invoice, Zoho, drawings, submission plans
         </h2>
-        <AttachmentList attachments={request.attachments} />
-        {isParty && (
+        <TaskLinks
+          addAction={addApprovalLinkAction.bind(null, request.id)}
+          removeAction={removeApprovalLinkAction}
+          canAdd={isParty}
+          links={request.links.map((l) => ({
+            id: l.id,
+            url: l.url,
+            label: l.label,
+            addedBy: l.addedBy.user.name,
+            canRemove: l.addedById === membership.id || membership.isDirector,
+          }))}
+        />
+        {request.attachments.length > 0 && (
           <div className="mt-3 border-t border-brand-100 pt-3">
-            <UploadForm requestId={request.id} />
+            <h3 className="mb-1.5 text-[17px] font-semibold text-slate-700">Documents uploaded earlier</h3>
+            <AttachmentList attachments={request.attachments} />
           </div>
         )}
       </Card>

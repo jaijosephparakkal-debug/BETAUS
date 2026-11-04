@@ -359,8 +359,8 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
 /**
  * KPI picture for the director: every non-director's KPIs at both
  * companies — overall average, per-company average, and per person (people
- * at both companies merged, each KPI tagged with its company). Averages are
- * over KPIs (each KPI counts once), matching getCompanyRollup.
+ * at both companies merged, each KPI tagged with its company). Company and
+ * overall scores average the people's own scores, so each person counts once.
  */
 export async function getKpiOverview() {
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
@@ -405,16 +405,23 @@ export async function getKpiOverview() {
   }
   for (const p of people.values()) p.avgScore = avg(p.kpis.map((k) => k.score));
 
+  // Roll-up: each person's score is the average of their own KPIs, then the company score is the average
+  // of its people and the overall score the average of everyone — so every person counts equally, however
+  // many KPIs they have.
   const allKpis = Array.from(people.values()).flatMap((p) => p.kpis);
+  const personScores = (slug?: string) =>
+    Array.from(people.values())
+      .map((p) => avg(p.kpis.filter((k) => !slug || k.companySlug === slug).map((k) => k.score)))
+      .filter((x): x is number => x !== null);
   return {
-    overall: { avgScore: avg(allKpis.map((k) => k.score)), kpiCount: allKpis.length, peopleCount: people.size },
+    overall: { avgScore: avg(personScores()), kpiCount: allKpis.length, peopleCount: people.size },
     perCompany: companies.map((c) => {
       const kpis = allKpis.filter((k) => k.companySlug === c.slug);
       return {
         id: c.id,
         slug: c.slug,
         name: c.name,
-        avgScore: avg(kpis.map((k) => k.score)),
+        avgScore: avg(personScores(c.slug)),
         kpiCount: kpis.length,
         peopleWithKpis: Array.from(people.values()).filter((p) => p.kpis.some((k) => k.companySlug === c.slug)).length,
       };

@@ -5,6 +5,19 @@
 /** Typed sub items are stored as task-title presets named "sub:<category>|<item>". */
 export const SUB_PREFIX = "sub:";
 
+/** A communication category everyone gets, next to their own role categories. */
+export const COMMON_TITLE = "Calls & Emails";
+export const COMMON_ID = "__common_calls_emails";
+export const COMMON_ITEMS = [
+  "Calls in",
+  "Calls out",
+  "Emails received",
+  "Emails attended / replied",
+  "Emails sent",
+  "Follow Up",
+  "WhatsApp / messages",
+];
+
 export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
   // Jai — Marketing & Content Manager
   "jai@gasneeds.com": {
@@ -19,7 +32,7 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
   "sales@gasneeds.com": {
     "Sales — Quotations": ["Product quotation sent", "Quotation revised", "Price & availability enquiry", "Customer order confirmed"],
     "Sales — Customer Visits": ["Customer visit", "Site / meeting", "Visit report"],
-    "Sales — Follow-ups": ["Quotation follow-up", "Payment follow-up", "Supplier / purchase coordination", "Emails Attended", "Calls in", "Calls out"],
+    "Sales — Follow-ups": ["Quotation follow-up", "Payment follow-up", "Supplier / purchase coordination"],
     "HR — Staff & Insurance": ["HR work", "Insurance / benefits", "Employee documents", "Recruitment / onboarding", "Leave / attendance"],
     "PRO — Government & Admin": ["PRO work", "RTA work", "Visa / residency", "Emirates ID / medical", "Trade licence / renewal", "Vehicle / branding", "Office admin"],
   },
@@ -31,7 +44,7 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Accounts — Supplier & Admin": ["Supplier application form", "Asset register", "Warehouse insurance"],
     "Maintenance — Gas Reading & Reports": ["Gas reading update", "Gas reading notice", "Summary report", "Outstanding report", "PPM report"],
     "Maintenance — AMC, Contracts & Portals": ["AMC renewal contract", "New contract", "Portal updation", "DCD attestation"],
-    "Calls & Emails": ["Calls in", "Calls out", "Emails Attended", "Follow Up", "Assist manager"],
+    "Calls & Emails": ["Assist manager"],
   },
   // Shafeek — Accounts Manager
   "finance@flaretechnical.com": {
@@ -47,13 +60,13 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Payments & Receipts": ["Payment entry", "International payment", "Local payment", "Vendor payment entry", "Receipt entry", "Beneficiary adding", "Payment link"],
     "Cheques, Cash & Banking": ["Cheque collection", "Cheque deposit", "Cash deposit", "Petty cash deposit", "Bank reconciliation"],
     "Bills & Books": ["Bills posting", "Inventory adjustment", "New vendor / customer", "Documentation / records", "Payroll", "Report"],
-    "Receivables Follow-up": ["Follow-up (email / phone / WhatsApp)", "Receivables status", "Calls out", "Emails Attended"],
+    "Receivables Follow-up": ["Follow-up (email / phone / WhatsApp)", "Receivables status"],
     "Procurement Support": ["Supplier price / offer", "Quotation prepared", "Shipment tracking", "Delivery status"],
   },
   // Jayaprakash — Service Engineer
   "service@flaretechnical.com": {
     "Connections & Disconnections": ["New connection request", "Connection scheduled", "Gas disconnection request", "Disconnection completed"],
-    "Enquiries & Quotations": ["Enquiry received", "Phone IN", "Quotation sent", "Quotation follow-up"],
+    "Enquiries & Quotations": ["Enquiry received", "Quotation sent", "Quotation follow-up"],
     "Scheduling (FSM)": ["Daily work schedule updated on FSM", "Schedule added in FSM", "Job closed on FSM"],
     "Billing & Payments": ["Invoice generated", "Payment link created (Zoho Billing)", "Payment follow-up"],
   },
@@ -71,7 +84,7 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     Enquiries: ["Customer enquiry received", "Enquiry clarified", "Enquiry converted to quotation", "Enquiry closed"],
     "Imports & Deliveries": ["Shipment booked", "Shipment in transit", "Customs clearance", "Delivery arranged", "Delivered"],
     Payments: ["Payment request sent", "Advance paid", "Balance paid", "Invoice received", "Payment follow-up"],
-    "Follow-ups & Calls": ["Calls in", "Calls out", "Emails Attended", "Supplier follow-up", "Customer follow-up"],
+    "Follow-ups & Calls": ["Supplier follow-up", "Customer follow-up"],
   },
   // Saroj — Estimation Engineer
   "saroj@flaretechnical.com": {
@@ -79,7 +92,7 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Estimation & Pricing": ["Estimate / BOQ prepared", "Price update", "Price escalation", "Cost comparison"],
     "Drawings & Documentation": ["Drawing prepared", "Drawing revision", "Document prepared", "Submittal / approval follow-up"],
     "Site Visits": ["Site visit", "Measurements taken", "Site report"],
-    "Follow-ups & Emails": ["Emails Attended", "Follow Up", "Consultant follow-up", "Supplier follow-up"],
+    "Follow-ups & Emails": ["Consultant follow-up", "Supplier follow-up", "Client follow-up"],
     "Systems & Updates": ["Projects update in the app", "IT / systems", "Updated tasks on OWNIT"],
   },
 };

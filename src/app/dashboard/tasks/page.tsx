@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SUB_CATEGORIES, SUB_PREFIX } from "@/lib/subCategories";
+import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getTasksFor, getAssignedTasksFor, getTaskForChoices } from "@/lib/queries";
@@ -71,11 +71,19 @@ export default async function MyTasksPage() {
         id: c.id,
         title: c.title,
         subs: [
-          ...(subConfig[c.title] ?? []),
+          ...(c.title === COMMON_TITLE ? COMMON_ITEMS : subConfig[c.title] ?? []),
           ...remembered.filter((r) => r.startsWith(`${SUB_PREFIX}${c.title}|`)).map((r) => r.slice(SUB_PREFIX.length + c.title.length + 1)),
         ],
       }))
     : [];
+  // Everyone also gets the common Calls & Emails category, created for them the first time they use it.
+  if (subConfig && !categories.some((c) => c.title === COMMON_TITLE)) {
+    categories.push({
+      id: COMMON_ID,
+      title: COMMON_TITLE,
+      subs: [...COMMON_ITEMS, ...remembered.filter((r) => r.startsWith(`${SUB_PREFIX}${COMMON_TITLE}|`)).map((r) => r.slice(SUB_PREFIX.length + COMMON_TITLE.length + 1))],
+    });
+  }
   const companies = showCompanyField
     ? await prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
     : [];

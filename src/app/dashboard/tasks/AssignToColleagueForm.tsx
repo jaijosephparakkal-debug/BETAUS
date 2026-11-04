@@ -182,7 +182,16 @@ const ADD_NEW_VALUE = "__add_new__";
 // These default presets (added to every staff member's title list) capture
 // who the interaction was with, so the "who was it with" pick shows up
 // automatically whenever one of them is selected.
-const CONTACT_TITLES = new Set(["Calls in", "Calls out", "Emails Attended", "Follow Up"]);
+const CONTACT_TITLES = new Set([
+  "Calls in",
+  "Calls out",
+  "Emails Attended",
+  "Follow Up",
+  "Emails received",
+  "Emails attended / replied",
+  "Emails sent",
+  "WhatsApp / messages",
+]);
 const CONTACT_TYPES = ["Vendor", "Supplier", "Client", "Office staff", "Site staff", "Others"];
 // Jayaprakash and Saroj also deal with the internal departments: for them,
 // "Others" opens a second pick of these, or "+ Add other…" to type a name

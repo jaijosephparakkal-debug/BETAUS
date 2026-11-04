@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { notifyNewTask } from "@/lib/notifications";
 import { TASK_FOR_OPTIONS, ADD_OTHER } from "@/lib/taskFor";
-import { SUB_CATEGORIES, SUB_PREFIX } from "@/lib/subCategories";
+import { SUB_CATEGORIES, SUB_PREFIX, COMMON_ID, COMMON_TITLE, COMMON_ITEMS } from "@/lib/subCategories";
 
 /**
  * Assigns a plain ad-hoc task from the signed-in employee to any colleague at
@@ -75,11 +75,16 @@ export async function assignTaskToColleagueAction(
 
   // A sub item picked under one of the person's own category tasks files the new task beneath it.
   let parentTaskId = String(formData.get("parentTaskId") || "");
+  let newCategoryName = String(formData.get("newCategory") || "").trim();
+  if (parentTaskId === COMMON_ID) {
+    parentTaskId = ADD_OTHER;
+    newCategoryName = COMMON_TITLE;
+  }
   let parentCategory: string | null = null;
   let parentTitle = "";
   if (parentTaskId === ADD_OTHER) {
     // A new category: create its category task first, then file this task under it.
-    const name = String(formData.get("newCategory") || "").trim();
+    const name = newCategoryName;
     if (!name) return { error: "Name the new category." };
     if (assigneeId !== membership.id) return { error: "Choose one of your own categories." };
     const existing = await prisma.task.findFirst({
@@ -134,7 +139,7 @@ export async function assignTaskToColleagueAction(
 
   // A typed sub item is remembered in that category's list for next time.
   if (parentTaskId && parentTitle) {
-    const known = SUB_CATEGORIES[membership.user.email.toLowerCase()]?.[parentTitle] ?? [];
+    const known = parentTitle === COMMON_TITLE ? COMMON_ITEMS : SUB_CATEGORIES[membership.user.email.toLowerCase()]?.[parentTitle] ?? [];
     if (!known.includes(title)) {
       await prisma.taskTitlePreset.upsert({
         where: { membershipId_title: { membershipId: membership.id, title: `${SUB_PREFIX}${parentTitle}|${title}` } },

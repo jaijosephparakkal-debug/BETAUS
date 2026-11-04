@@ -23,6 +23,32 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "HR — Staff & Insurance": ["HR work", "Insurance / benefits", "Employee documents", "Recruitment / onboarding", "Leave / attendance"],
     "PRO — Government & Admin": ["PRO work", "RTA work", "Visa / residency", "Emirates ID / medical", "Trade licence / renewal", "Vehicle / branding", "Office admin"],
   },
+  // Hashim — Accounts Executive
+  "accounts@flaretechnical.com": {
+    "Invoicing & Billing": ["Invoice generated", "Tax invoice", "PO update", "Pending PO follow-up"],
+    "Vouchers & Reconciliation": ["Expense voucher", "Receipt voucher", "Bank reconciliation", "Credit card reconciliation", "POS / bank reconcile"],
+    "Collections & Follow-ups": ["Payment follow-up", "Payment collected", "Security deposit refund", "Rebate calculation / cheque"],
+    "Gas Reading & Reports": ["Gas reading update", "Gas reading notice", "Summary report", "Outstanding report", "PPM report"],
+    "Contracts & Portals": ["AMC renewal contract", "New contract", "Portal updation", "Supplier application form", "DCD attestation", "Asset register / insurance"],
+    "Calls & Emails": ["Calls in", "Calls out", "Emails Attended", "Follow Up", "Assist manager"],
+  },
+  // Shafeek — Accounts Manager
+  "finance@flaretechnical.com": {
+    "Banking & Cash": ["Bank reconciliation", "Cheque preparation", "Petty cash", "International transfer", "Credit card statement review"],
+    "Receivables & Collections": ["Receivable review", "Payment collection", "Security deposit refund"],
+    "Payroll & Staff Payments": ["Payroll generation", "Payroll review", "Overtime payment", "Leave salary & air ticket", "Final settlement"],
+    "Tax, VAT & Compliance": ["Corporate tax filing", "VAT return filing", "Insurance renewal"],
+    "Reports & Adjustments": ["Adjustment entries", "Expense posting & review", "Financial report", "Project P&L", "Import / consolidated report"],
+    "Meetings & Admin": ["Meeting with Abraham sir", "Team meeting", "Weekly project meeting", "Vehicle GPS / RFID"],
+  },
+  // Jintu — Accounts Manager
+  "accounts@gasneeds.com": {
+    "Payments & Receipts": ["Payment entry", "International payment", "Local payment", "Vendor payment entry", "Receipt entry", "Beneficiary adding", "Payment link"],
+    "Cheques, Cash & Banking": ["Cheque collection", "Cheque deposit", "Cash deposit", "Petty cash deposit", "Bank reconciliation"],
+    "Bills & Books": ["Bills posting", "Inventory adjustment", "New vendor / customer", "Documentation / records", "Payroll", "Report"],
+    "Receivables Follow-up": ["Follow-up (email / phone / WhatsApp)", "Receivables status", "Calls out", "Emails Attended"],
+    "Procurement Support": ["Supplier price / offer", "Quotation prepared", "Shipment tracking", "Delivery status"],
+  },
   // Manu Johny — Purchase Engineer
   "business@gasneeds.com": {
     Quotations: ["Customer quotation sent", "Revised quotation", "Supplier quotation requested", "Quotation follow-up", "Quotation approved / lost"],

@@ -77,6 +77,39 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
     "Collections & Payments": ["Payment link posted", "Payment collected / updated", "Outstanding balance report", "Email to building admin"],
     "Disconnections & Refunds": ["Disconnection processed", "Disconnection updated", "Refund follow-up", "Security refund updated"],
   },
+  // Ram — Projects Manager
+  "ram@flaretechnical.com": {
+    "Project Meetings": ["Weekly meeting", "Site meeting", "Client meeting", "Technical meeting", "Site visit", "Variation discussion"],
+    "Inspections & Handover": ["Inspection", "Handover inspection", "Site walk", "WIR preparation", "Documents submission"],
+    "Payments & Invoicing": ["Payment follow-up", "Proforma invoice", "Invoice discussion", "Payment certificate"],
+  },
+  // Jiyad — Site Engineer
+  "jiyad.m@flaretechnical.com": {
+    "Site Visits & Meetings": ["Site visit", "Site meeting", "Consultant meeting", "Technical meeting"],
+    "Inspections & Documentation": ["Inspection", "Documentation for raising inspection", "Highlighting drawings", "Completion certificate"],
+    "HSE & Compliance": ["HSE induction documents", "Safety documents"],
+    "Tracker & Reporting": ["Tracker update", "Site report"],
+  },
+  // Mamidi — Design Engineer
+  "design@flaretechnical.com": {
+    "Drawings": ["LPG shop drawing", "Kitchen drawing", "Electrical drawing", "Coordination drawing", "DCD drawing"],
+    "Submittals & Statements": ["Material submittal", "Method statement", "Risk assessment"],
+    "Price Escalation": ["Price escalation submittal"],
+  },
+  // Mohammed Jashim — Design Engineer
+  "jashim@flaretechnical.com": {
+    "Design & 3D Modelling": ["Design", "3D modelling", "Presentation"],
+    "Drawing Revisions": ["Drawing revision", "Client revision"],
+    "Quantities & Quotations": ["Quantity take-off", "Quotation for works"],
+    "Site, Submittals & Meetings": ["Site coordination", "Project submittal", "Client workshop meeting"],
+  },
+  // Simi — Project Coordinator
+  "simi@flaretechnical.com": {
+    "Material & Site Costs": ["Material cost entry", "Material purchase", "Labour count at site"],
+    "Accounts Entries & Invoices": ["Zoho entry", "Invoice", "Project invoice summary", "Security cheque"],
+    "Documentation & Reports": ["Documentation", "Report", "Miscellaneous"],
+    "Timesheets": ["Employee timesheet"],
+  },
   // Manu Johny — Purchase Engineer
   "business@gasneeds.com": {
     Quotations: ["Customer quotation sent", "Revised quotation", "Supplier quotation requested", "Quotation follow-up", "Quotation approved / lost"],

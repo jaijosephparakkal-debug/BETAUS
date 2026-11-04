@@ -25,11 +25,12 @@ export const SUB_CATEGORIES: Record<string, Record<string, string[]>> = {
   },
   // Hashim — Accounts Executive
   "accounts@flaretechnical.com": {
-    "Invoicing & Billing": ["Invoice generated", "Tax invoice", "PO update", "Pending PO follow-up"],
-    "Vouchers & Reconciliation": ["Expense voucher", "Receipt voucher", "Bank reconciliation", "Credit card reconciliation", "POS / bank reconcile"],
-    "Collections & Follow-ups": ["Payment follow-up", "Payment collected", "Security deposit refund", "Rebate calculation / cheque"],
-    "Gas Reading & Reports": ["Gas reading update", "Gas reading notice", "Summary report", "Outstanding report", "PPM report"],
-    "Contracts & Portals": ["AMC renewal contract", "New contract", "Portal updation", "Supplier application form", "DCD attestation", "Asset register / insurance"],
+    "Accounts — Invoicing & Billing": ["Invoice generated", "Tax invoice", "PO update", "Pending PO follow-up"],
+    "Accounts — Vouchers & Reconciliation": ["Expense voucher", "Receipt voucher", "Bank reconciliation", "Credit card reconciliation", "POS / bank reconcile"],
+    "Accounts — Collections & Follow-ups": ["Payment follow-up", "Payment collected", "Security deposit refund", "Rebate calculation / cheque"],
+    "Accounts — Supplier & Admin": ["Supplier application form", "Asset register", "Warehouse insurance"],
+    "Maintenance — Gas Reading & Reports": ["Gas reading update", "Gas reading notice", "Summary report", "Outstanding report", "PPM report"],
+    "Maintenance — AMC, Contracts & Portals": ["AMC renewal contract", "New contract", "Portal updation", "DCD attestation"],
     "Calls & Emails": ["Calls in", "Calls out", "Emails Attended", "Follow Up", "Assist manager"],
   },
   // Shafeek — Accounts Manager

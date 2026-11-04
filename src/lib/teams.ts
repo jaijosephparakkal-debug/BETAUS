@@ -23,3 +23,8 @@ export const canAddProjects = canSeeProjects;
 
 /** Same rule for maintenance sites: the Maintenance team and the directors. */
 export const canAddMaintenance = (m: Person) => m.isDirector || dept(m) === "maintenance";
+
+/** The Accounts tab: the Accounts team and the directors. */
+export function canSeeAccounts(m: Person) {
+  return m.isDirector || dept(m) === "accounts";
+}

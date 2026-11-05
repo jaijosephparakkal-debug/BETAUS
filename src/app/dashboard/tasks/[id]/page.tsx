@@ -16,6 +16,7 @@ import ProgressForm from "./ProgressForm";
 import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
 import { TaskLinks } from "./TaskLinks";
+import { ArrangedTasks } from "@/components/ArrangedTasks";
 import { addTaskLinkAction, removeTaskLinkAction } from "./actions";
 import { DeleteTaskButton, EditTaskForm, ReassignTaskForm } from "./ManageTaskForms";
 
@@ -36,7 +37,7 @@ export default async function TaskDetailPage({
       project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
         include: { assignedTo: { include: { user: true } } },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
       },
       comments: {
         include: { author: { include: { user: true } } },
@@ -215,6 +216,13 @@ export default async function TaskDetailPage({
           </p>
         )}
       </Card>
+
+      {task.subtasks.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Tasks ({task.subtasks.length})</h2>
+          <ArrangedTasks tasks={task.subtasks} />
+        </Card>
+      )}
 
       {task.projectId && task.stageOrder != null && (
         <Card>

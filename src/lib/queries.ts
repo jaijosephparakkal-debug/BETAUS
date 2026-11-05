@@ -18,8 +18,8 @@ export function getTasksFor(membershipId: string) {
       assignedBy: { include: { user: true } },
       project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
-        select: { id: true, title: true, status: true, progress: true },
-        orderBy: { createdAt: "asc" },
+        select: { id: true, title: true, status: true, progress: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -34,8 +34,8 @@ export function getAssignedTasksFor(membershipId: string) {
       assignedTo: { include: { user: true } },
       project: { select: { id: true, name: true, number: true, type: true } },
       subtasks: {
-        select: { id: true, title: true, status: true, progress: true },
-        orderBy: { createdAt: "asc" },
+        select: { id: true, title: true, status: true, progress: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
       },
     },
   });

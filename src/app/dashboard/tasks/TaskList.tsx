@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { taskForLabel } from "@/lib/taskFor";
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
+import { ArrangedTasks } from "@/components/ArrangedTasks";
+import { arrangeTasks } from "@/lib/taskOrder";
 
 type BaseTask = {
   id: string;
@@ -12,6 +14,7 @@ type BaseTask = {
   progress: number;
   description: string | null;
   deadline: Date | string | null;
+  createdAt: Date | string;
   workedForCompany: string | null;
   category: string | null;
   phase: string | null;
@@ -23,7 +26,7 @@ type BaseTask = {
   forPerson?: string | null;
   companySlug: string;
   project: { id: string; name: string; number: string | null; type?: string } | null;
-  subtasks: { id: string; title: string; status: string }[];
+  subtasks: { id: string; title: string; status: string; createdAt: Date | string }[];
 };
 
 type Task = BaseTask & { assignedBy: { user: { name: string } } };
@@ -117,16 +120,7 @@ function TaskCard({
             {task.subtasks.filter((s) => s.status === "COMPLETED").length}/
             {task.subtasks.length} done
           </div>
-          {task.subtasks.map((sub) => (
-            <Link
-              key={sub.id}
-              href={`/dashboard/tasks/${sub.id}`}
-              className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-[19px] hover:bg-brand-50/40"
-            >
-              <span className="text-slate-800">{sub.title}</span>
-              <StatusBadge status={sub.status} />
-            </Link>
-          ))}
+          <ArrangedTasks tasks={task.subtasks} />
         </div>
       )}
     </Card>
@@ -147,7 +141,7 @@ export function TaskList({
   const [filter, setFilter] = useState<FilterKey>("all");
   const isAssignedTab = filter === "assigned";
   const activeMyFilter = MY_FILTERS.find((f) => f.key === filter);
-  const visibleMy = activeMyFilter ? tasks.filter(activeMyFilter.test) : [];
+  const visibleMy = arrangeTasks(activeMyFilter ? tasks.filter(activeMyFilter.test) : []);
   const activeLabel = isAssignedTab ? "Assigned" : activeMyFilter?.label ?? "";
 
   return (
@@ -200,7 +194,7 @@ export function TaskList({
 
       <div className="space-y-3">
         {isAssignedTab
-          ? assignedTasks.map((task) => (
+          ? arrangeTasks(assignedTasks).map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}

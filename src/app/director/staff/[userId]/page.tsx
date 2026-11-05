@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { groupKpis } from "@/lib/kpiSections";
+import { arrangeTasks } from "@/lib/taskOrder";
 import { staffWhere } from "@/lib/visibleStaff";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -89,7 +90,7 @@ export default async function StaffProfilePage({
     kpis.push(...(await getKpisFor(m.id)).map((k) => ({ ...k, companySlug: m.company.slug })));
     updates.push(...(await getTimelineFor(m.id)).map((u) => ({ ...u, companySlug: m.company.slug })));
   }
-  tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  tasks.splice(0, tasks.length, ...arrangeTasks(tasks));
   updates.sort((a, b) => b.at.getTime() - a.at.getTime());
 
   const approvalInclude = {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { groupKpis } from "@/lib/kpiSections";
 import { arrangeTasks } from "@/lib/taskOrder";
+import { CompletedDropdown } from "@/components/CompletedDropdown";
 import { staffWhere } from "@/lib/visibleStaff";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -195,6 +196,35 @@ export default async function StaffProfilePage({
   const officeStartLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_START.hour - 4, OFFICE_START.minute)));
   const officeEndLabel = formatDubaiTime(new Date(Date.UTC(2000, 0, 1, OFFICE_END.hour - 4, OFFICE_END.minute)));
 
+  const renderTaskRow = (t: (typeof tasks)[number]) => (
+              <Link
+                key={t.id}
+                href={`/dashboard/tasks/${t.id}`}
+                className="block py-2.5 hover:bg-brand-50/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <CompanyTag slug={t.companySlug} />
+                    <span className="truncate text-[17px] font-medium text-slate-900">{t.title}</span>
+                  </span>
+                  <StatusBadge status={t.status} />
+                </div>
+                <div className="mt-1.5">
+                  <ProgressBar value={t.progress} />
+                </div>
+                <div className="mt-1 text-[15px] text-slate-500">
+                  {t.subtasks.length > 0 ? "" : (
+                    <>
+                      {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
+                      {" · "}
+                    </>
+                  )}
+                  <span className={isOverdueTask(t) ? "font-medium text-red-600" : ""}>Due {formatDate(t.deadline)}</span>
+                  {t.completedAt && ` · Completed ${formatDate(t.completedAt)}`}
+                </div>
+              </Link>
+  );
+
   return (
     <div className="space-y-6">
       <Link href="/director/staff" className="text-[17px] text-brand-600 hover:underline">
@@ -325,36 +355,20 @@ export default async function StaffProfilePage({
         {shownTasks.length === 0 ? (
           <p className="text-[17px] text-slate-500">No tasks here.</p>
         ) : (
+          <>
           <div className="divide-y divide-brand-100">
-            {shownTasks.map((t) => (
-              <Link
-                key={t.id}
-                href={`/dashboard/tasks/${t.id}`}
-                className="block py-2.5 hover:bg-brand-50/40"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <CompanyTag slug={t.companySlug} />
-                    <span className="truncate text-[17px] font-medium text-slate-900">{t.title}</span>
-                  </span>
-                  <StatusBadge status={t.status} />
-                </div>
-                <div className="mt-1.5">
-                  <ProgressBar value={t.progress} />
-                </div>
-                <div className="mt-1 text-[15px] text-slate-500">
-                  {t.subtasks.length > 0 ? "" : (
-                    <>
-                      {t.assignedBy.userId === person.id ? "Self-assigned" : `Assigned by ${t.assignedBy.user.name}`}
-                      {" · "}
-                    </>
-                  )}
-                  <span className={isOverdueTask(t) ? "font-medium text-red-600" : ""}>Due {formatDate(t.deadline)}</span>
-                  {t.completedAt && ` · Completed ${formatDate(t.completedAt)}`}
-                </div>
-              </Link>
-            ))}
+            {shownTasks.filter((t) => filter === "completed" || t.status !== "COMPLETED").map(renderTaskRow)}
           </div>
+          {filter !== "completed" && (
+            <div className="mt-2">
+              <CompletedDropdown count={shownTasks.filter((t) => t.status === "COMPLETED").length}>
+                <div className="divide-y divide-brand-100">
+                  {shownTasks.filter((t) => t.status === "COMPLETED").map(renderTaskRow)}
+                </div>
+              </CompletedDropdown>
+            </div>
+          )}
+          </>
         )}
       </Card>
 

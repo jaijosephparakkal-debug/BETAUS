@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { taskForLabel } from "@/lib/taskFor";
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 import { ArrangedTasks } from "@/components/ArrangedTasks";
+import { CompletedDropdown } from "@/components/CompletedDropdown";
 import { arrangeTasks } from "@/lib/taskOrder";
 
 type BaseTask = {
@@ -127,6 +128,24 @@ function TaskCard({
   );
 }
 
+/** Open tasks as they are, completed ones inside a closed dropdown (or open when `showAll`). */
+function withCompletedClosed<T extends { status: string }>(
+  list: T[],
+  render: (task: T) => ReactNode,
+  showAll = false
+) {
+  if (showAll) return list.map(render);
+  const done = list.filter((t) => t.status === "COMPLETED");
+  return (
+    <>
+      {list.filter((t) => t.status !== "COMPLETED").map(render)}
+      <CompletedDropdown count={done.length}>
+        <div className="space-y-3">{done.map(render)}</div>
+      </CompletedDropdown>
+    </>
+  );
+}
+
 export function TaskList({
   tasks,
   assignedTasks,
@@ -194,26 +213,34 @@ export function TaskList({
 
       <div className="space-y-3">
         {isAssignedTab
-          ? arrangeTasks(assignedTasks).map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                showCompanyTag={showCompanyTag}
-                companies={companies}
-                counterpartLabel="Assigned to"
-                counterpartName={task.assignedTo.user.name}
-              />
-            ))
-          : visibleMy.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                showCompanyTag={showCompanyTag}
-                companies={companies}
-                counterpartLabel="Assigned by"
-                counterpartName={task.assignedBy.user.name}
-              />
-            ))}
+          ? withCompletedClosed(
+              arrangeTasks(assignedTasks),
+              (task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  showCompanyTag={showCompanyTag}
+                  companies={companies}
+                  counterpartLabel="Assigned to"
+                  counterpartName={task.assignedTo.user.name}
+                />
+              )
+            )
+          : withCompletedClosed(
+              visibleMy,
+              (task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  showCompanyTag={showCompanyTag}
+                  companies={companies}
+                  counterpartLabel="Assigned by"
+                  counterpartName={task.assignedBy.user.name}
+                />
+              ),
+              // The "Completed" tab was asked for directly, so it stays open.
+              filter === "completed"
+            )}
         {isAssignedTab && assignedTasks.length === 0 && (
           <p className="text-[19px] text-slate-500">
             You haven&apos;t assigned any tasks to someone else yet.

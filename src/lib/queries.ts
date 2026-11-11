@@ -42,10 +42,12 @@ export function getAssignedTasksFor(membershipId: string) {
 }
 
 /** Every project at a company, with a computed progress rollup from its linked top-level tasks. */
-export async function getProjectsFor(companyId: string) {
+export async function getProjectsFor(companyIds: string | string[]) {
+  const ids = Array.isArray(companyIds) ? companyIds : [companyIds];
   const projects = await prisma.project.findMany({
-    where: { companyId, type: "PROJECT" },
+    where: { companyId: { in: ids }, type: "PROJECT" },
     include: {
+      company: { select: { slug: true, name: true } },
       tasks: {
         where: { parentTaskId: null },
         select: { status: true, progress: true },
@@ -57,6 +59,8 @@ export async function getProjectsFor(companyId: string) {
 
   return projects.map((p) => ({
     id: p.id,
+    companySlug: p.company.slug,
+    companyName: p.company.name,
     number: p.number,
     name: p.name,
     status: p.status,
@@ -472,9 +476,10 @@ export async function getMaintenanceSites(companyId: string) {
 }
 
 /** Choices for My Tasks' "Task for" picker: projects, AMC sites and DLP sites at this company. */
-export async function getTaskForChoices(companyId: string) {
+export async function getTaskForChoices(companyIds: string | string[]) {
+  const ids = Array.isArray(companyIds) ? companyIds : [companyIds];
   const rows = await prisma.project.findMany({
-    where: { companyId },
+    where: { companyId: { in: ids } },
     select: { id: true, name: true, number: true, type: true },
     orderBy: [{ number: "asc" }, { name: "asc" }],
   });

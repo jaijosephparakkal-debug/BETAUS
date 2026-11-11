@@ -17,7 +17,7 @@ function SubmitButton() {
   );
 }
 
-export function AddProjectForm() {
+export function AddProjectForm({ companies = [], defaultCompanyId }: { companies?: { id: string; name: string }[]; defaultCompanyId?: string }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(createProjectAction, {});
 
@@ -35,6 +35,20 @@ export function AddProjectForm() {
 
   return (
     <form action={formAction} className="space-y-2 rounded-lg border border-brand-200 p-3">
+      {companies.length > 1 && (
+        <select
+          name="companyId"
+          defaultValue={defaultCompanyId}
+          className="w-full rounded-md border border-brand-300 px-2 py-1.5 text-[19px]"
+          aria-label="Company"
+        >
+          {companies.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      )}
       <input
         name="number"
         placeholder="Project number (optional, e.g. P672-2021)"

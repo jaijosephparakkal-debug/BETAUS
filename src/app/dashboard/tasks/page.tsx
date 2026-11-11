@@ -47,7 +47,10 @@ export default async function MyTasksPage() {
   tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   assignedTasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  const taskForChoices = await getTaskForChoices(membership.companyId);
+  // Directors (admins) can pick projects and sites from both companies.
+  const taskForChoices = await getTaskForChoices(
+    membership.isDirector ? allMemberships.map((m) => m.companyId) : membership.companyId
+  );
   const titlePresets = await prisma.taskTitlePreset.findMany({
     where: { membershipId: membership.id },
     orderBy: { createdAt: "asc" },

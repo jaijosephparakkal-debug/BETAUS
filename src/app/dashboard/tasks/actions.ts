@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { getCurrentMembership } from "@/lib/auth";
+import { getCurrentMembership, hasCompanyAccess } from "@/lib/auth";
 import { notifyNewTask } from "@/lib/notifications";
 import { TASK_FOR_OPTIONS, ADD_OTHER } from "@/lib/taskFor";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_ID, COMMON_TITLE, COMMON_ITEMS } from "@/lib/subCategories";
@@ -55,7 +55,7 @@ export async function assignTaskToColleagueAction(
     const target = await prisma.project.findUnique({ where: { id: projectId } });
     const typeOk =
       taskFor === "PROJECT" ? target?.type === "PROJECT" : target?.type === "AMC" || target?.type === "DLP";
-    if (!target || target.companyId !== membership.companyId || !typeOk) {
+    if (!target || !(await hasCompanyAccess(membership, target.companyId)) || !typeOk) {
       return { error: taskFor === "PROJECT" ? "Choose a project." : "Choose an AMC or DLP site." };
     }
     linkedProjectId = target.id;

@@ -32,11 +32,19 @@ export async function createProjectAction(
   const name = String(formData.get("name") || "").trim();
   if (!name) return { error: "Give the project a name." };
 
+  // Directors pick which company the project belongs to; everyone else adds to their own.
+  let companyId = access.membership.companyId;
+  const chosen = String(formData.get("companyId") || "");
+  if (chosen && chosen !== companyId && access.membership.isDirector) {
+    if (!(await hasCompanyAccess(access.membership, chosen))) return { error: "Choose a valid company." };
+    companyId = chosen;
+  }
+  const company = await prisma.company.findUnique({ where: { id: companyId }, select: { slug: true } });
   const project = await prisma.project.create({
-    data: { companyId: access.membership.companyId, number: number || null, name },
+    data: { companyId, number: number || null, name },
   });
   // New Flaretech projects start with the full required site-task checklist.
-  if (access.membership.company.slug === SITE_TASK_COMPANY_SLUG) {
+  if (company?.slug === SITE_TASK_COMPANY_SLUG) {
     await prisma.projectSiteTask.createMany({
       data: STANDARD_SITE_TASKS.map((title, i) => ({ projectId: project.id, title, sortOrder: i + 1 })),
     });

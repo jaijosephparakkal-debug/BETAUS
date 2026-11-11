@@ -3,7 +3,8 @@ import { canSeeProjects } from "@/lib/teams";
 import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/auth";
 import { getProjectsFor } from "@/lib/queries";
-import { Card, ProgressBar, StatusBadge } from "@/components/ui";
+import { Card, ProgressBar, StatusBadge, CompanyTag } from "@/components/ui";
+import { prisma } from "@/lib/db";
 import { AddProjectForm } from "./ProjectForms";
 
 export default async function ProjectsPage() {
@@ -11,26 +12,33 @@ export default async function ProjectsPage() {
   if (!membership) redirect("/login");
   if (!canSeeProjects(membership)) redirect("/dashboard");
 
-  const projects = await getProjectsFor(membership.companyId);
+  // Directors (admins) see the projects of both companies, each tagged; everyone else sees their own company's.
+  const companies = membership.isDirector
+    ? await prisma.company.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } })
+    : [];
+  const projects = await getProjectsFor(membership.isDirector ? companies.map((c) => c.id) : membership.companyId);
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-[23px] font-semibold text-slate-900">Projects</h1>
         <p className="mt-1 text-[19px] text-slate-500">
-          Every project at {membership.company.name}, and how far along it is
+          Every project at {membership.isDirector ? "both companies" : membership.company.name}, and how far along it is
           based on the tasks linked to it.
         </p>
       </div>
 
-      <AddProjectForm />
+      <AddProjectForm companies={companies} defaultCompanyId={membership.companyId} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {projects.map((p) => (
           <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
             <Card className="transition hover:border-brand-200">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[21px] font-medium text-slate-900">{p.name}</span>
+                <span className="flex items-center gap-2 text-[21px] font-medium text-slate-900">
+                  {membership.isDirector && <CompanyTag slug={p.companySlug} />}
+                  {p.name}
+                </span>
                 <StatusBadge status={p.status} />
               </div>
               {p.number && (

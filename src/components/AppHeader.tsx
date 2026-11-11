@@ -81,9 +81,9 @@ export function AppHeader({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {membershipCount > 1 && !membership.isDirector && (
+          {membershipCount > 1 && canManageAllStaff(membership) && (
             <Link
-              href="/select-company"
+              href="/select-company?switch=1"
               className="text-[19px] text-brand-600 hover:underline"
             >
               Switch company

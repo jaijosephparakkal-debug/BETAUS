@@ -1,11 +1,11 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getSessionUserId } from "@/lib/auth";
+import { getSessionUserId, canManageAllStaff } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
 import { selectCompanyAction } from "./actions";
 
-export default async function SelectCompanyPage() {
+export default async function SelectCompanyPage({ searchParams }: { searchParams: { switch?: string } }) {
   const userId = await getSessionUserId();
   if (!userId) redirect("/login");
 
@@ -16,7 +16,9 @@ export default async function SelectCompanyPage() {
 
   if (memberships.length === 0) redirect("/login");
   if (memberships.length === 1) redirect("/dashboard");
-  if (memberships.some((m) => m.isDirector)) redirect("/director");
+  // Switching company is for Abraham and Jai only; everyone else stays in their own company.
+  if (!canManageAllStaff(memberships[0])) redirect("/dashboard");
+  if (memberships.some((m) => m.isDirector) && !searchParams.switch) redirect("/director");
 
   const { user, title } = memberships[0];
 

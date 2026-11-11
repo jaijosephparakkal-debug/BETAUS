@@ -41,9 +41,11 @@ export async function verifyCodeAction(
     redirect("/director");
   }
 
-  const memberships = await prisma.membership.findMany({ where: { userId } });
-  if (memberships.length === 1) {
+  // Everyone except Abraham and Jai stays in their own (first) company: no company choice at sign-in.
+  const memberships = await prisma.membership.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  if (memberships.length > 0) {
+    setActiveCompanyCookie(memberships[0].companyId);
     await clockInIfNeeded(memberships[0].id, { explicit: true });
   }
-  redirect(memberships.length > 1 ? "/select-company" : "/dashboard");
+  redirect("/dashboard");
 }

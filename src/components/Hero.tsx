@@ -68,7 +68,7 @@ export function BentoHome({
         </div>
       </div>
 
-      <div className="row-span-2 flex flex-col items-center justify-center gap-1 rounded-3xl bg-ink p-4 text-white shadow-lg">
+      <div className="panel-ink art-left art-soft row-span-2 flex flex-col items-center justify-center gap-1 rounded-3xl p-4 shadow-lg">
         <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">MY SCORE</div>
         <svg viewBox="0 0 100 100" width="104" height="104" aria-label={score === null ? "No score yet" : `Score ${score}`}>
           <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(223,229,235,0.18)" strokeWidth="9" />
@@ -81,7 +81,7 @@ export function BentoHome({
       </div>
 
       {kinds && kinds.length > 0 ? (
-        <div className="row-span-2 rounded-3xl bg-ink p-4 text-white shadow-lg">
+        <div className="panel-ink art-soft row-span-2 rounded-3xl p-4 shadow-lg">
           <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">LOG WORK</div>
           <div className="mt-2 grid gap-1.5">
             {kinds.slice(0, 4).map((k) => (
@@ -93,21 +93,21 @@ export function BentoHome({
           </div>
         </div>
       ) : (
-        <div className="row-span-2 rounded-3xl bg-ink p-4 text-white shadow-lg">
+        <div className="panel-ink art-soft row-span-2 rounded-3xl p-4 shadow-lg">
           <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">ADD</div>
           <a href="#log" className="mt-2 block rounded-xl bg-white/10 px-3 py-2 text-[15px] hover:bg-white/20">Add a task</a>
         </div>
       )}
 
-      {stats.slice(0, 2).map((s) => (
-        <div key={s.label} className="rounded-3xl bg-ink p-4 text-white shadow-lg">
+      {stats.slice(0, 2).map((s, i) => (
+        <div key={s.label} className={`panel-ink art-soft ${i === 0 ? "art-left" : "art-flip"} rounded-3xl p-4 shadow-lg`}>
           <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">{s.label.toUpperCase()}</div>
           <div className="mt-1 text-[34px] font-semibold leading-none">{s.value}</div>
           <div className="mt-2 text-[13px] text-[#9fb0bc]">{s.note}</div>
         </div>
       ))}
 
-      <div className="col-span-2 rounded-3xl bg-ink p-4 text-white shadow-lg">
+      <div className="panel-ink art-left art-soft col-span-2 rounded-3xl p-4 shadow-lg">
         <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">TEAM PULSE</div>
         {pulse.length === 0 ? (
           <p className="mt-3 text-[14px] text-[#9fb0bc]">Work passed to you and by you will show here.</p>
@@ -121,7 +121,7 @@ export function BentoHome({
         )}
       </div>
 
-      <div className="col-span-2 rounded-3xl bg-white p-4 text-ink shadow-lg">
+      <div className="panel-light col-span-2 rounded-3xl p-4 text-ink shadow-lg">
         <div className="text-[12px] tracking-[0.14em] text-slate-500">IN MOTION</div>
         {journey ? (
           <>

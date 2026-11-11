@@ -262,7 +262,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
         journey={journey}
       />
       {due.length > 0 && (
-        <div className="panel-ink rounded-2xl p-5 shadow-lg">
+        <div className="panel-ink art-left rounded-2xl p-5 shadow-lg">
           <div className="mb-1 text-[16px] font-semibold uppercase tracking-[0.14em] text-[#DFE5EB]">Follow-ups due — <span className="rounded-full bg-accent px-2 text-on-accent">{due.length}</span></div>
           {due.map((t) => {
             const overdue = t.followUpAt! < startOfToday;

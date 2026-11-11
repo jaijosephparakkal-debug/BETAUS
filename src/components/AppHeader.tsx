@@ -70,7 +70,7 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-30 px-3 pt-3">
-      <div className="panel-ink mx-auto max-w-6xl rounded-3xl border border-accent/60 shadow-xl">
+      <div className="panel-ink art-header mx-auto max-w-6xl rounded-3xl border border-accent/60 shadow-xl">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
           <div className="flex items-center gap-2">
             <div className="rounded-xl bg-[#DFE5EB] px-2 py-1">
@@ -101,7 +101,7 @@ export function AppHeader({
             )}
             <Avatar name={membership.user.name} email={membership.user.email} size={36} className="ring-2 ring-accent" />
           </div>
-          <nav className="order-last flex w-full gap-1 overflow-x-auto pb-1 md:order-none md:w-auto md:flex-1 md:justify-center md:pb-0">
+          <nav className="order-last flex w-full min-w-0 gap-1 overflow-x-auto pb-1 [&>*]:shrink-0">
             <NavLinks items={navItems} />
           </nav>
         </div>

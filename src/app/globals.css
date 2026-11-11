@@ -184,3 +184,37 @@ input[type="range"]::-moz-range-track {
   height: 28px;
   border-left: 1px solid rgb(var(--brand-200));
 }
+
+/* Artwork modifiers: flip to the left side, soften, or flip upside down so every panel is a little different. */
+.panel-ink.art-left::before { transform: scaleX(-1); }
+.panel-ink.art-flip::before { transform: scale(-1, -1); }
+.panel-ink.art-soft::before { opacity: 0.5; }
+.panel-ink.art-header::before {
+  opacity: 0.4;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 55%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, transparent 55%, #000 100%);
+}
+/* White panels with the faint artwork, without the card text recolouring. */
+.panel-light {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: #fff;
+}
+.panel-light::before {
+  content: "";
+  z-index: -1;
+  position: absolute;
+  inset: 0;
+  background-image: var(--art-light);
+  background-size: cover;
+  background-position: right top;
+  opacity: var(--art-light-opacity, 0.5);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(100deg, transparent 40%, #000 100%);
+  mask-image: linear-gradient(100deg, transparent 40%, #000 100%);
+}
+.panel-light.art-left::before { transform: scaleX(-1); }
+/* Cards alternate sides down the page. */
+.card-themed:nth-child(even)::before { transform: scaleX(-1); }

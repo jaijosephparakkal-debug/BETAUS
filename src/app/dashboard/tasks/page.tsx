@@ -141,13 +141,13 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
     const ft = await prisma.company.findUnique({ where: { slug: "flaretechnical" } });
     if (ft) {
       const projects = await prisma.project.findMany({
-        where: { companyId: ft.id, type: "PROJECT", status: { not: "COMPLETED" } },
+        where: { companyId: ft.id, type: "PROJECT" },
         orderBy: { name: "asc" },
         include: { siteTasks: { orderBy: { sortOrder: "asc" }, select: { id: true, title: true, progress: true, weight: true } } },
       });
       projectLogData = {
         profile: projectProfile,
-        projects: projects.map((p) => ({ id: p.id, name: p.name, number: p.number, sites: p.siteTasks })),
+        projects: projects.map((p) => ({ id: p.id, name: p.name, number: p.number, status: p.status, sites: p.siteTasks })),
         customers: (await prisma.customer.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
         suppliers: (await prisma.supplier.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
         names: [],

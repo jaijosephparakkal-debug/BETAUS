@@ -7,7 +7,7 @@ import { SITE_STAGES, OTHER_STAGE, stageOf, NEW_ESTIMATE, type PField, type PPro
 
 export type ProjectLogData = {
   profile: PProfile;
-  projects: { id: string; name: string; number: string | null; sites: { id: string; title: string; progress: number; weight: number | null }[] }[];
+  projects: { id: string; name: string; number: string | null; status?: string; sites: { id: string; title: string; progress: number; weight: number | null }[] }[];
   customers: { id: string; name: string }[];
   suppliers: { id: string; name: string }[];
   /** Names used before (people met, emailed, inspectors), offered as suggestions. */
@@ -185,7 +185,7 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
         <Field label="2. Project">
           <select name="projectId" value={projectId} onChange={(e) => setProjectId(e.target.value)} className={sel}>
             {!needsProject && <option value="none">Not a project yet (tender or enquiry)</option>}
-            {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}</option>)}
+            {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}{p.status && p.status !== "ACTIVE" ? ` (${p.status === "COMPLETED" ? "completed" : "on hold"})` : ""}</option>)}
           </select>
         </Field>
         )}
@@ -210,31 +210,19 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
                 {recentSites.map((x) => <Chip key={x.id} on={siteId === x.id} onClick={() => { setStage(stageOf(x.title)); setSiteId(x.id); }}>{x.title}</Chip>)}
               </div>
             )}
-            <div className="flex flex-wrap gap-2">
-              {kind.site === "optional" && <Chip on={!siteId && stage === ""} onClick={() => { setStage(""); setSiteId(""); }}>Whole project</Chip>}
-              {stages.map((st) => (
-                <Chip key={st} on={stage === st} onClick={() => { setStage(st); setSiteId(""); }}>
-                  {st} · {project.sites.filter((x) => stageOf(x.title) === st).length}
-                </Chip>
-              ))}
-            </div>
+            <select name="siteTaskPick" value={siteId} onChange={(e) => { setSiteId(e.target.value); const t = project.sites.find((x) => x.id === e.target.value); setStage(t ? stageOf(t.title) : ""); }} className={sel}>
+              <option value="">{kind.site === "optional" ? "Whole project" : `Choose site task… (${project.sites.length})`}</option>
+              {[...SITE_STAGES.map((st) => st.name), OTHER_STAGE].map((st) => {
+                const list = project.sites.filter((x) => stageOf(x.title) === st);
+                if (list.length === 0) return null;
+                return (
+                  <optgroup key={st} label={`${st} · ${list.length}`}>
+                    {list.map((x) => <option key={x.id} value={x.id}>{x.title} — {x.progress}%{x.weight != null ? ` · weight ${x.weight}%` : ""}</option>)}
+                  </optgroup>
+                );
+              })}
+            </select>
           </Field>
-          {stage && (
-            <div className="max-h-72 overflow-y-auto rounded-md border border-brand-100">
-              {siteList.map((x) => (
-                <button
-                  type="button"
-                  key={x.id}
-                  onClick={() => setSiteId(x.id)}
-                  className={`flex w-full items-center justify-between gap-2 border-b border-brand-50 px-3 py-2 text-left text-[16px] ${siteId === x.id ? "bg-brand-100 text-brand-800" : "hover:bg-brand-50/50"}`}
-                >
-                  <span>{x.title}</span>
-                  <span className="shrink-0 text-[14px] text-slate-500">{x.progress}%{x.weight != null ? ` · weight ${x.weight}%` : ""}</span>
-                </button>
-              ))}
-              {stage === OTHER_STAGE && siteList.length === 0 && <p className="p-3 text-[15px] text-slate-500">No other tasks on this project.</p>}
-            </div>
-          )}
         </div>
       )}
       {kind.site === "required" && !project && <p className="text-[15px] text-amber-700">Choose a project to see its site tasks.</p>}

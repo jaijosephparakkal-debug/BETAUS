@@ -132,6 +132,14 @@ export async function createProjectLogAction(_prev: ProjectLogState | undefined,
       parts.push(`${f.label}: ${raw}${name ? ` — ${name}` : ""}`);
       continue;
     }
+    if (f.type === "staff") {
+      if (!raw) return { error: `Choose “${f.label}”.` };
+      const e = await prisma.employee.findFirst({ where: { name: raw }, select: { id: true } });
+      if (!e) return { error: `Choose “${f.label}” from the staff directory.` };
+      values[f.k] = raw;
+      parts.push(`${f.label}: ${raw}`);
+      continue;
+    }
     if (!raw) {
       if (f.optional) continue;
       return { error: `Choose “${f.label}”.` };
@@ -156,10 +164,11 @@ export async function createProjectLogAction(_prev: ProjectLogState | undefined,
   const summary = [where, site?.title, ...parts.filter((p) => p !== values[kind.titleFrom ?? ""]), note && `Note: ${note}`].filter(Boolean).join(" · ");
 
   // Category task to file it under (created the first time it is used).
-  let parent = await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: { equals: kind.parent, mode: "insensitive" } } });
+  const parentTitle = kind.parentFrom && typeof values[kind.parentFrom] === "string" ? String(values[kind.parentFrom]) : kind.parent;
+  let parent = await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: { equals: parentTitle, mode: "insensitive" } } });
   if (!parent) {
     parent = await prisma.task.create({
-      data: { companyId: m.companyId, title: kind.parent, category: kind.parent, assignedToId: m.id, assignedById: m.managerId ?? m.id, status: "IN_PROGRESS" },
+      data: { companyId: m.companyId, title: parentTitle, category: parentTitle, assignedToId: m.id, assignedById: m.managerId ?? m.id, status: "IN_PROGRESS" },
     });
   }
 

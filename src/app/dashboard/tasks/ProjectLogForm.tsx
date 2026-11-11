@@ -325,6 +325,16 @@ function FieldInput({
       </Field>
     );
   }
+  if (f.type === "staff") {
+    return (
+      <Field label={label}>
+        <select required value={vals[f.k] ?? ""} onChange={(e) => setV(f.k, e.target.value)} className={sel}>
+          <option value="">Choose from the staff directory…</option>
+          {staff.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </Field>
+    );
+  }
   if (f.type === "who") {
     return (
       <div className="grid grid-cols-2 gap-2 sm:col-span-2">

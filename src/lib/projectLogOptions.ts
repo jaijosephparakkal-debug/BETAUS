@@ -25,7 +25,7 @@ const ALL_STAGES = [...SITE_STAGES.map((s) => s.name), OTHER_STAGE];
 export type PField = {
   k: string;
   label: string;
-  type: "chips" | "select" | "number" | "amount" | "date" | "ref" | "progress" | "supplier" | "who" | "estimate";
+  type: "chips" | "select" | "staff" | "number" | "amount" | "date" | "ref" | "progress" | "supplier" | "who" | "estimate";
   /** For "who": the name can be left empty. */
   nameOptional?: boolean;
   options?: string[];
@@ -50,6 +50,8 @@ export type PKind = {
    * (or added by name), or an existing project for variations.
    */
   project?: "required" | "optional" | "potential";
+  /** A select field whose value is the category task to file under (instead of the fixed parent). */
+  parentFrom?: string;
   fields: PField[];
   /** Which field's value becomes the task title (falls back to the kind's label). */
   titleFrom?: string;
@@ -57,6 +59,7 @@ export type PKind = {
 export type PProfile = { name: string; role: string; kinds: PKind[] };
 
 const CHANNEL = ["Phone call", "Email", "WhatsApp", "In person", "Video call"];
+const MATERIALS = ["Pipes", "Fittings", "Valves", "Regulators", "Detectors and cables", "Tank and vaporizer", "Other"];
 const REV = ["Rev 0", "Rev 1", "Rev 2", "Rev 3", "Rev 4", "Rev 5+"];
 const SUBMIT_TO = ["Consultant", "Client", "Main contractor", "Civil Defense", "Service provider", "Internal review"];
 const DOC_STATUS = ["Prepared", "Submitted", "Approved", "Approved with comments", "Rejected — resubmit"];
@@ -110,11 +113,36 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       {
         v: "pay", l: "Payment or invoice", parent: "Payments & Invoicing", code: "PROJECT_PAYMENT", site: "none", titleFrom: "action",
         fields: [
-          { k: "action", label: "What was done", type: "chips", options: ["Payment follow-up", "Proforma invoice", "Invoice discussion", "Payment certificate", "Payment received"] },
+          { k: "action", label: "What was done", type: "chips", options: ["Payment follow-up", "Proforma invoice", "Invoice discussion", "Payment certificate", "Payment received", "Progress certificate", "Retention release"] },
           { k: "milestone", label: "For", type: "select", options: ["Advance", "Progress payment", "Variation", "Retention", "Final payment"] },
           { k: "with", label: "With", type: "who", options: ["Client", "Main contractor", "Consultant", "Developer"] },
           { k: "amount", label: "Amount (AED)", type: "amount", optional: true },
           { k: "promisedOn", label: "Promised by", type: "date", optional: true },
+        ],
+      },
+      {
+        v: "var", l: "Variation or claim", parent: "Variations & Claims", code: "PROJECT_VARIATION", site: "none", titleFrom: "type",
+        fields: [
+          { k: "type", label: "Type", type: "chips", options: ["Variation order", "Claim", "Extension of time", "Rectification works"] },
+          { k: "to", label: "Raised with", type: "who", options: ["Client", "Main contractor", "Consultant", "Developer"], nameOptional: true },
+          { k: "status", label: "Status", type: "select", options: ["Prepared", "Submitted", "Negotiating", "Approved", "Rejected"] },
+          { k: "amount", label: "Amount (AED)", type: "amount", optional: true },
+        ],
+      },
+      {
+        v: "plan", l: "Plan, issue or report", parent: "Planning & Resources", code: "PROJECT_PLAN", site: "none", titleFrom: "what",
+        fields: [
+          { k: "what", label: "What", type: "chips", options: ["Schedule update", "Manpower allocated", "Subcontractor work order", "Material approval", "Equipment arranged", "Issue raised", "Risk logged", "Report to Abraham sir"] },
+          { k: "team", label: "Team", type: "select", options: TEAMS, optional: true, showIf: { k: "what", in: ["Manpower allocated", "Subcontractor work order", "Equipment arranged"] } },
+          { k: "status", label: "Status", type: "select", options: ["Planned", "Confirmed", "Delayed", "Open", "Resolved"] },
+        ],
+      },
+      {
+        v: "review", l: "Team review", parent: "Team Reviews", code: "TEAM_REVIEW", site: "none", project: "optional", titleFrom: "item",
+        fields: [
+          { k: "whose", label: "Whose work", type: "staff" },
+          { k: "item", label: "Item", type: "select", options: ["Estimate", "Quotation", "Drawing", "Submittal", "Cost report", "Timesheet", "Site report"] },
+          { k: "result", label: "Result", type: "select", options: ["Approved", "Returned with comments", "Escalated to Abraham sir"] },
         ],
       },
       comm("Calls & Emails", ["Inspection", "Payment", "Variation", "Drawing approval", "Material", "Site issue", "Handover"]),
@@ -138,7 +166,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       {
         v: "insp", l: "Inspection", parent: "Inspections & Documentation", code: "SITE_INSPECTION", site: "required", stages: ["Inspections", "Testing", ...SITE_WORK.filter((s) => s !== "Testing"), "Handover"], titleFrom: "action",
         fields: [
-          { k: "action", label: "What was done", type: "chips", options: ["Documentation for raising inspection", "Inspection raised", "Inspection done", "Completion certificate collected"] },
+          { k: "action", label: "What was done", type: "chips", options: ["Documentation for raising inspection", "Inspection raised", "Inspection done", "Completion certificate collected", "Subcontractor work checked"] },
           { k: "by", label: "Inspected by", type: "who", options: ["Internal QA/QC", "Consultant", "Service provider", "Civil Defense", "Client"], nameOptional: true },
           { k: "result", label: "Result", type: "select", options: ["Not inspected yet", "Passed", "Passed with comments", "Rejected"], showIf: { k: "action", in: ["Inspection done"] } },
         ],
@@ -157,7 +185,23 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       },
       {
         v: "track", l: "Tracker or report", parent: "Tracker & Reporting", code: "SITE_REPORT", site: "none", titleFrom: "type",
-        fields: [{ k: "type", label: "What was done", type: "chips", options: ["Tracker update", "Daily site report", "Weekly progress report", "Highlighting drawings"] }],
+        fields: [{ k: "type", label: "What was done", type: "chips", options: ["Tracker update", "Daily site report", "Weekly progress report", "Highlighting drawings", "Measurement sheet", "Testing or commissioning record"] }],
+      },
+      {
+        v: "mat", l: "Material at site", parent: "Material at Site", code: "SITE_MATERIAL", site: "none", titleFrom: "what",
+        fields: [
+          { k: "what", label: "What", type: "chips", options: ["Requested", "Delivered", "Checked", "Returned"] },
+          { k: "material", label: "Material", type: "select", options: MATERIALS },
+          { k: "supplier", label: "Supplier", type: "supplier", optional: true },
+          { k: "ref", label: "Delivery note no.", type: "ref", optional: true, placeholder: "Only if you have it" },
+        ],
+      },
+      {
+        v: "snag", l: "Snag or RFI", parent: "Snags & RFIs", code: "SITE_SNAG", site: "optional", stages: ALL_STAGES, titleFrom: "type",
+        fields: [
+          { k: "type", label: "Type", type: "chips", options: ["Snag raised", "Snag closed", "RFI raised", "RFI answered"] },
+          { k: "with", label: "With", type: "who", options: ["Consultant", "Client", "Main contractor", "Office team"], nameOptional: true },
+        ],
       },
       comm("Calls & Emails", ["Inspection", "Material at site", "Manpower", "Site issue", "Drawing", "Access or permit", "Safety"]),
     ],
@@ -208,6 +252,21 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
           { k: "with", label: "With", type: "who", options: PARTIES },
         ],
       },
+      {
+        v: "rfi", l: "RFI or clash", parent: "RFIs & Clashes", code: "DESIGN_RFI", site: "optional", stages: ALL_STAGES, titleFrom: "type",
+        fields: [
+          { k: "type", label: "Type", type: "chips", options: ["RFI raised", "RFI answered", "Clash found", "Clash resolved"] },
+          { k: "with", label: "With", type: "who", options: ["Consultant", "Client", "Main contractor", "Our site team"], nameOptional: true },
+          { k: "status", label: "Status", type: "select", options: ["Open", "Answered", "Closed"] },
+        ],
+      },
+      {
+        v: "calc", l: "Calculation or BOM", parent: "Calculations & BOM", code: "DESIGN_CALC", site: "optional", stages: ALL_STAGES, titleFrom: "what",
+        fields: [
+          { k: "what", label: "What", type: "chips", options: ["Pipe sizing", "Load calculation", "Bill of materials", "Datasheet approval", "Design review"] },
+          { k: "status", label: "Status", type: "select", options: ["In progress", "Sent for review", "Approved"] },
+        ],
+      },
       comm("Site, Submittals & Meetings", ["Drawing comments", "Submittal status", "Design change", "Quantities", "Site coordination", "Meeting"]),
     ],
   },
@@ -230,7 +289,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       {
         v: "quote", l: "Quotation", parent: "Quotations", code: "PROJECT_QUOTATION", site: "optional", stages: ALL_STAGES, project: "potential", titleFrom: "type",
         fields: [
-          { k: "type", label: "What was done", type: "chips", options: ["Quotation prepared", "Quotation revised", "Quotation sent", "Quotation follow-up"] },
+          { k: "type", label: "What was done", type: "chips", options: ["Quotation prepared", "Quotation revised", "Quotation sent", "Quotation follow-up", "Tender submitted", "Clarification answered", "Negotiation", "Bid bond"] },
           { k: "estimate", label: "Estimation no.", type: "estimate" },
           { k: "rev", label: "Revision", type: "select", options: REV },
           { k: "status", label: "Where it stands", type: "select", options: ["With the client", "Negotiating", "Awarded", "Not awarded", "On hold"] },
@@ -248,6 +307,15 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
         v: "visit", l: "Site visit", parent: "Site Visits", code: "ESTIMATION_SITE_VISIT", site: "optional", stages: ALL_STAGES, project: "potential", titleFrom: "type",
         fields: [{ k: "type", label: "What was done", type: "chips", options: ["Site visit", "Measurements taken", "Site report"] }],
       },
+      {
+        v: "rfq", l: "Supplier price request", parent: "Supplier Prices", code: "SUPPLIER_PRICE", site: "none", project: "optional", titleFrom: "what",
+        fields: [
+          { k: "what", label: "What", type: "chips", options: ["Price requested", "Price received", "Prices compared", "Price list updated"] },
+          { k: "supplier", label: "Supplier", type: "supplier" },
+          { k: "item", label: "Item", type: "select", options: MATERIALS },
+          { k: "status", label: "Status", type: "select", options: ["Waiting", "Received", "Compared"] },
+        ],
+      },
       comm("Follow-ups & Emails", ["Quotation", "Estimate", "Drawing approval", "Supplier price", "Site measurement", "Payment"]),
       {
         v: "sys", l: "App or systems update", parent: "Systems & Updates", code: "SYSTEMS_UPDATE", site: "none", project: "optional", titleFrom: "type",
@@ -263,7 +331,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       {
         v: "cost", l: "Material or site cost", parent: "Material & Site Costs", code: "PROJECT_COST", site: "optional", stages: ALL_STAGES, titleFrom: "type",
         fields: [
-          { k: "type", label: "Entry", type: "chips", options: ["Material cost entry", "Material purchase", "Site expense", "Subcontractor bill"] },
+          { k: "type", label: "Entry", type: "chips", options: ["Material cost entry", "Material purchase", "Site expense", "Subcontractor bill", "Subcontractor payment", "Retention tracked"] },
           { k: "supplier", label: "Supplier", type: "supplier", optional: true },
           { k: "amount", label: "Amount (AED)", type: "amount" },
           { k: "ref", label: "Bill or LPO no.", type: "ref", optional: true, placeholder: "Only if you have it" },
@@ -287,7 +355,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
       {
         v: "rep", l: "Document or report", parent: "Documentation & Reports", code: "PROJECT_REPORT", site: "optional", stages: ALL_STAGES, titleFrom: "type",
         fields: [
-          { k: "type", label: "What was done", type: "chips", options: ["Progress report", "Cost report", "Documentation", "Document sent", "Miscellaneous"] },
+          { k: "type", label: "What was done", type: "chips", options: ["Progress report", "Cost report", "Documentation", "Document sent", "Transmittal sent", "Site worker permit or visa", "Miscellaneous"] },
           { k: "to", label: "Sent to", type: "who", options: ["Not sent", "Ram", "Abraham", "Client", "Consultant", "Accounts"], nameOptional: true },
         ],
       },
@@ -296,6 +364,15 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
         fields: [
           { k: "period", label: "Period", type: "select", options: ["Daily", "Weekly", "Monthly"] },
           { k: "status", label: "Status", type: "select", options: ["Prepared", "Sent to accounts", "Corrected"] },
+        ],
+      },
+      {
+        v: "lpo", l: "LPO or delivery", parent: "LPOs & Deliveries", code: "PROJECT_LPO", site: "none", project: "optional", titleFrom: "what",
+        fields: [
+          { k: "what", label: "What", type: "chips", options: ["LPO issued", "Order confirmed", "Dispatched", "Delivered", "Delayed"] },
+          { k: "supplier", label: "Supplier", type: "supplier" },
+          { k: "ref", label: "LPO no.", type: "ref", optional: true, placeholder: "Only if you have it" },
+          { k: "expectedOn", label: "Expected on", type: "date", optional: true },
         ],
       },
       comm("Calls & Emails", ["Material", "Cost or bill", "Invoice", "Labour or timesheet", "Documents", "Payment", "Report"]),
@@ -311,3 +388,15 @@ export const estimatePrefix = (d: Date) => {
 export const NEW_ESTIMATE = "__new__";
 
 export const PROJECT_LOG_EMAILS = Object.keys(PROJECT_PROFILES);
+
+/** Every project form ends with "Other task": pick the category, type a short title. */
+for (const p of Object.values(PROJECT_PROFILES)) {
+  const cats = Array.from(new Set(p.kinds.map((k) => k.parent)));
+  p.kinds.push({
+    v: "other", l: "Other task (type it)", parent: "Other work", parentFrom: "category", code: "PROJECT_OTHER", site: "none", project: "optional", titleFrom: "title",
+    fields: [
+      { k: "category", label: "Category", type: "select", options: [...cats, "Other work"] },
+      { k: "title", label: "Short title", type: "ref", placeholder: "What was it?" },
+    ],
+  });
+}

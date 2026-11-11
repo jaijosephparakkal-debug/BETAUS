@@ -151,6 +151,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
         customers: (await prisma.customer.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
         suppliers: (await prisma.supplier.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
         names: [],
+        staff: (await prisma.employee.findMany({ orderBy: { name: "asc" }, select: { name: true } })).map((e) => e.name),
         estimates: [],
         nextEstimate: "",
         potentials: [],

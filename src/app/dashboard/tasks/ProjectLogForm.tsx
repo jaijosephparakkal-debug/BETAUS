@@ -12,6 +12,8 @@ export type ProjectLogData = {
   suppliers: { id: string; name: string }[];
   /** Names used before (people met, emailed, inspectors), offered as suggestions. */
   names: string[];
+  /** Everyone in the Employee ID Directory: used wherever a staff member is named. */
+  staff: string[];
   /** Saroj: estimation numbers already given (newest first), and the next one. */
   estimates: { number: string; label: string }[];
   nextEstimate: string;
@@ -229,7 +231,7 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
 
       {(kind.site === "none" || site || kind.site === "optional") && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {kind.fields.map((f) => <FieldInput key={f.k} f={f} vals={vals} setV={setV} site={site} suppliers={data.suppliers} supplierId={supplierId} setSupplierId={setSupplierId} estimates={data.estimates} nextEstimate={data.nextEstimate} />)}
+          {kind.fields.map((f) => <FieldInput key={f.k} f={f} vals={vals} setV={setV} site={site} suppliers={data.suppliers} supplierId={supplierId} setSupplierId={setSupplierId} estimates={data.estimates} nextEstimate={data.nextEstimate} staff={data.staff} />)}
           <datalist id="pl-names">{data.names.map((n) => <option key={n} value={n} />)}</datalist>
         </div>
       )}
@@ -273,9 +275,13 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
   );
 }
 
+/** Parties that are our own people: their name comes from the staff directory. */
+const INTERNAL = ["Our site team", "Office team", "Internal QA/QC"];
+
 function FieldInput({
-  f, vals, setV, site, suppliers, supplierId, setSupplierId, estimates, nextEstimate,
+  f, vals, setV, site, suppliers, supplierId, setSupplierId, estimates, nextEstimate, staff,
 }: {
+  staff: string[];
   estimates: { number: string; label: string }[];
   nextEstimate: string;
   f: PField;
@@ -329,14 +335,21 @@ function FieldInput({
           </select>
         </Field>
         <Field label={`Name${f.nameOptional ? " (optional)" : ""}`}>
-          <input
-            list="pl-names"
-            required={!f.nameOptional}
-            value={vals[`${f.k}Name`] ?? ""}
-            onChange={(e) => setV(`${f.k}Name`, e.target.value)}
-            placeholder="Pick a saved name or type it once"
-            className={sel}
-          />
+          {INTERNAL.includes(vals[f.k] ?? "") ? (
+            <select required={!f.nameOptional} value={vals[`${f.k}Name`] ?? ""} onChange={(e) => setV(`${f.k}Name`, e.target.value)} className={sel}>
+              <option value="">{f.nameOptional ? "—" : "Choose from the staff directory…"}</option>
+              {staff.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          ) : (
+            <input
+              list="pl-names"
+              required={!f.nameOptional}
+              value={vals[`${f.k}Name`] ?? ""}
+              onChange={(e) => setV(`${f.k}Name`, e.target.value)}
+              placeholder="Pick a saved name or type it once"
+              className={sel}
+            />
+          )}
         </Field>
       </div>
     );

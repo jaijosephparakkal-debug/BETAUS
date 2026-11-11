@@ -5,8 +5,9 @@ import { useFormState, useFormStatus } from "react-dom";
 import { createLogEntryAction } from "./logActions";
 import { PRODUCTS } from "@/lib/products";
 import {
-  FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, NEXT_STEPS, DISCUSS, HR_TOPICS, HR_ACTIONS,
-  PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS,
+  FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
+  PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES,
 } from "@/lib/logOptions";
 
 export type LogData = {
@@ -16,18 +17,14 @@ export type LogData = {
   employees: { id: string; companyId: string; name: string }[];
   agencies: { id: string; name: string }[];
   quotations: { id: string; number: string; companyId: string; customerId: string; customerName: string; value: number | null; createdAt: string }[];
+  suppliers: { id: string; companyId: string; name: string }[];
+  /** What this person's form offers: kinds of work, the companies they can log for, and their next-step choices. */
+  profile: { kinds: { v: string; l: string }[]; companies: string[]; next: { v: string; l: string }[] };
   nextNumbers: Record<string, string>;
   prefill?: { kind?: string; quotationId?: string };
 };
 
 const sel = "w-full rounded-md border border-brand-300 px-2 py-1.5 text-[17px]";
-const KINDS = [
-  { v: "q", l: "Quotation" },
-  { v: "f", l: "Follow-up" },
-  { v: "v", l: "Customer visit" },
-  { v: "pro", l: "PRO" },
-  { v: "hr", l: "HR" },
-];
 
 function Tag({ t }: { t: "pick" | "type" | "auto" }) {
   const cls = t === "pick" ? "bg-emerald-100 text-emerald-800" : t === "type" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800";
@@ -70,8 +67,11 @@ export function LogForm({ data }: { data: LogData }) {
   const [state, formAction] = useFormState(createLogEntryAction, {});
   const [open, setOpen] = useState(!!data.prefill?.quotationId);
   const [key, setKey] = useState(0);
-  const [company, setCompany] = useState(data.companies.find((c) => c.slug === "gasneeds")?.slug ?? data.companies[0].slug);
-  const [kind, setKind] = useState(data.prefill?.kind ?? "q");
+  const KINDS = data.profile.kinds;
+  const myCompanies = data.companies.filter((c) => data.profile.companies.includes(c.slug));
+  const [company, setCompany] = useState(myCompanies.find((c) => c.slug === "gasneeds")?.slug ?? myCompanies[0].slug);
+  const [kind, setKind] = useState(data.prefill?.kind ?? KINDS[0].v);
+  const [supplierId, setSupplierId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [quotationId, setQuotationId] = useState(data.prefill?.quotationId ?? "");
   const [eventAt, setEventAt] = useState(dubaiNow());
@@ -85,6 +85,7 @@ export function LogForm({ data }: { data: LogData }) {
   const [saved, setSaved] = useState("");
 
   const companyRow = data.companies.find((c) => c.slug === company)!;
+  const suppliers = data.suppliers.filter((x) => x.companyId === companyRow.id);
   const customers = data.customers.filter((c) => c.companyId === companyRow.id);
   const employees = data.employees.filter((e) => e.companyId === companyRow.id);
   const quotes = data.quotations.filter((q) => q.companyId === companyRow.id);
@@ -98,10 +99,10 @@ export function LogForm({ data }: { data: LogData }) {
   useEffect(() => {
     try {
       const p = JSON.parse(localStorage.getItem("logFormPrefs") || "{}");
-      if (p.company && data.companies.some((c) => c.slug === p.company)) setCompany(p.company);
-      if (p.kind && !data.prefill?.kind) setKind(p.kind);
+      if (p.company && myCompanies.some((c) => c.slug === p.company)) setCompany(p.company);
+      if (p.kind && !data.prefill?.kind && KINDS.some((k) => k.v === p.kind)) setKind(p.kind);
     } catch {}
-  }, [data.companies, data.prefill?.kind]);
+  }, [data.companies, data.prefill?.kind]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (state.ok) {
       try {
@@ -139,8 +140,8 @@ export function LogForm({ data }: { data: LogData }) {
 
       <Field label="Working for" tag="pick">
         <div className="flex gap-2">
-          {data.companies.map((c) => (
-            <Chip key={c.slug} on={company === c.slug} onClick={() => { setCompany(c.slug); setCustomerId(""); setQuotationId(""); setEmployeeId(""); }}>
+          {myCompanies.map((c) => (
+            <Chip key={c.slug} on={company === c.slug} onClick={() => { setCompany(c.slug); setCustomerId(""); setQuotationId(""); setEmployeeId(""); setSupplierId(""); }}>
               {c.name}
             </Chip>
           ))}
@@ -284,6 +285,96 @@ export function LogForm({ data }: { data: LogData }) {
         </div>
       )}
 
+      {kind === "enq" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />
+          <ContactInput list={contactList} />
+          <Field label="Product category" tag="pick">
+            <select name="productCategory" value={pcat} onChange={(e) => setPcat(e.target.value)} className={sel}>
+              {Object.keys(PRODUCTS).map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Product" tag="pick">
+            {pcat === "Other product" ? (
+              <input name="productOther" required placeholder="Type the product name" className={sel} />
+            ) : (
+              <select name="product" className={sel}>{PRODUCTS[pcat].map((p) => <option key={p}>{p}</option>)}</select>
+            )}
+          </Field>
+          <Field label="Quantity" tag="type"><input name="quantity" placeholder="e.g. 10" className={sel} /></Field>
+          <Field label="How it came in" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Where it stands" tag="pick"><select name="enqStatus" className={sel}>{ENQ_STATUS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        </div>
+      )}
+
+      {kind === "po" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
+          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
+          <Field label="PO number" tag="type"><input name="poNo" required placeholder="Your PO number" className={sel} /></Field>
+          <Field label="Amount (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="12000" className={sel} /></Field>
+          <Field label="Where it stands" tag="pick"><select name="poStatus" className={sel}>{PO_STATUS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Expected on" tag="pick"><input type="date" name="expectedOn" className={sel} /></Field>
+        </div>
+      )}
+
+      {kind === "imp" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
+          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
+          <Field label="Shipment stage" tag="pick"><select name="importStage" className={sel}>{IMPORT_STAGES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Shipment or tracking reference" tag="type"><input name="shipRef" placeholder="Only if you have it" className={sel} /></Field>
+          <Field label="Expected arrival" tag="pick"><input type="date" name="etaOn" className={sel} /></Field>
+        </div>
+      )}
+
+      {kind === "pr" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" optional />
+          {!quotationId && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
+          <Field label="Amount received (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="5000" className={sel} /></Field>
+          <Field label="Paid by" tag="pick"><select name="method" className={sel}>{PAY_METHODS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Reference or cheque no." tag="type"><input name="reference" placeholder="Only if you have it" className={sel} /></Field>
+          <Field label="This payment is" tag="pick"><select name="payType" className={sel}><option>Part payment</option><option>Full payment</option></select></Field>
+        </div>
+      )}
+
+      {kind === "pm" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
+          <Field label="PO number" tag="type"><input name="poNo" placeholder="Only if it is for a PO" className={sel} /></Field>
+          <Field label="Amount paid (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="12000" className={sel} /></Field>
+          <Field label="Paid by" tag="pick"><select name="method" className={sel}>{PAY_METHODS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Reference or cheque no." tag="type"><input name="reference" placeholder="Only if you have it" className={sel} /></Field>
+        </div>
+      )}
+
+      {kind === "pf" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" />
+          <Field label="How you were in touch" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <ContactInput list={contactList} label="Spoke to" />
+          <Field label="Their answer" tag="pick"><select name="payResponse" className={sel}>{PAY_RESPONSES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="They promised to pay by" tag="pick"><input type="date" name="promisedOn" className={sel} /></Field>
+        </div>
+      )}
+
+      {kind === "cc" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="What was done" tag="pick"><select name="ccType" className={sel}>{CC_TYPES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Amount (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="5000" className={sel} /></Field>
+          <Field label="Bank" tag="type"><input name="bank" placeholder="Only if needed" className={sel} /></Field>
+          <Field label="Cheque or slip no." tag="type"><input name="reference" placeholder="Only if you have it" className={sel} /></Field>
+        </div>
+      )}
+
+      {kind === "ac" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="What was done" tag="pick"><select name="acType" className={sel}>{AC_TYPES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Reference" tag="type"><input name="reference" placeholder="Only if needed" className={sel} /></Field>
+        </div>
+      )}
+
       <div className="border-t border-brand-100 pt-3">
         <Field label="What was discussed — tap a topic, then pick the detail" tag="pick">
           <div className="flex flex-wrap gap-2">
@@ -325,7 +416,7 @@ export function LogForm({ data }: { data: LogData }) {
         <Field label="How it ended" tag="pick"><select name="outcome" className={sel}>{OUTCOMES.map((o) => <option key={o}>{o}</option>)}</select></Field>
         <Field label="Next step needed" tag="pick">
           <select name="nextStep" value={next} onChange={(e) => setNext(e.target.value)} className={sel}>
-            {NEXT_STEPS.map((n) => <option key={n.v} value={n.v}>{n.l}</option>)}
+            {data.profile.next.map((n) => <option key={n.v} value={n.v}>{n.l}</option>)}
           </select>
         </Field>
         {next !== "none" && (
@@ -374,6 +465,37 @@ function EmployeePick({ employees, value, onChange, label }: { employees: { id: 
         <option value="__new__">+ Add employee</option>
       </select>
       {value === "__new__" && <input name="newEmployee" required placeholder="Employee name" className={`${sel} mt-1`} />}
+    </Field>
+  );
+}
+
+function SupplierPick({ suppliers, value, onChange }: { suppliers: { id: string; name: string }[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <Field label="Supplier" tag="pick">
+      <select name="supplierId" required value={value} onChange={(e) => onChange(e.target.value)} className={sel}>
+        <option value="" disabled>Choose supplier…</option>
+        {suppliers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        <option value="__new__">+ Add supplier</option>
+      </select>
+      {value === "__new__" && <input name="newSupplier" required placeholder="Supplier name" className={`${sel} mt-1`} />}
+    </Field>
+  );
+}
+
+function QuotePick({
+  quotes, value, onChange, label, optional,
+}: {
+  quotes: { id: string; number: string; customerName: string; value: number | null; createdAt: string }[];
+  value: string; onChange: (v: string) => void; label: string; optional?: boolean;
+}) {
+  return (
+    <Field label={label} tag="pick">
+      <select name="quotationId" required={!optional} value={value} onChange={(e) => onChange(e.target.value)} className={sel}>
+        {optional ? <option value="">None</option> : <option value="" disabled>Choose quotation…</option>}
+        {quotes.map((q) => (
+          <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
+        ))}
+      </select>
     </Field>
   );
 }

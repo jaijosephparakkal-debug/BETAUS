@@ -416,3 +416,13 @@ model Quotation {
   @@unique([companyId, year, seq])
   @@index([customerId])
 }
+
+/// Suppliers a company buys from — picked in the work log (Manu, Jintu) instead of typed.
+model Supplier {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, name])
+}

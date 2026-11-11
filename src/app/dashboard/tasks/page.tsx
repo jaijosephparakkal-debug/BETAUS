@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LogForm, type LogData } from "./LogForm";
-import { LOG_FORM_EMAILS } from "@/lib/logOptions";
+import { LOG_FORM_EMAILS, PROFILES } from "@/lib/logOptions";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
@@ -113,8 +113,10 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       employees: (await prisma.employee.findMany({ orderBy: { name: "asc" } })).map((e) => ({ id: e.id, companyId: e.companyId, name: e.name })),
       agencies: (await prisma.proAgency.findMany({ orderBy: { name: "asc" } })).map((a) => ({ id: a.id, name: a.name })),
       quotations: quotations.map((q) => ({ id: q.id, number: q.number, companyId: q.companyId, customerId: q.customerId, customerName: q.customer.name, value: q.value, createdAt: q.createdAt.toISOString() })),
+      suppliers: (await prisma.supplier.findMany({ orderBy: { name: "asc" } })).map((x) => ({ id: x.id, companyId: x.companyId, name: x.name })),
+      profile: { kinds: PROFILES[membership.user.email.toLowerCase()].kinds, companies: PROFILES[membership.user.email.toLowerCase()].companies, next: PROFILES[membership.user.email.toLowerCase()].next },
       nextNumbers,
-      prefill: searchParams.quotation ? { kind: "f", quotationId: searchParams.quotation } : undefined,
+      prefill: searchParams.quotation ? { kind: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => k.v === "pf") ? "pf" : "f", quotationId: searchParams.quotation } : undefined,
     };
   }
 

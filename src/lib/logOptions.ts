@@ -1,5 +1,38 @@
 /** Wording and lists for the structured work log form (Antony). Everything here is picked, not typed. */
-export const LOG_FORM_EMAILS = ["sales@gasneeds.com"];
+export type NextStep = { v: string; l: string };
+type Profile = {
+  kinds: { v: string; l: string }[];
+  /** Company slugs the person can log work for. */
+  companies: string[];
+  /** Category task each kind is filed under. */
+  parent: Record<string, string>;
+  next: NextStep[];
+};
+const NS_NONE = { v: "none", l: "None" };
+const NS_SELF = { v: "followup", l: "Follow up myself" };
+
+/** Who gets the structured work-log form, and what it offers them. */
+export const PROFILES: Record<string, Profile> = {
+  "sales@gasneeds.com": {
+    kinds: [{ v: "q", l: "Quotation" }, { v: "f", l: "Follow-up" }, { v: "v", l: "Customer visit" }, { v: "pro", l: "PRO" }, { v: "hr", l: "HR" }],
+    companies: ["gasneeds", "flaretechnical"],
+    parent: { q: "Sales — Quotations", f: "Sales — Follow-ups", v: "Sales — Customer Visits", pro: "PRO — Government & Admin", hr: "HR — Staff & Insurance" },
+    next: [NS_NONE, NS_SELF, { v: "manu", l: "Hand over to Manu — purchase follow-up" }, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
+  },
+  "business@gasneeds.com": {
+    kinds: [{ v: "q", l: "Quotation" }, { v: "enq", l: "Enquiry" }, { v: "po", l: "Purchase order" }, { v: "imp", l: "Import or delivery" }, { v: "f", l: "Follow-up" }],
+    companies: ["gasneeds"],
+    parent: { q: "Quotations", enq: "Enquiries", po: "Purchase Orders", imp: "Imports & Deliveries", f: "Follow-ups & Calls" },
+    next: [NS_NONE, NS_SELF, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
+  },
+  "accounts@gasneeds.com": {
+    kinds: [{ v: "pr", l: "Payment received" }, { v: "pm", l: "Payment made" }, { v: "pf", l: "Payment follow-up" }, { v: "cc", l: "Cheque or cash" }, { v: "ac", l: "Accounts entry" }],
+    companies: ["gasneeds", "flaretechnical"],
+    parent: { pr: "Payments & Receipts", pm: "Payments & Receipts", pf: "Receivables Follow-up", cc: "Cheques, Cash & Banking", ac: "Bills & Books" },
+    next: [NS_NONE, NS_SELF],
+  },
+};
+export const LOG_FORM_EMAILS = Object.keys(PROFILES);
 export const SALES_TEAM_EMAILS = ["sales@gasneeds.com", "business@gasneeds.com", "accounts@gasneeds.com"];
 
 export const QUOTE_STATUS: { v: string; l: string }[] = [
@@ -66,3 +99,11 @@ export const PRO_SERVICES = ["Visa — renewal", "Visa — new", "Emirates ID", 
 export const PRO_STAGES = ["Documents sent", "Submitted", "In process", "Approved", "Collected", "Rejected"];
 export const BACKDATE_REASONS = ["Forgot to log it", "Was away from the office", "No network at the time", "Other"];
 export const BACKDATE_DAYS = 7;
+
+export const ENQ_STATUS = ["Enquiry received", "Clarified with the customer", "Converted to a quotation", "Closed — no order"];
+export const PO_STATUS = ["Sent to supplier", "Confirmed by supplier", "Amended", "Cancelled"];
+export const IMPORT_STAGES = ["Shipment booked", "In transit", "Customs clearance", "Arrived", "Delivery arranged", "Delivered"];
+export const PAY_METHODS = ["Bank transfer", "Cheque", "Cash", "Card", "Payment link"];
+export const PAY_RESPONSES = ["Will pay by a date", "Already paid", "Disputed", "Needs documents first", "Asked for more time", "Could not reach them"];
+export const CC_TYPES = ["Cheque deposit", "Cheque collection", "Cash deposit", "Petty cash"];
+export const AC_TYPES = ["Payment entries", "Bills posting", "Bank reconciliation", "Payroll", "Reports", "Other"];

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
 import { RequestContent } from "./RequestContent";
+import { Hero } from "@/components/Hero";
 import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
@@ -198,6 +199,11 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
     ? await prisma.task.findMany({ where: { assignedToId: membership.id, logKind: "CONTENT_REQUEST", status: { not: "COMPLETED" } }, orderBy: { deadline: "asc" }, take: 30 })
     : [];
 
+  // Live numbers for the hero.
+  const monthStartDubai = new Date(Date.UTC(new Date(Date.now() + 4 * 3600 * 1000).getUTCFullYear(), new Date(Date.now() + 4 * 3600 * 1000).getUTCMonth(), 1) - 4 * 3600 * 1000);
+  const loggedThisMonth = await prisma.task.count({ where: { assignedToId: membership.id, logKind: { not: null }, createdAt: { gte: monthStartDubai } } });
+  const openTaskCount = await prisma.task.count({ where: { assignedToId: membership.id, parentTaskId: { not: null }, status: { not: "COMPLETED" } } });
+
   // Follow-ups that are due today or overdue (Dubai day), for the person's own list.
   const endOfToday = new Date(Math.floor((Date.now() + 4 * 3600 * 1000) / 86400000) * 86400000 + 86400000 - 4 * 3600 * 1000);
   const startOfToday = new Date(endOfToday.getTime() - 86400000);
@@ -210,15 +216,25 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
+      <Hero
+        name={membership.user.name}
+        email={membership.user.email}
+        title={`${membership.title} · ${membership.company.name}`}
+        dueCount={due.length}
+        tiles={[
+          { label: "Follow-ups due", value: due.length },
+          { label: "Logged this month", value: loggedThisMonth },
+          { label: "Open tasks", value: openTaskCount },
+        ]}
+      />
       {due.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <div className="mb-1 text-[19px] font-semibold text-amber-900">Follow-ups due — {due.length}</div>
+        <div className="panel-ink rounded-2xl p-5 shadow-lg">
+          <div className="mb-1 text-[16px] font-semibold uppercase tracking-[0.14em] text-[#DFE5EB]">Follow-ups due — <span className="rounded-full bg-accent px-2 text-on-accent">{due.length}</span></div>
           {due.map((t) => {
             const overdue = t.followUpAt! < startOfToday;
             return (
-              <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block py-1 text-[17px] hover:underline">
-                <span className={overdue ? "font-medium text-red-600" : "text-slate-800"}>{overdue ? "Overdue" : "Today"}</span>
+              <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block border-b border-white/15 py-2 text-[17px] text-white last:border-0 hover:underline">
+                <span className={overdue ? "font-semibold text-highlight" : "text-[#DFE5EB]"}>{overdue ? "Overdue" : "Today"}</span>
                 {" · "}
                 {t.quotation?.number ? `${t.quotation.number} · ` : ""}
                 {t.title}

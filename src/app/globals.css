@@ -17,7 +17,7 @@
 }
 
 html {
-  background-color: #f8fafc;
+  background-color: #DFE5EB;
   color-scheme: light;
   /* Neutral default ramp — used on /login, /select-company and the
      landing page, before a company context is known. Company pages
@@ -42,7 +42,48 @@ html {
    so status badges (emerald/red/amber) keep their own colours. */
 .card-themed {
   background-color: #fff !important;
+  position: relative;
+  isolation: isolate;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgb(var(--ink) / 0.08);
 }
+/* Faint artwork in the corner of every card (polygons for Gasneeds, smoke for Flaretech). */
+.card-themed::before {
+  content: "";
+  z-index: -1;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--art-light);
+  background-size: cover;
+  background-position: right top;
+  opacity: var(--art-light-opacity, 0.5);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(100deg, transparent 40%, #000 100%);
+  mask-image: linear-gradient(100deg, transparent 40%, #000 100%);
+}
+/* Dark panel with the company artwork on the right (hero, follow-ups, header). */
+.panel-ink {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: rgb(var(--ink));
+  color: #fff;
+}
+.panel-ink::before {
+  content: "";
+  z-index: -1;
+  position: absolute;
+  inset: 0;
+  background-image: var(--art);
+  background-size: cover;
+  background-position: right center;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+}
+
 .card-themed .text-slate-900,
 .card-themed .text-slate-800,
 .card-themed .text-slate-700,
@@ -53,6 +94,7 @@ html {
 }
 .card-themed .bg-brand-600 {
   background-color: rgb(var(--button-bg)) !important;
+  color: rgb(var(--on-accent)) !important;
 }
 .card-themed .hover\:bg-brand-700:hover {
   background-color: rgb(var(--button-bg-hover)) !important;

@@ -49,13 +49,18 @@ const THEMES: Record<string, CompanyTheme> = {
       "--card-text": "0 126 200", // same blue as --brand-600
       "--button-bg": "245 136 31", // the logo's flame orange, #F5881F
       "--button-bg-hover": "199 106 15",
+      // New look: deep navy panels, ice gray page, flame-orange action colour, smoke artwork.
+      "--ink": "10 31 51",
+      "--accent": "245 136 31",
+      "--on-accent": "10 31 51",
+      "--highlight": "245 169 79",
+      "--art": "url(/art/flaretech-smoke.webp)",
+      "--art-light": "url(/art/flaretech-smoke.webp)",
+      "--art-light-opacity": "0.14",
     } as CSSProperties,
     // Faint blue (top-left) and orange (bottom-right) wash, echoing the
     // logo's own diagonal flame-to-drop split, over a near-white base.
-    pageBackground:
-      "radial-gradient(circle at 15% 8%, rgba(0,126,200,0.12) 0%, transparent 42%), " +
-      "radial-gradient(circle at 85% 92%, rgba(245,136,31,0.12) 0%, transparent 42%), " +
-      "#f8fafc",
+    pageBackground: "#DFE5EB",
   },
   gasneeds: {
     displayName: "Gasneeds Trading LLC",
@@ -74,13 +79,18 @@ const THEMES: Record<string, CompanyTheme> = {
       "--brand-900": "92 4 4",
       // Red text, black buttons, on white card backgrounds.
       "--card-text": "211 10 10", // same red as --brand-600
-      "--button-bg": "23 23 23",
-      "--button-bg-hover": "51 51 51",
+      "--button-bg": "239 35 60",
+      "--button-bg-hover": "205 24 48",
+      // New look: Obsidian Black panels, Ice Gray page, Racing Red actions, polygon artwork.
+      "--ink": "17 18 23",
+      "--accent": "239 35 60",
+      "--on-accent": "255 255 255",
+      "--highlight": "255 77 77",
+      "--art": "url(/art/gasneeds-mesh-dark.webp)",
+      "--art-light": "url(/art/gasneeds-mesh-light.webp)",
+      "--art-light-opacity": "0.9",
     } as CSSProperties,
-    pageBackground:
-      "radial-gradient(circle at 15% 8%, rgba(211,10,10,0.10) 0%, transparent 42%), " +
-      "radial-gradient(circle at 85% 92%, rgba(17,17,17,0.06) 0%, transparent 42%), " +
-      "#fafafa",
+    pageBackground: "#DFE5EB",
   },
 };
 

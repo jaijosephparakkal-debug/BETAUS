@@ -5,6 +5,8 @@ import { canManageAllStaff, isManagingDirector, type FullMembership } from "@/li
 import { seesGnDepartments } from "@/lib/gnDepartments";
 import { getCompanyTheme } from "@/lib/theme";
 import { AttendanceClock } from "@/components/AttendanceClock";
+import { NavLinks } from "@/components/NavLinks";
+import { Avatar } from "@/components/Avatar";
 
 export function AppHeader({
   membership,
@@ -67,10 +69,10 @@ export function AppHeader({
   ];
 
   return (
-    <header className="border-b border-brand-200 bg-surface">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header className="panel-ink border-b border-accent/70">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg border border-brand-200 bg-brand-50 p-1.5">
+          <div className="rounded-xl bg-[#DFE5EB] px-2.5 py-1.5">
             <Image
               src={theme.logo}
               alt={theme.displayName}
@@ -81,41 +83,28 @@ export function AppHeader({
             />
           </div>
           <div>
-            <div className="text-[21px] font-semibold text-slate-900">
-              {membership.company.name}
-            </div>
-            <div className="text-[17px] text-slate-500">
+            <div className="text-[21px] font-semibold text-white">{membership.company.name}</div>
+            <div className="text-[17px] text-[#c9d2da]">
               {membership.user.name} · {membership.title}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {membershipCount > 1 && canManageAllStaff(membership) && (
-            <Link
-              href="/select-company?switch=1"
-              className="text-[19px] text-brand-600 hover:underline"
-            >
+            <Link href="/select-company?switch=1" className="text-[19px] text-[#DFE5EB] underline-offset-2 hover:underline">
               Switch company
             </Link>
           )}
-          {!viewingAsName && <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />}
+          {!viewingAsName && (
+            <div className="rounded-full bg-[#DFE5EB] px-2 py-0.5 text-ink">
+              <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
+            </div>
+          )}
+          <Avatar name={membership.user.name} email={membership.user.email} size={40} className="ring-2 ring-accent" />
         </div>
       </div>
-      <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[19px] font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700"
-          >
-            {item.label}
-            {!!item.badge && (
-              <span className="rounded-full bg-brand-600 px-1.5 text-[17px] font-semibold text-white">
-                {item.badge}
-              </span>
-            )}
-          </Link>
-        ))}
+      <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-3">
+        <NavLinks items={navItems} />
       </nav>
     </header>
   );

@@ -21,6 +21,10 @@ const config: Config = {
         // Elevated panel background (cards, header) — plain white on the
         // light theme.
         surface: "#ffffff",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        accent: "rgb(var(--accent) / <alpha-value>)",
+        "on-accent": "rgb(var(--on-accent) / <alpha-value>)",
+        highlight: "rgb(var(--highlight) / <alpha-value>)",
         // Dialog/card boxes: white background with brand-coloured text and
         // buttons (see src/lib/theme.ts and the .card-themed rules in
         // globals.css that apply these on top of the existing slate/brand

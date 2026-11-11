@@ -47,7 +47,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-[16px] ${on ? "border-brand-500 bg-brand-100 text-brand-800" : "border-slate-300 bg-white text-slate-700"}`}
+      className={`rounded-full border px-3 py-1 text-[16px] ${on ? "border-ink bg-ink text-white shadow-md" : "border-slate-300 bg-white text-slate-700 hover:border-ink"}`}
     >
       {children}
     </button>
@@ -56,7 +56,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="rounded-lg bg-brand-600 px-4 py-2 text-[19px] font-medium text-white hover:bg-brand-700 disabled:opacity-60">
+    <button type="submit" disabled={pending} className="rounded-xl bg-accent px-5 py-2.5 text-[19px] font-semibold text-on-accent shadow-md hover:opacity-90 disabled:opacity-60">
       {pending ? "Saving…" : "Add task"}
     </button>
   );

@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/db";
 import type { Membership } from "@prisma/client";
@@ -26,6 +26,7 @@ export async function createSession(userId: string) {
 }
 
 export async function destroySession() {
+  cookies().delete(VIEW_AS_COOKIE);
   cookies().delete(SESSION_COOKIE);
   cookies().delete(COMPANY_COOKIE);
 }
@@ -55,14 +56,37 @@ export function getActiveCompanyId(): string | null {
   return cookies().get(COMPANY_COOKIE)?.value ?? null;
 }
 
+export const VIEW_AS_COOKIE = "viewAs";
+
 export type FullMembership = Membership & {
   user: { id: string; name: string; email: string; signature: string | null };
   company: { id: string; name: string; slug: string };
   manager: Membership | null;
+  /** Set when a director is looking at the app as someone else (read-only). */
+  viewingAs?: { realUserId: string; realName: string };
 };
 
-/** Resolves the signed-in user's active membership (their role at the currently-selected company). */
+/**
+ * Resolves the active membership. When a director has switched on "View as" (Abraham and Jai only), this is
+ * the other person's membership, flagged with `viewingAs`, and the session is read-only: any server action
+ * (anything that would write) sees nobody signed in.
+ */
 export async function getCurrentMembership(): Promise<FullMembership | null> {
+  const real = await getRealMembership();
+  if (!real) return null;
+  const targetId = cookies().get(VIEW_AS_COOKIE)?.value;
+  if (!targetId || !real.isDirector || !canManageAllStaff(real)) return real;
+  const target = await prisma.membership.findUnique({
+    where: { id: targetId },
+    include: { user: true, company: true, manager: true },
+  });
+  if (!target || target.isDirector || target.userId === real.userId) return real;
+  if (headers().get("next-action")) return null;
+  return { ...(target as FullMembership), viewingAs: { realUserId: real.userId, realName: real.user.name } };
+}
+
+/** The signed-in person's own membership, ignoring "View as". Used to start and stop it. */
+export async function getRealMembership(): Promise<FullMembership | null> {
   const userId = await getSessionUserId();
   if (!userId) return null;
 

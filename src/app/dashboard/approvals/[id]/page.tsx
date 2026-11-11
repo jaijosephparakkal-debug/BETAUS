@@ -34,7 +34,7 @@ export default async function ApprovalDetailPage({
   if (!isParty && !membership.isDirector) redirect("/dashboard/approvals");
   const isAuditing = !isParty && membership.isDirector;
 
-  if (isApprover && !request.viewedAt) {
+  if (isApprover && !request.viewedAt && !membership.viewingAs) {
     await prisma.approvalRequest.update({
       where: { id: request.id },
       data: { viewedAt: new Date() },

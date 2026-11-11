@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { exitViewAsAction } from "@/app/director/view-as/actions";
 import { getCurrentMembership, getMembershipCount } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AppHeader } from "@/components/AppHeader";
@@ -25,7 +26,8 @@ export default async function DashboardLayout({
   const pendingApprovalCount = await prisma.approvalRequest.count({
     where: { approverId: membership.id, status: "PENDING" },
   });
-  const attendanceEntry = await clockInIfNeeded(membership.id);
+  // While a director is viewing as someone, never clock that person in or out.
+  const attendanceEntry = membership.viewingAs ? null : await clockInIfNeeded(membership.id);
   const taskNotificationCount = await getUnreadTaskNotificationCount(membership.id);
 
   const theme = getCompanyTheme(membership.company.slug);
@@ -42,9 +44,22 @@ export default async function DashboardLayout({
         pendingApprovalCount={pendingApprovalCount}
         taskNotificationCount={taskNotificationCount}
         clockInIso={attendanceEntry ? attendanceEntry.clockIn.toISOString() : null}
-        autoClockedOut={!attendanceEntry}
+        autoClockedOut={!attendanceEntry && !membership.viewingAs}
+        viewingAsName={membership.viewingAs ? membership.user.name : undefined}
       />
-      {isReconcileOpen(membership.user.email) && (
+      {membership.viewingAs && (
+        <div className="flex flex-wrap items-center justify-center gap-3 bg-slate-900 px-4 py-2 text-center text-[17px] text-white">
+          <span>
+            Viewing as <strong>{membership.user.name}</strong> — read only. Nothing here changes their data.
+          </span>
+          <form action={exitViewAsAction}>
+            <button type="submit" className="rounded-md bg-white px-3 py-1 text-[15px] font-medium text-slate-900 hover:bg-slate-200">
+              Exit view
+            </button>
+          </form>
+        </div>
+      )}
+      {!membership.viewingAs && isReconcileOpen(membership.user.email) && (
         <a href="/dashboard/reconcile" className="block bg-amber-100 px-4 py-2 text-center text-[19px] font-medium text-amber-900 hover:bg-amber-200">
           Attendance reconciliation is open until {reconcileEndLabel(membership.user.email)} — tap to review and correct your shifts
         </a>

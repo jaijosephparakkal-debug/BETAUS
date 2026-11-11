@@ -13,6 +13,7 @@ export function AppHeader({
   taskNotificationCount = 0,
   clockInIso = null,
   autoClockedOut = false,
+  viewingAsName,
 }: {
   membership: FullMembership;
   reportCount: number;
@@ -21,6 +22,8 @@ export function AppHeader({
   taskNotificationCount?: number;
   clockInIso?: string | null;
   autoClockedOut?: boolean;
+  /** Set while a director views the app as this person (read-only). */
+  viewingAsName?: string;
 }) {
   const theme = getCompanyTheme(membership.company.slug);
 
@@ -86,7 +89,7 @@ export function AppHeader({
               Switch company
             </Link>
           )}
-          <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
+          {!viewingAsName && <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />}
         </div>
       </div>
       <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2">

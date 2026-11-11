@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startViewAsAction } from "@/app/director/view-as/actions";
 import { groupKpis } from "@/lib/kpiSections";
 import { arrangeTasks } from "@/lib/taskOrder";
 import { CompletedDropdown } from "@/components/CompletedDropdown";
@@ -227,9 +228,22 @@ export default async function StaffProfilePage({
 
   return (
     <div className="space-y-6">
-      <Link href="/director/staff" className="text-[17px] text-brand-600 hover:underline">
-        ← Manage My Staff
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/director/staff" className="text-[17px] text-brand-600 hover:underline">
+          ← Manage My Staff
+        </Link>
+        {memberships[0] && (
+          <form action={startViewAsAction.bind(null, memberships[0].id)}>
+            <button
+              type="submit"
+              className="rounded-md border border-brand-300 px-3 py-1.5 text-[17px] font-medium text-brand-700 hover:bg-brand-50"
+              title="Open the app exactly as this person sees it — read only"
+            >
+              View as {person.name.split(" ")[0]} (read only)
+            </button>
+          </form>
+        )}
+      </div>
 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">

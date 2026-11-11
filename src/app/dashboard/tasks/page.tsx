@@ -25,7 +25,7 @@ export default async function MyTasksPage() {
 
   const showCompanyField = DUAL_COMPANY_EMAILS.includes(membership.user.email);
 
-  await markTaskNotificationsRead(membership.id);
+  if (!membership.viewingAs) await markTaskNotificationsRead(membership.id);
 
   // Anyone holding more than one company membership (e.g. Abraham, Jai) sees
   // their tasks merged across every company they belong to, tagged by

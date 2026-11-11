@@ -7,7 +7,7 @@ import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
   PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
-  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH } from "@/lib/logOptions";
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
 
 export type LogData = {
   companies: { id: string; slug: string; name: string }[];
@@ -17,6 +17,8 @@ export type LogData = {
   agencies: { id: string; name: string }[];
   quotations: { id: string; number: string; companyId: string; customerId: string; customerName: string; value: number | null; createdAt: string }[];
   suppliers: { id: string; companyId: string; name: string }[];
+  buildings: { id: string; code: string | null; name: string; cycle: string | null; rate: number | null; pf: number | null; monthly: number | null; first: number | null; deposit: number | null; connection: number | null; disconnection: number | null }[];
+  units: { id: string; buildingId: string; flat: string; tenant: string | null; status: string }[];
   /** What this person's form offers: kinds of work, the companies they can log for, and their next-step choices. */
   profile: { kinds: { v: string; l: string }[]; companies: string[]; next: { v: string; l: string }[] };
   nextNumbers: Record<string, string>;
@@ -71,6 +73,9 @@ export function LogForm({ data }: { data: LogData }) {
   const [company, setCompany] = useState(myCompanies.find((c) => c.slug === "gasneeds")?.slug ?? myCompanies[0].slug);
   const [kind, setKind] = useState(data.prefill?.kind ?? KINDS[0].v);
   const [supplierId, setSupplierId] = useState("");
+  const [buildingId, setBuildingId] = useState("");
+  const [unitType, setUnitType] = useState("Apartment");
+  const [unitId, setUnitId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [quotationId, setQuotationId] = useState(data.prefill?.quotationId ?? "");
   // Follow-ups: about a quotation, or about anything else (topic + who).
@@ -436,6 +441,36 @@ export function LogForm({ data }: { data: LogData }) {
         </div>
       )}
 
+      {GENERIC[kind] && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {GENERIC[kind].building && (
+            <BuildingUnit
+              data={data}
+              required={GENERIC[kind].building === "req"}
+              buildingId={buildingId}
+              setBuildingId={(v) => { setBuildingId(v); setUnitId(""); }}
+              unitType={unitType}
+              setUnitType={(v) => { setUnitType(v); setUnitId(""); }}
+              unitId={unitId}
+              setUnitId={setUnitId}
+            />
+          )}
+          {GENERIC[kind].fields.map((f) => (
+            <Field key={`${kind}-${f.n}`} label={f.l} tag={f.t === "type" ? "type" : "pick"}>
+              {f.t === "pick" ? (
+                <select name={f.n} className={sel}>{(f.o ?? []).map((o) => <option key={o}>{o}</option>)}</select>
+              ) : f.t === "date" ? (
+                <input type="date" name={f.n} required={f.req} className={sel} />
+              ) : f.t === "month" ? (
+                <input type="month" name={f.n} required={f.req} defaultValue={new Date(Date.now() + 4 * 3600 * 1000).toISOString().slice(0, 7)} className={sel} />
+              ) : (
+                <input name={f.n} required={f.req} placeholder={f.ph} className={sel} />
+              )}
+            </Field>
+          ))}
+        </div>
+      )}
+
       <div className="border-t border-brand-100 pt-3">
         <Field label="What was discussed — tap a topic, then pick the detail" tag="pick">
           <div className="flex flex-wrap gap-2">
@@ -592,5 +627,72 @@ function QuotePick({
         ))}
       </select>
     </Field>
+  );
+}
+
+function BuildingUnit({
+  data, required, buildingId, setBuildingId, unitType, setUnitType, unitId, setUnitId,
+}: {
+  data: LogData; required: boolean; buildingId: string; setBuildingId: (v: string) => void;
+  unitType: string; setUnitType: (v: string) => void; unitId: string; setUnitId: (v: string) => void;
+}) {
+  const b = data.buildings.find((x) => x.id === buildingId);
+  const units = data.units.filter((u) => u.buildingId === buildingId);
+  const label = UNIT_TYPES.find((u) => u.v === unitType)?.label ?? "";
+  const chosen = units.find((u) => u.id === unitId);
+  const aed = (n: number | null) => (n == null ? "—" : `AED ${n.toLocaleString("en-US")}`);
+  return (
+    <>
+      <Field label="Building" tag="pick">
+        <select name="buildingId" required={required} value={buildingId} onChange={(e) => setBuildingId(e.target.value)} className={sel}>
+          <option value="">{required ? "Choose building…" : "No building"}</option>
+          {data.buildings.map((x) => <option key={x.id} value={x.id}>{x.code ? `${x.code} · ` : ""}{x.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Bill cycle and charges" tag="auto">
+        <div className="rounded-md bg-slate-50 px-2 py-1.5 text-[14px] text-slate-600">
+          {b ? (
+            b.cycle ? (
+              <>
+                {b.cycle} · rate {b.rate ?? "—"}/m³ · pressure {b.pf ?? "—"} · monthly {aed(b.monthly)} · first bill {aed(b.first)}
+                <br />
+                Deposit {aed(b.deposit)} · connection {aed(b.connection)} · disconnection {aed(b.disconnection)}
+              </>
+            ) : (
+              "No charges on the sheet for this building"
+            )
+          ) : (
+            "Pick a building"
+          )}
+        </div>
+      </Field>
+      {b && (
+        <>
+          <input type="hidden" name="unitType" value={unitType} />
+          <div className="sm:col-span-2">
+            <Field label="Unit type" tag="pick">
+              <div className="flex flex-wrap gap-2">
+                {UNIT_TYPES.map((u) => <Chip key={u.v} on={unitType === u.v} onClick={() => setUnitType(u.v)}>{u.v === "Whole building" ? "Whole building / common" : u.v}</Chip>)}
+              </div>
+            </Field>
+          </div>
+          {unitType === "Apartment" && units.length > 0 && (
+            <Field label="Flat" tag="pick">
+              <select name="unitId" value={unitId} onChange={(e) => setUnitId(e.target.value)} className={sel}>
+                <option value="">Choose flat…</option>
+                {units.map((u) => <option key={u.id} value={u.id}>{u.flat} · {u.tenant ?? "vacant"}{u.status === "REFUND_PENDING" ? " · refund pending" : ""}</option>)}
+                <option value="__typed__">Not on the list — type it</option>
+              </select>
+              {chosen && <p className="mt-0.5 text-[13px] text-slate-500">{chosen.tenant ?? "Vacant"}{chosen.status === "REFUND_PENDING" ? " · refund pending" : ""}</p>}
+            </Field>
+          )}
+          {unitType !== "Whole building" && (unitType !== "Apartment" || units.length === 0 || unitId === "__typed__") && (
+            <Field label={label || "Unit"} tag="type">
+              <input name="unitText" required placeholder={unitType === "Kitchen" ? "e.g. Kitchen 3" : "e.g. 1204"} className={sel} />
+            </Field>
+          )}
+        </>
+      )}
+    </>
   );
 }

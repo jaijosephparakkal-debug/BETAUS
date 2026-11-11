@@ -84,3 +84,32 @@ export async function createHandOver(opts: {
   await notifyNewTask(member.id, task.id, title);
   return task.id;
 }
+
+/** Next running number for a key, e.g. SR-2026-NOV-0001. Atomic, so two people never get the same number. */
+export async function nextRunning(key: string, make: (n: number) => string) {
+  const row = await prisma.numberCounter.upsert({ where: { key }, update: { last: { increment: 1 } }, create: { key, last: 1 } });
+  return make(row.last);
+}
+
+const GENERIC_HAND_OVER = {
+  flexie: { email: "alerts@flaretechnical.com", parentId: "fx_gas_billing_invoicing", label: "First bill" },
+  hashim: { email: "accounts@flaretechnical.com", parentId: "ha_accounts_collections_follow_ups", label: "Collection follow-up" },
+} as const;
+
+/** Gives Flexie or Hashim the next task in a maintenance flow and notifies them. */
+export async function createMaintenanceHandOver(opts: { to: "flexie" | "hashim"; ref: string; description: string; assignedById: string; dueAt: Date; companySlug: string }) {
+  const cfg = GENERIC_HAND_OVER[opts.to];
+  const member = await prisma.membership.findFirst({ where: { user: { email: { equals: cfg.email, mode: "insensitive" } }, company: { slug: "flaretechnical" } } });
+  const parent = await prisma.task.findUnique({ where: { id: cfg.parentId } });
+  if (!member || !parent) return null;
+  const title = `${cfg.label} — ${opts.ref}`.slice(0, 160);
+  const task = await prisma.task.create({
+    data: {
+      companyId: member.companyId, title, description: opts.description.slice(0, 500), assignedToId: member.id, assignedById: opts.assignedById,
+      parentTaskId: parent.id, category: parent.category ?? parent.title, status: "NOT_STARTED", deadline: opts.dueAt, followUpAt: opts.dueAt,
+      logKind: "HANDOVER", workedForCompany: opts.companySlug, eventAt: new Date(),
+    },
+  });
+  await notifyNewTask(member.id, task.id, title);
+  return task.id;
+}

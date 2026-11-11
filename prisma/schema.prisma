@@ -427,3 +427,41 @@ model Supplier {
 
   @@unique([companyId, name])
 }
+
+/// Gas-reading buildings and their charges (from the building charges sheet), picked in the maintenance work log.
+model Building {
+  id                  String  @id @default(cuid())
+  code                String? // e.g. B-002
+  name                String  @unique
+  billCycle           String? // MONTHLY | BI-MONTHLY
+  securityDeposit     Float?
+  connectionCharge    Float?
+  disconnectionCharge Float?
+  unitRate            Float?
+  pressureFactor      Float?
+  monthlyCharge       Float?
+  firstBill           Float?
+  createdAt           DateTime @default(now())
+
+  units Unit[]
+}
+
+/// A flat (or other unit) in a building and its tenant.
+model Unit {
+  id              String   @id @default(cuid())
+  buildingId      String
+  flat            String
+  tenantName      String?
+  securityDeposit Float?
+  status          String   @default("ACTIVE") // ACTIVE | VACANT | REFUND_PENDING | INACTIVE
+  createdAt       DateTime @default(now())
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([buildingId, flat])
+}
+
+model NumberCounter {
+  key  String @id
+  last Int    @default(0)
+}

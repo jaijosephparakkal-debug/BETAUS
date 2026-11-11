@@ -27,6 +27,24 @@ export const PROFILES: Record<string, Profile> = {
     parent: { q: "Quotations", enq: "Enquiries", po: "Purchase Orders", imp: "Imports & Deliveries", f: "Follow-ups & Calls" },
     next: [NS_NONE, NS_SELF, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
   },
+  "alerts@flaretechnical.com": {
+    kinds: [{ v: "rd", l: "Meter reading" }, { v: "gi", l: "Gas invoice" }, { v: "co", l: "Collection" }, { v: "rf", l: "Disconnection and refund" }, { v: "os", l: "Outstanding report" }],
+    companies: ["flaretechnical"],
+    parent: { rd: "Meter Reading", gi: "Gas Billing & Invoicing", co: "Collections & Payments", rf: "Disconnections & Refunds", os: "Collections & Payments" },
+    next: [NS_NONE, NS_SELF, { v: "hashim", l: "Hand over to Hashim — collection follow-up" }],
+  },
+  "service@flaretechnical.com": {
+    kinds: [{ v: "sr", l: "Connection or disconnection" }, { v: "jenq", l: "Enquiry" }, { v: "fsm", l: "FSM schedule" }, { v: "inv", l: "Invoice or payment link" }, { v: "cl", l: "Call or email" }],
+    companies: ["flaretechnical"],
+    parent: { sr: "Connections & Disconnections", jenq: "Enquiries & Quotations", fsm: "Scheduling (FSM)", inv: "Billing & Payments", cl: "Enquiries & Quotations" },
+    next: [NS_NONE, NS_SELF, { v: "flexie", l: "Hand over to Flexie — first bill" }],
+  },
+  "accounts@flaretechnical.com": {
+    kinds: [{ v: "amc", l: "AMC contract" }, { v: "ppm", l: "PPM report" }, { v: "dcd", l: "DCD attestation" }, { v: "rp", l: "Gas reading report" }, { v: "co", l: "Collection" }, { v: "ac", l: "Accounts entry" }],
+    companies: ["flaretechnical"],
+    parent: { amc: "Maintenance — AMC, Contracts & Portals", ppm: "Maintenance — Gas Reading & Reports", dcd: "Maintenance — AMC, Contracts & Portals", rp: "Maintenance — Gas Reading & Reports", co: "Accounts — Collections & Follow-ups", ac: "Accounts — Vouchers & Reconciliation" },
+    next: [NS_NONE, NS_SELF],
+  },
   "accounts@gasneeds.com": {
     kinds: [{ v: "pr", l: "Payment received" }, { v: "pm", l: "Payment made" }, { v: "pf", l: "Payment follow-up" }, { v: "f", l: "Follow-up" }, { v: "cc", l: "Cheque or cash" }, { v: "ac", l: "Accounts entry" }],
     companies: ["gasneeds", "flaretechnical"],
@@ -118,3 +136,33 @@ export const PAY_METHODS = ["Bank transfer", "Cheque", "Cash", "Card", "Payment 
 export const PAY_RESPONSES = ["Will pay by a date", "Already paid", "Disputed", "Needs documents first", "Asked for more time", "Could not reach them"];
 export const CC_TYPES = ["Cheque deposit", "Cheque collection", "Cash deposit", "Petty cash"];
 export const AC_TYPES = ["Payment entries", "Bills posting", "Bank reconciliation", "Payroll", "Reports", "Other"];
+
+export const UNIT_TYPES = [
+  { v: "Apartment", label: "Flat no." },
+  { v: "Kitchen", label: "Kitchen no. or name" },
+  { v: "Shop", label: "Shop no." },
+  { v: "Villa", label: "Villa no." },
+  { v: "Office", label: "Office no." },
+  { v: "Whole building", label: "" },
+];
+
+/** Work kinds described by their fields (maintenance team). `building` says whether a building (and unit) is asked for. */
+export type GField = { n: string; l: string; t: "pick" | "type" | "date" | "month"; o?: string[]; ph?: string; req?: boolean };
+export type GKind = { code: string; dept: string; building?: "req" | "opt"; fields: GField[]; title: (v: Record<string, string>) => string };
+const sm = (n = "readMonth", l = "For the month"): GField => ({ n, l, t: "month", req: true });
+export const GENERIC: Record<string, GKind> = {
+  rd: { code: "METER_READING", dept: "Maintenance", building: "req", title: () => "Meter reading", fields: [sm(), { n: "prevReading", l: "Previous reading (m³)", t: "type", ph: "e.g. 412.5" }, { n: "currReading", l: "Current reading (m³)", t: "type", ph: "e.g. 431.0" }] },
+  gi: { code: "GAS_INVOICE", dept: "Maintenance", building: "req", title: () => "Gas invoice", fields: [sm(), { n: "amount", l: "Invoice amount (AED)", t: "type", req: true, ph: "e.g. 780" }, { n: "reference", l: "Invoice no.", t: "type", ph: "Only if you have it" }] },
+  co: { code: "COLLECTION", dept: "Accounts", building: "opt", title: (v) => (v.collectType === "Full payment" ? "Collection — in full" : "Collection — part"), fields: [{ n: "amount", l: "Amount collected (AED)", t: "type", req: true }, { n: "method", l: "Paid by", t: "pick", o: PAY_METHODS }, { n: "reference", l: "Reference or payment link", t: "type", ph: "Only if you have it" }, { n: "collectType", l: "This payment is", t: "pick", o: ["Part payment", "Full payment"] }] },
+  rf: { code: "REFUND", dept: "Maintenance", building: "req", title: (v) => v.refundStage || "Disconnection and refund", fields: [{ n: "refundStage", l: "Where it stands", t: "pick", o: ["Disconnection requested", "Disconnection done", "Final bill issued", "Refund approved", "Refund paid", "Refund on hold"] }, { n: "amount", l: "Refund amount (AED)", t: "type", ph: "Only when known" }, { n: "reference", l: "Reference", t: "type", ph: "Only if you have it" }] },
+  os: { code: "OUTSTANDING_REPORT", dept: "Maintenance", building: "opt", title: () => "Outstanding report", fields: [sm(), { n: "amount", l: "Total outstanding (AED)", t: "type", ph: "Only when known" }] },
+  sr: { code: "SERVICE_REQUEST", dept: "Maintenance", building: "req", title: (v) => `${v.srType || "Service request"} — ${(v.srStage || "").toLowerCase()}`, fields: [{ n: "srNo", l: "Service request no.", t: "type", ph: "Leave empty for a new request; type an old number to update it" }, { n: "srType", l: "Request", t: "pick", o: ["New connection", "Disconnection", "Complaint", "Meter or leak check", "Other"] }, { n: "srStage", l: "Where it stands", t: "pick", o: ["Request received", "Scheduled on FSM", "Technician assigned", "Done", "Cancelled"] }] },
+  fsm: { code: "FSM_SCHEDULE", dept: "Maintenance", building: "opt", title: (v) => v.fsmStage || "FSM schedule", fields: [{ n: "jobRef", l: "FSM job reference", t: "type", ph: "Only if you have it" }, { n: "visitDate", l: "Visit date", t: "date" }, { n: "fsmStage", l: "Where it stands", t: "pick", o: ["Scheduled", "Technician assigned", "Visited", "Closed"] }] },
+  inv: { code: "INVOICE_LINK", dept: "Maintenance", building: "opt", title: (v) => v.invType || "Invoice", fields: [{ n: "invType", l: "What was done", t: "pick", o: ["Invoice generated", "Payment link created", "Payment link sent"] }, { n: "amount", l: "Amount (AED)", t: "type", req: true }, { n: "reference", l: "Invoice or link reference", t: "type", ph: "Only if you have it" }] },
+  jenq: { code: "ENQUIRY", dept: "Maintenance", building: "opt", title: (v) => v.enqType || "Enquiry", fields: [{ n: "enqType", l: "About", t: "pick", o: ["New connection enquiry", "Billing enquiry", "Disconnection enquiry", "Other"] }, { n: "channel", l: "How it came in", t: "pick", o: CHANNELS }, { n: "enqStatus", l: "Where it stands", t: "pick", o: ["Received", "Answered", "Quotation sent", "Closed"] }] },
+  cl: { code: "CALL_EMAIL", dept: "Maintenance", building: "opt", title: (v) => v.channel || "Call or email", fields: [{ n: "channel", l: "How you were in touch", t: "pick", o: CHANNELS }, { n: "subject", l: "About", t: "pick", o: ["New connection", "Billing", "Disconnection", "Complaint", "Other"] }] },
+  amc: { code: "AMC_RENEWAL", dept: "Maintenance", title: (v) => v.amcStage || "AMC contract", fields: [{ n: "site", l: "Site or client", t: "type", req: true }, { n: "contractNo", l: "Contract no.", t: "type" }, { n: "renewalOn", l: "Renewal or expiry date", t: "date", req: true }, { n: "value", l: "Contract value (AED)", t: "type" }, { n: "amcStage", l: "Where it stands", t: "pick", o: ["Renewal quoted", "Renewal agreed", "Contract signed", "Lapsed"] }] },
+  ppm: { code: "PPM_REPORT", dept: "Maintenance", title: (v) => v.ppmStage || "PPM report", fields: [{ n: "site", l: "Site or client", t: "type", req: true }, sm("ppmMonth", "PPM month"), { n: "ppmStage", l: "Where it stands", t: "pick", o: ["Visit done", "Report prepared", "Report submitted"] }] },
+  dcd: { code: "DCD_ATTESTATION", dept: "Maintenance", title: (v) => v.dcdStage || "DCD attestation", fields: [{ n: "site", l: "Site or client", t: "type", req: true }, { n: "dcdStage", l: "Where it stands", t: "pick", o: ["Documents prepared", "Submitted", "Inspection booked", "Attested", "Rejected"] }, { n: "reference", l: "Reference", t: "type", ph: "Only if you have it" }] },
+  rp: { code: "REPORT", dept: "Maintenance", building: "opt", title: (v) => v.reportType || "Report", fields: [{ n: "reportType", l: "Report", t: "pick", o: ["Gas reading summary", "Outstanding report", "Detail report"] }, sm("reportMonth", "For the month")] },
+};

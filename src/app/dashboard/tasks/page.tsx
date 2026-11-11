@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
-import { LOG_FORM_EMAILS, PROFILES } from "@/lib/logOptions";
+import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
 import { nextEstimateNumber } from "@/lib/projectEstimates";
@@ -123,6 +123,12 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       quotations: quotations.map((q) => ({ id: q.id, number: q.number, companyId: q.companyId, customerId: q.customerId, customerName: q.customer.name, value: q.value, createdAt: q.createdAt.toISOString() })),
       suppliers: (await prisma.supplier.findMany({ orderBy: { name: "asc" } })).map((x) => ({ id: x.id, companyId: x.companyId, name: x.name })),
       profile: { kinds: PROFILES[membership.user.email.toLowerCase()].kinds, companies: PROFILES[membership.user.email.toLowerCase()].companies, next: PROFILES[membership.user.email.toLowerCase()].next },
+      buildings: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.building)
+        ? (await prisma.building.findMany({ orderBy: { name: "asc" } })).map((b) => ({ id: b.id, code: b.code, name: b.name, cycle: b.billCycle, rate: b.unitRate, pf: b.pressureFactor, monthly: b.monthlyCharge, first: b.firstBill, deposit: b.securityDeposit, connection: b.connectionCharge, disconnection: b.disconnectionCharge }))
+        : [],
+      units: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.building)
+        ? (await prisma.unit.findMany({ orderBy: [{ buildingId: "asc" }, { flat: "asc" }] })).map((u) => ({ id: u.id, buildingId: u.buildingId, flat: u.flat, tenant: u.tenantName, status: u.status }))
+        : [],
       nextNumbers,
       prefill: searchParams.quotation ? { kind: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => k.v === "pf") ? "pf" : "f", quotationId: searchParams.quotation } : undefined,
     };

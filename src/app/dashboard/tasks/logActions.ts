@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { cleanLink } from "@/lib/links";
-import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel } from "@/lib/logOptions";
-import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS } from "@/lib/quotations";
+import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC } from "@/lib/logOptions";
+import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS, nextRunning, createMaintenanceHandOver, MONTHS } from "@/lib/quotations";
 
 export type LogState = { error?: string; needsConfirm?: boolean; ok?: string };
 
@@ -137,7 +137,48 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     });
   }
 
-  if (kind === "q") {
+  let mdKind: { code: string; dept: string } | null = null;
+  let mdRef = "";
+  if (GENERIC[kind]) {
+    // Maintenance kinds: a building and unit (flat, kitchen, shop…) plus the fields listed for the kind.
+    const g = GENERIC[kind];
+    mdKind = { code: g.code, dept: g.dept };
+    const vals: Record<string, string> = {};
+    for (const f of g.fields) vals[f.n] = s(f.n);
+    for (const f of g.fields) if (f.req && !vals[f.n]) return { error: `${f.l}: fill this in.` };
+    let building: { id: string; name: string; code: string | null } | null = null;
+    if (g.building) {
+      const bid = s("buildingId");
+      building = bid ? await prisma.building.findUnique({ where: { id: bid } }) : null;
+      if (!building && g.building === "req") return { error: "Choose the building." };
+    }
+    const unitType = s("unitType");
+    let unitLabel = "";
+    let tenant = "";
+    if (building && unitType && unitType !== "Whole building") {
+      const uid = s("unitId");
+      if (unitType === "Apartment" && uid && uid !== "__typed__") {
+        const u = await prisma.unit.findFirst({ where: { id: uid, buildingId: building.id } });
+        if (u) { unitLabel = u.flat; tenant = u.tenantName ?? ""; }
+      } else {
+        unitLabel = s("unitText");
+        if (!unitLabel) return { error: `Type the ${unitType.toLowerCase()} number.` };
+      }
+    }
+    const dubai = new Date(eventAt.getTime() + DUBAI_MS);
+    let srNo = "";
+    if (kind === "sr") {
+      srNo = vals.srNo || (await nextRunning(`SR-${dubai.getUTCFullYear()}-${dubai.getUTCMonth() + 1}`, (n) => `SR-${dubai.getUTCFullYear()}-${MONTHS[dubai.getUTCMonth()]}-${String(n).padStart(4, "0")}`));
+      vals.srNo = srNo;
+    }
+    title = g.title(vals);
+    forPerson = tenant || building?.name || vals.site || "";
+    const where = building ? `${building.code ? `${building.code} ` : ""}${building.name}${unitType && unitType !== "Whole building" ? ` · ${unitType} ${unitLabel}` : ""}${tenant ? ` · ${tenant}` : ""}` : "";
+    const parts = g.fields.filter((f) => vals[f.n] && f.n !== "srNo").map((f) => `${f.l}: ${vals[f.n]}`);
+    summary = [srNo, where, ...parts].filter(Boolean).join(" · ");
+    mdRef = srNo || where || vals.site || title;
+    Object.assign(details, { ...vals, building: building?.name ?? null, unitType: unitType || null, unit: unitLabel || null, tenant: tenant || null });
+  } else if (kind === "q") {
     const category = s("productCategory");
     let product = s("product");
     if (category === "Other product") product = s("productOther");
@@ -339,12 +380,12 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
       progress: 100,
       completedAt: eventAt,
       taskFor: "OTHERS",
-      forDepartment: profile.dept?.[kind] ?? DEPT[kind],
+      forDepartment: mdKind?.dept ?? DEPT[kind],
       forPerson: forPerson.slice(0, 200) || null,
       workedForCompany: slug,
       quotationId: quotation?.id ?? null,
       customerId: customer ? (customer as Cust).id : quotation?.customerId ?? null,
-      logKind: KIND_CODE[kind],
+      logKind: mdKind?.code ?? KIND_CODE[kind],
       eventAt,
       enteredLater,
       backdateReason,
@@ -380,6 +421,10 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     await createHandOver({ to: next, quotationId: quotation.id, assignedById: m.id, dueAt, companySlug: slug });
   }
 
+  if (dueAt && (next === "flexie" || next === "hashim")) {
+    await createMaintenanceHandOver({ to: next, ref: mdRef, description: summary, assignedById: m.id, dueAt, companySlug: slug });
+  }
+
   // Keep the quotation's stage in step with what was just logged.
   if (quotation) {
     let advance: string | null = null;
@@ -400,7 +445,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
 
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard/quotations");
-  return { ok: quotation ? `Saved ${quotation.number}` : "Saved" };
+  return { ok: quotation ? `Saved ${quotation.number}` : kind === "sr" && mdRef ? `Saved ${mdRef.split(" · ")[0]}` : "Saved" };
 }
 
 async function resolveEmployee(s: Fd, companyId: string): Promise<{ name: string } | { error: string }> {

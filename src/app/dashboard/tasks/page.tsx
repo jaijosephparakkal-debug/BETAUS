@@ -126,6 +126,9 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       buildings: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.building)
         ? (await prisma.building.findMany({ orderBy: { name: "asc" } })).map((b) => ({ id: b.id, code: b.code, name: b.name, cycle: b.billCycle, rate: b.unitRate, pf: b.pressureFactor, monthly: b.monthlyCharge, first: b.firstBill, deposit: b.securityDeposit, connection: b.connectionCharge, disconnection: b.disconnectionCharge }))
         : [],
+      projects: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.fields.some((f) => f.t === "project"))
+        ? (await prisma.project.findMany({ where: { type: "PROJECT", company: { slug: "flaretechnical" } }, orderBy: { name: "asc" }, select: { id: true, name: true, number: true } }))
+        : [],
       units: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.building)
         ? (await prisma.unit.findMany({ orderBy: [{ buildingId: "asc" }, { flat: "asc" }] })).map((u) => ({ id: u.id, buildingId: u.buildingId, flat: u.flat, tenant: u.tenantName, status: u.status }))
         : [],

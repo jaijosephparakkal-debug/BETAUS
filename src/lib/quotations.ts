@@ -113,3 +113,33 @@ export async function createMaintenanceHandOver(opts: { to: "flexie" | "hashim";
   await notifyNewTask(member.id, task.id, title);
   return task.id;
 }
+
+const FINANCE_TEAM = {
+  shafeek: { email: "finance@flaretechnical.com", company: "flaretechnical" },
+  hashim: { email: "accounts@flaretechnical.com", company: "flaretechnical" },
+  jintu: { email: "accounts@gasneeds.com", company: "gasneeds" },
+} as const;
+
+/** Finance team hand-over, in any direction (Shafeek, Hashim, Jintu): nobody assigns, work is passed on. */
+export async function createFinanceHandOver(opts: { to: string; ref: string; description: string; assignedById: string; dueAt: Date; companySlug: string }) {
+  const cfg = FINANCE_TEAM[opts.to as keyof typeof FINANCE_TEAM];
+  if (!cfg) return null;
+  const member = await prisma.membership.findFirst({ where: { user: { email: { equals: cfg.email, mode: "insensitive" } }, company: { slug: cfg.company } } });
+  if (!member) return null;
+  const parentTitle = "Hand-overs received";
+  let parent = await prisma.task.findFirst({ where: { assignedToId: member.id, parentTaskId: null, title: { equals: parentTitle, mode: "insensitive" } } });
+  if (!parent) {
+    parent = await prisma.task.create({ data: { companyId: member.companyId, title: parentTitle, category: parentTitle, assignedToId: member.id, assignedById: member.managerId ?? member.id, status: "IN_PROGRESS" } });
+  }
+  const sender = await prisma.membership.findUnique({ where: { id: opts.assignedById }, include: { user: true } });
+  const title = `From ${(sender?.user.name ?? "the team").split(" ")[0]} — ${opts.ref}`.slice(0, 160);
+  const task = await prisma.task.create({
+    data: {
+      companyId: member.companyId, title, description: opts.description.slice(0, 500), assignedToId: member.id, assignedById: opts.assignedById,
+      parentTaskId: parent.id, category: parent.category ?? parent.title, status: "NOT_STARTED", deadline: opts.dueAt, followUpAt: opts.dueAt,
+      logKind: "HANDOVER", workedForCompany: opts.companySlug, eventAt: new Date(),
+    },
+  });
+  await notifyNewTask(member.id, task.id, title);
+  return task.id;
+}

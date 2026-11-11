@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { cleanLink } from "@/lib/links";
 import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC } from "@/lib/logOptions";
-import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS, nextRunning, createMaintenanceHandOver, MONTHS } from "@/lib/quotations";
+import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS, nextRunning, createMaintenanceHandOver, createFinanceHandOver, MONTHS } from "@/lib/quotations";
 
 export type LogState = { error?: string; needsConfirm?: boolean; ok?: string };
 
@@ -159,6 +159,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     });
   }
 
+  let parentOverride = "";
   let mdKind: { code: string; dept: string } | null = null;
   let mdRef = "";
   if (GENERIC[kind]) {
@@ -166,7 +167,34 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     const g = GENERIC[kind];
     mdKind = { code: g.code, dept: g.dept };
     const vals: Record<string, string> = {};
-    for (const f of g.fields) vals[f.n] = s(f.n);
+    for (const f of g.fields) {
+      if (f.t === "customer") {
+        const c = await pickCustomer();
+        if (typeof c === "string") return { error: c };
+        vals[f.n] = c.name;
+        continue;
+      }
+      if (f.t === "supplier") {
+        const x = await pickSupplier();
+        if (typeof x === "string") return { error: x };
+        vals[f.n] = x.name;
+        continue;
+      }
+      if (f.t === "staff") {
+        const e = await prisma.employee.findFirst({ where: { name: s(f.n) }, select: { id: true } });
+        if (!e) return { error: `${f.l}: choose from the staff directory.` };
+        vals[f.n] = s(f.n);
+        continue;
+      }
+      if (f.t === "project") {
+        const pr = await prisma.project.findUnique({ where: { id: s(f.n) }, select: { name: true, number: true } });
+        if (!pr) return { error: `${f.l}: choose the project.` };
+        vals[f.n] = `${pr.name}${pr.number ? ` (${pr.number})` : ""}`;
+        continue;
+      }
+      vals[f.n] = s(f.n);
+    }
+    if (g.parentFrom && vals[g.parentFrom]) parentOverride = vals[g.parentFrom];
     for (const f of g.fields) if (f.req && !vals[f.n]) return { error: `${f.l}: fill this in.` };
     let building: { id: string; name: string; code: string | null } | null = null;
     if (g.building) {
@@ -371,10 +399,10 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     if ((next === "manu" || next === "jintu") && !quotation) return { error: "Hand-overs need a quotation. Choose or add one first." };
   }
 
-  const parentTitle = profile.parent[kind];
+  const parentTitle = parentOverride || profile.parent[kind];
   let parent = await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: { equals: parentTitle, mode: "insensitive" } } });
   // Calls & Emails is shared by everyone and created the first time it is used.
-  if (!parent && parentTitle === "Calls & Emails") {
+  if (!parent) {
     parent = await prisma.task.create({
       data: {
         companyId: m.companyId,
@@ -441,6 +469,10 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
   }
   if (dueAt && (next === "manu" || next === "jintu") && quotation) {
     await createHandOver({ to: next, quotationId: quotation.id, assignedById: m.id, dueAt, companySlug: slug });
+  }
+
+  if (dueAt && next.startsWith("f_")) {
+    await createFinanceHandOver({ to: next.slice(2), ref: mdRef || title, description: summary, assignedById: m.id, dueAt, companySlug: slug });
   }
 
   if (dueAt && (next === "flexie" || next === "hashim")) {

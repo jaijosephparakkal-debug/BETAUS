@@ -19,6 +19,7 @@ export type LogData = {
   suppliers: { id: string; companyId: string; name: string }[];
   buildings: { id: string; code: string | null; name: string; cycle: string | null; rate: number | null; pf: number | null; monthly: number | null; first: number | null; deposit: number | null; connection: number | null; disconnection: number | null }[];
   units: { id: string; buildingId: string; flat: string; tenant: string | null; status: string }[];
+  projects?: { id: string; name: string; number: string | null }[];
   /** What this person's form offers: kinds of work, the companies they can log for, and their next-step choices. */
   profile: { kinds: { v: string; l: string }[]; companies: string[]; next: { v: string; l: string }[]; tabs?: { l: string; kinds: string[] }[] };
   nextNumbers: Record<string, string>;
@@ -466,7 +467,25 @@ export function LogForm({ data }: { data: LogData }) {
               setUnitId={setUnitId}
             />
           )}
-          {GENERIC[kind].fields.map((f) => (
+          {GENERIC[kind].fields.map((f) => f.t === "customer" ? (
+            <CustomerPick key={`${kind}-${f.n}`} customers={customers} value={customerId} onChange={setCustomerId} />
+          ) : f.t === "supplier" ? (
+            <SupplierPick key={`${kind}-${f.n}`} suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
+          ) : f.t === "staff" ? (
+            <Field key={`${kind}-${f.n}`} label={f.l} tag="pick">
+              <select name={f.n} required className={sel} defaultValue="">
+                <option value="" disabled>Choose from the staff directory…</option>
+                {data.employees.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}
+              </select>
+            </Field>
+          ) : f.t === "project" ? (
+            <Field key={`${kind}-${f.n}`} label={f.l} tag="pick">
+              <select name={f.n} required className={sel} defaultValue="">
+                <option value="" disabled>Choose project…</option>
+                {(data.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}</option>)}
+              </select>
+            </Field>
+          ) : (
             <Field key={`${kind}-${f.n}`} label={f.l} tag={f.t === "type" ? "type" : "pick"}>
               {f.t === "pick" ? (
                 <select name={f.n} className={sel}>{(f.o ?? []).map((o) => <option key={o}>{o}</option>)}</select>

@@ -7,8 +7,7 @@ import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
   PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
-  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES,
-} from "@/lib/logOptions";
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH } from "@/lib/logOptions";
 
 export type LogData = {
   companies: { id: string; slug: string; name: string }[];
@@ -74,6 +73,10 @@ export function LogForm({ data }: { data: LogData }) {
   const [supplierId, setSupplierId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [quotationId, setQuotationId] = useState(data.prefill?.quotationId ?? "");
+  // Follow-ups: about a quotation, or about anything else (topic + who).
+  const [followAbout, setFollowAbout] = useState<"quote" | "other">("quote");
+  const [followTopic, setFollowTopic] = useState(FOLLOW_TOPICS[0]);
+  const [followWith, setFollowWith] = useState("customer");
   const [eventAt, setEventAt] = useState(dubaiNow());
   const [pcat, setPcat] = useState(Object.keys(PRODUCTS)[0]);
   const [existing, setExisting] = useState(false);
@@ -114,6 +117,9 @@ export function LogForm({ data }: { data: LogData }) {
       setNext("none");
       setCustomerId("");
       setQuotationId("");
+      setFollowAbout("quote");
+      setFollowTopic(FOLLOW_TOPICS[0]);
+      setFollowWith("customer");
       setEventAt(dubaiNow());
       setKey((k) => k + 1);
       const t = setTimeout(() => setSaved(""), 3000);
@@ -219,22 +225,57 @@ export function LogForm({ data }: { data: LogData }) {
       )}
 
       {kind === "f" && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="About which quotation" tag="pick">
-            <select name="quotationId" required value={quotationId} onChange={(e) => setQuotationId(e.target.value)} className={sel}>
-              <option value="" disabled>Choose quotation…</option>
-              {quotes.map((q) => (
-                <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
-              ))}
-            </select>
+        <div className="space-y-3">
+          <Field label="About" tag="pick">
+            <input type="hidden" name="followAbout" value={followAbout} />
+            <div className="flex flex-wrap gap-2">
+              <Chip on={followAbout === "quote"} onClick={() => setFollowAbout("quote")}>A quotation</Chip>
+              <Chip on={followAbout === "other"} onClick={() => { setFollowAbout("other"); setQuotationId(""); }}>Something else</Chip>
+            </div>
           </Field>
-          <Field label="How you were in touch" tag="pick">
-            <select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select>
-          </Field>
-          <ContactInput list={contactList} label="Spoke to" />
-          <Field label="Their answer" tag="pick">
-            <select name="response" className={sel}>{RESPONSES.map((c) => <option key={c}>{c}</option>)}</select>
-          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {followAbout === "quote" ? (
+              <Field label="About which quotation" tag="pick">
+                <select name="quotationId" required value={quotationId} onChange={(e) => setQuotationId(e.target.value)} className={sel}>
+                  <option value="" disabled>Choose quotation…</option>
+                  {quotes.map((q) => (
+                    <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
+                  ))}
+                </select>
+              </Field>
+            ) : (
+              <>
+                <Field label="Topic" tag="pick">
+                  <select name="followTopic" value={followTopic} onChange={(e) => setFollowTopic(e.target.value)} className={sel}>
+                    {FOLLOW_TOPICS.map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                  {followTopic === "Other" && <input name="followTopicOther" required placeholder="What is it about?" className={`${sel} mt-1`} />}
+                </Field>
+                <Field label="With" tag="pick">
+                  <input type="hidden" name="followWith" value={followWith} />
+                  <div className="flex flex-wrap gap-2">
+                    {FOLLOW_WITH.map((w) => (
+                      <Chip key={w.v} on={followWith === w.v} onClick={() => { setFollowWith(w.v); setCustomerId(""); setSupplierId(""); }}>{w.l}</Chip>
+                    ))}
+                  </div>
+                </Field>
+                {followWith === "customer" && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
+                {followWith === "supplier" && <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />}
+                {followWith === "someone" && (
+                  <Field label="Who" tag="type">
+                    <input name="followWho" required placeholder="Name and company / office" className={sel} />
+                  </Field>
+                )}
+              </>
+            )}
+            <Field label="How you were in touch" tag="pick">
+              <select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select>
+            </Field>
+            {(followAbout === "quote" || followWith === "customer") && <ContactInput list={contactList} label="Spoke to" />}
+            <Field label="Their answer" tag="pick">
+              <select name="response" className={sel}>{RESPONSES.map((c) => <option key={c}>{c}</option>)}</select>
+            </Field>
+          </div>
         </div>
       )}
 

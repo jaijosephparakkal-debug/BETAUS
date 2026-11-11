@@ -104,7 +104,26 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
       customer = c;
     }
   }
-  if (kind === "f" || kind === "pf") {
+  // A follow-up can be about a quotation or about anything else (topic + who it was with).
+  const followOther = kind === "f" && s("followAbout") === "other";
+  let followWho = "";
+  if (followOther) {
+    const w = s("followWith");
+    if (w === "supplier") {
+      const sup = await pickSupplier();
+      if (typeof sup === "string") return { error: sup };
+      followWho = sup.name;
+    } else if (w === "someone") {
+      followWho = s("followWho");
+      if (!followWho) return { error: "Write who the follow-up was with." };
+    } else {
+      const c = await pickCustomer();
+      if (typeof c === "string") return { error: c };
+      customer = c;
+      followWho = c.name;
+    }
+  }
+  if ((kind === "f" && !followOther) || kind === "pf") {
     if (!s("quotationId")) return { error: "Choose which quotation this is about." };
     quotation = await loadQuote(s("quotationId"));
     if (!quotation) return { error: "That quotation was not found." };
@@ -158,6 +177,13 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     forPerson = customer!.name;
     summary = `${quotation.number} · ${customer!.name} · ${product}${s("quantity") ? ` × ${s("quantity")}` : ""} · ${aed(value)} · ${statusLabel(status)}`;
     Object.assign(details, { quotationNumber: quotation.number, productCategory: category, product, quantity: s("quantity") || null, value, status });
+  } else if (kind === "f" && followOther) {
+    const topic = s("followTopic") === "Other" ? s("followTopicOther") : s("followTopic");
+    if (!topic) return { error: "Choose what the follow-up is about." };
+    title = `Follow-up — ${topic}`.slice(0, 200);
+    forPerson = followWho;
+    summary = `${topic} · ${followWho} · ${s("channel")} · ${s("response")}`;
+    Object.assign(details, { topic, with: followWho, withType: s("followWith"), channel: s("channel"), response: s("response") });
   } else if (kind === "f") {
     title = "Quotation follow-up";
     forPerson = customer!.name;

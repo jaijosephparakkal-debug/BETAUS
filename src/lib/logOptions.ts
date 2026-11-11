@@ -59,6 +59,14 @@ export const CHANNELS = [
   "Video call",
   "Letter or courier",
 ];
+/** What a follow-up can be about when it isn't a quotation. */
+export const FOLLOW_TOPICS = ["Order or delivery", "Payment", "Complaint", "Documents", "Meeting or visit", "New enquiry", "Other"];
+export const FOLLOW_WITH = [
+  { v: "customer", l: "Customer" },
+  { v: "supplier", l: "Supplier" },
+  { v: "someone", l: "Someone else" },
+];
+
 export const RESPONSES = [
   "Interested",
   "Needs more time",

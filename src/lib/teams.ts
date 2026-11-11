@@ -1,3 +1,4 @@
+import { SALES_TEAM_EMAILS } from "@/lib/logOptions";
 /**
  * Who sees and manages the Projects and Maintenance areas. Everyone can still pick a project or a
  * maintenance site in a task's "Task for" dropdown — these rules only decide the tabs and who may add.
@@ -27,4 +28,9 @@ export const canAddMaintenance = (m: Person) => m.isDirector || dept(m) === "mai
 /** The Accounts tab: the Accounts team and the directors. */
 export function canSeeAccounts(m: Person) {
   return m.isDirector || dept(m) === "accounts";
+}
+
+/** The Quotations tab: Antony, Manu, Jintu and the directors. */
+export function canSeeQuotations(m: Person) {
+  return m.isDirector || SALES_TEAM_EMAILS.includes(m.user.email.toLowerCase());
 }

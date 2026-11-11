@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { LogForm, type LogData } from "./LogForm";
+import { LOG_FORM_EMAILS } from "@/lib/logOptions";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
@@ -18,7 +20,7 @@ const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com",
 // Accounts / HR / Sales / Purchase.
 const DEPARTMENT_CONTACT_EMAILS = ["service@flaretechnical.com", "saroj@flaretechnical.com"];
 
-export default async function MyTasksPage() {
+export default async function MyTasksPage({ searchParams }: { searchParams: { quotation?: string } }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
   if (isManagingDirector(membership)) redirect("/director");
@@ -91,9 +93,65 @@ export default async function MyTasksPage() {
     ? await prisma.company.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } })
     : [];
 
+  // Antony logs work with the structured form (who, when, what was discussed, outcome, next step).
+  const useLogForm = LOG_FORM_EMAILS.includes(membership.user.email.toLowerCase());
+  let logData: LogData | null = null;
+  if (useLogForm) {
+    const allCompanies = await prisma.company.findMany({ select: { id: true, slug: true, name: true }, orderBy: { name: "asc" } });
+    const customers = await prisma.customer.findMany({ orderBy: { name: "asc" }, include: { contacts: true } });
+    const quotations = await prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 300, include: { customer: true } });
+    const year = new Date(Date.now() + 4 * 3600 * 1000).getUTCFullYear();
+    const nextNumbers: Record<string, string> = {};
+    for (const c of allCompanies) {
+      const last = await prisma.quotation.findFirst({ where: { companyId: c.id, year, seq: { not: null } }, orderBy: { seq: "desc" }, select: { seq: true } });
+      nextNumbers[c.slug] = `${c.slug === "gasneeds" ? "GN" : "FT"}-Q-${year}-${String((last?.seq ?? 0) + 1).padStart(4, "0")}`;
+    }
+    logData = {
+      companies: allCompanies,
+      customers: customers.map((c) => ({ id: c.id, companyId: c.companyId, name: c.name })),
+      contacts: customers.flatMap((c) => c.contacts.map((k) => ({ customerId: c.id, name: k.name }))),
+      employees: (await prisma.employee.findMany({ orderBy: { name: "asc" } })).map((e) => ({ id: e.id, companyId: e.companyId, name: e.name })),
+      agencies: (await prisma.proAgency.findMany({ orderBy: { name: "asc" } })).map((a) => ({ id: a.id, name: a.name })),
+      quotations: quotations.map((q) => ({ id: q.id, number: q.number, companyId: q.companyId, customerId: q.customerId, customerName: q.customer.name, value: q.value, createdAt: q.createdAt.toISOString() })),
+      nextNumbers,
+      prefill: searchParams.quotation ? { kind: "f", quotationId: searchParams.quotation } : undefined,
+    };
+  }
+
+  // Follow-ups that are due today or overdue (Dubai day), for the person's own list.
+  const endOfToday = new Date(Math.floor((Date.now() + 4 * 3600 * 1000) / 86400000) * 86400000 + 86400000 - 4 * 3600 * 1000);
+  const startOfToday = new Date(endOfToday.getTime() - 86400000);
+  const due = await prisma.task.findMany({
+    where: { assignedToId: membership.id, followUpAt: { not: null, lt: endOfToday }, status: { not: "COMPLETED" } },
+    include: { quotation: { select: { number: true } } },
+    orderBy: { followUpAt: "asc" },
+    take: 20,
+  });
+
   return (
     <div className="space-y-4">
       <h1 className="text-[23px] font-semibold text-slate-900">My Tasks</h1>
+      {due.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <div className="mb-1 text-[19px] font-semibold text-amber-900">Follow-ups due — {due.length}</div>
+          {due.map((t) => {
+            const overdue = t.followUpAt! < startOfToday;
+            return (
+              <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block py-1 text-[17px] hover:underline">
+                <span className={overdue ? "font-medium text-red-600" : "text-slate-800"}>{overdue ? "Overdue" : "Today"}</span>
+                {" · "}
+                {t.quotation?.number ? `${t.quotation.number} · ` : ""}
+                {t.title}
+                {" · "}
+                {t.followUpAt!.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Dubai" })}
+              </a>
+            );
+          })}
+        </div>
+      )}
+      {useLogForm && logData ? (
+        <LogForm data={logData} />
+      ) : (
       <AssignToColleagueForm
         selfId={membership.id}
         titleOptions={titlePresets.map((p) => p.title).filter((t) => !t.startsWith(SUB_PREFIX))}
@@ -102,6 +160,7 @@ export default async function MyTasksPage() {
         companyOptions={companies}
         departmentContacts={DEPARTMENT_CONTACT_EMAILS.includes(membership.user.email.toLowerCase())}
       />
+      )}
       <TaskList
         tasks={tasks}
         assignedTasks={assignedTasks}

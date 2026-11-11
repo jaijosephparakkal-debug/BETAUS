@@ -156,6 +156,17 @@ model Task {
   attachments Attachment[]
   links TaskLink[]
   notifications Notification[]
+
+  // Structured work log (Antony's form): who, when it happened, what was discussed, the outcome and the next step.
+  quotationId   String?
+  customerId    String?
+  logKind       String? // QUOTATION | FOLLOW_UP | VISIT | PRO | HR | HANDOVER
+  eventAt       DateTime? // when it actually happened (may be back-dated)
+  enteredLater  Boolean   @default(false)
+  backdateReason String?
+  followUpAt    DateTime? // a follow-up that is due: feeds the "due today" list and the daily reminder email
+  details       Json?
+  quotation     Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
 }
 
 // A lightweight "you've been assigned a task" alert — surfaces as an
@@ -337,4 +348,71 @@ model ApprovalLink {
   addedBy         Membership      @relation(fields: [addedById], references: [id])
 
   @@index([approvalRequestId])
+}
+
+/// Customers a company deals with — picked in the work log instead of typed.
+model Customer {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  createdAt DateTime @default(now())
+
+  contacts   Contact[]
+  quotations Quotation[]
+
+  @@unique([companyId, name])
+}
+
+model Contact {
+  id         String   @id @default(cuid())
+  customerId String
+  name       String
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, name])
+}
+
+model ProAgency {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+/// People HR and PRO work is about (staff of each company), picked in the work log.
+model Employee {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, name])
+}
+
+/// A numbered quotation, e.g. GN-Q-2026-0001. The number follows the job through order, delivery and payment.
+model Quotation {
+  id              String   @id @default(cuid())
+  companyId       String
+  number          String   @unique
+  year            Int
+  seq             Int?
+  customerId      String
+  contactName     String?
+  productCategory String
+  product         String
+  quantity        String?
+  value           Float?
+  status          String   @default("SENT") // SENT | REVISED | REVIEWING | NEGOTIATING | ORDER_RECEIVED | DELIVERED | PAID | NOT_AWARDED | ON_HOLD
+  docUrl          String?
+  legacy          Boolean  @default(false) // an older quotation brought in with its own number
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tasks    Task[]
+
+  @@unique([companyId, year, seq])
+  @@index([customerId])
 }

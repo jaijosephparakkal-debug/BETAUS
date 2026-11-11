@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { canSeeProjects, canSeeMaintenance, canSeeAccounts } from "@/lib/teams";
+import { canSeeProjects, canSeeMaintenance, canSeeAccounts, canSeeQuotations } from "@/lib/teams";
 import Link from "next/link";
 import { canManageAllStaff, isManagingDirector, type FullMembership } from "@/lib/auth";
 import { getCompanyTheme } from "@/lib/theme";
@@ -43,6 +43,7 @@ export function AppHeader({
       ? [{ href: "/dashboard/maintenance", label: "Maintenance" }]
       : []),
     ...(canSeeAccounts(membership) ? [{ href: "/dashboard/accounts", label: "Accounts" }] : []),
+    ...(canSeeQuotations(membership) ? [{ href: "/dashboard/quotations", label: "Quotations" }] : []),
     // Abraham sees everyone through Manage My Staff instead of My Team.
     ...(reportCount > 0 && !isManagingDirector(membership)
       ? [{ href: "/dashboard/team", label: "My Team" }]

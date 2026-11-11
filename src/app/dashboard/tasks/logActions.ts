@@ -299,8 +299,8 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     if (!amount || amount <= 0) return { error: "Enter the amount received in AED." };
     title = s("payType") === "Full payment" ? "Payment received — in full" : "Payment received — part";
     forPerson = customer!.name;
-    summary = `${customer!.name} · ${aed(amount)} · ${s("method")}${s("reference") ? ` · ${s("reference")}` : ""}${quotation ? ` · ${quotation.number}` : ""} · ${s("payType")}`;
-    Object.assign(details, { amount, method: s("method"), reference: s("reference") || null, paymentType: s("payType"), quotationNumber: quotation?.number ?? null });
+    summary = `${customer!.name} · ${aed(amount)} · ${s("method")}${s("reference") ? ` · ${s("reference")}` : ""}${quotation ? ` · ${quotation.number}` : ` · ${s("payFor") || "Other"}${s("invoiceNo") ? ` ${s("invoiceNo")}` : ""}`} · ${s("payType")}`;
+    Object.assign(details, { amount, method: s("method"), reference: s("reference") || null, paymentType: s("payType"), quotationNumber: quotation?.number ?? null, paymentFor: quotation ? "Quotation" : s("payFor") || "Other", invoiceNumber: s("invoiceNo") || null });
   } else if (kind === "pm") {
     const sup = await pickSupplier();
     if (typeof sup === "string") return { error: sup };

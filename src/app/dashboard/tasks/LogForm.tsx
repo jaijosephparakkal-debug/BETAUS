@@ -7,7 +7,7 @@ import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
   PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
-  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
 
 export type LogData = {
   companies: { id: string; slug: string; name: string }[];
@@ -290,7 +290,7 @@ export function LogForm({ data }: { data: LogData }) {
           </Field>
           <Field label="Related quotation" tag="pick">
             <select name="relatedQuotationId" className={sel}>
-              <option value="">None</option>
+              <option value="">No quotation — other payment</option>
               {quotes.map((q) => <option key={q.id} value={q.id}>{q.number} · {q.customerName}</option>)}
             </select>
           </Field>
@@ -373,6 +373,8 @@ export function LogForm({ data }: { data: LogData }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" optional />
           {!quotationId && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
+          {!quotationId && <Field label="Payment is for" tag="pick"><select name="payFor" className={sel}>{PAY_FOR.map((c) => <option key={c}>{c}</option>)}</select></Field>}
+          {!quotationId && <Field label="Invoice no." tag="type"><input name="invoiceNo" placeholder="Only if you have it" className={sel} /></Field>}
           <Field label="Amount received (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="5000" className={sel} /></Field>
           <Field label="Paid by" tag="pick"><select name="method" className={sel}>{PAY_METHODS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Reference or cheque no." tag="type"><input name="reference" placeholder="Only if you have it" className={sel} /></Field>
@@ -429,7 +431,7 @@ export function LogForm({ data }: { data: LogData }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="What was done" tag="pick"><select name="ccType" className={sel}>{CC_TYPES.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Amount (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="5000" className={sel} /></Field>
-          <Field label="Bank" tag="type"><input name="bank" placeholder="Only if needed" className={sel} /></Field>
+          <BankPick />
           <Field label="Cheque or slip no." tag="type"><input name="reference" placeholder="Only if you have it" className={sel} /></Field>
         </div>
       )}
@@ -577,11 +579,30 @@ function CustomerPick({ customers, value, onChange }: { customers: { id: string;
 }
 
 function ContactInput({ list, label = "Contact person" }: { list: { name: string }[]; label?: string }) {
+  const [v, setV] = useState("");
   return (
-    <Field label={label}>
-      <span className="ml-1"><Tag t="pick" /> <Tag t="type" /></span>
-      <input name="contact" list="contact-list" placeholder="Pick a saved contact or type a name" className={sel} />
-      <datalist id="contact-list">{list.map((c) => <option key={c.name} value={c.name} />)}</datalist>
+    <Field label={label} tag="pick">
+      <select value={v} onChange={(e) => setV(e.target.value)} className={sel}>
+        <option value="">Not needed</option>
+        {list.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+        <option value="__new__">+ Someone else — type the name</option>
+      </select>
+      {v && v !== "__new__" && <input type="hidden" name="contact" value={v} />}
+      {v === "__new__" && <input name="contact" required placeholder="Name" className={`${sel} mt-1`} />}
+    </Field>
+  );
+}
+
+function BankPick() {
+  const [v, setV] = useState("");
+  return (
+    <Field label="Bank" tag="pick">
+      <select value={v} onChange={(e) => setV(e.target.value)} className={sel}>
+        <option value="">Not needed</option>
+        {BANKS.map((b) => <option key={b}>{b}</option>)}
+      </select>
+      {v && v !== "Other bank" && <input type="hidden" name="bank" value={v} />}
+      {v === "Other bank" && <input name="bank" required placeholder="Bank name" className={`${sel} mt-1`} />}
     </Field>
   );
 }

@@ -177,7 +177,7 @@ export function LogForm({ data }: { data: LogData }) {
       <Field label="Kind of work" tag="pick">
         <div className="flex flex-wrap gap-2">
           {KINDS.map((k) => (
-            <Chip key={k.v} on={kind === k.v} onClick={() => { setKind(k.v); setCustomerId(""); }}>{k.l}</Chip>
+            <Chip key={k.v} on={kind === k.v} onClick={() => { setKind(k.v); setCustomerId(""); setFollowAbout("quote"); }}>{k.l}</Chip>
           ))}
         </div>
       </Field>
@@ -251,21 +251,16 @@ export function LogForm({ data }: { data: LogData }) {
                   </select>
                   {followTopic === "Other" && <input name="followTopicOther" required placeholder="What is it about?" className={`${sel} mt-1`} />}
                 </Field>
-                <Field label="With" tag="pick">
-                  <input type="hidden" name="followWith" value={followWith} />
-                  <div className="flex flex-wrap gap-2">
-                    {FOLLOW_WITH.map((w) => (
-                      <Chip key={w.v} on={followWith === w.v} onClick={() => { setFollowWith(w.v); setCustomerId(""); setSupplierId(""); }}>{w.l}</Chip>
-                    ))}
-                  </div>
-                </Field>
-                {followWith === "customer" && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
-                {followWith === "supplier" && <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />}
-                {followWith === "someone" && (
-                  <Field label="Who" tag="type">
-                    <input name="followWho" required placeholder="Name and company / office" className={sel} />
-                  </Field>
-                )}
+                <WithPicker
+                  value={followWith}
+                  onChange={(v) => { setFollowWith(v); setCustomerId(""); setSupplierId(""); }}
+                  customers={customers}
+                  suppliers={suppliers}
+                  customerId={customerId}
+                  setCustomerId={setCustomerId}
+                  supplierId={supplierId}
+                  setSupplierId={setSupplierId}
+                />
               </>
             )}
             <Field label="How you were in touch" tag="pick">
@@ -391,15 +386,40 @@ export function LogForm({ data }: { data: LogData }) {
       )}
 
       {kind === "pf" && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" />
-          <Field label="How you were in touch" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
-          <ContactInput list={contactList} label="Spoke to" />
-          <Field label="Their answer" tag="pick"><select name="payResponse" className={sel}>{PAY_RESPONSES.map((c) => <option key={c}>{c}</option>)}</select></Field>
-          <Field label="They promised to pay by" tag="pick"><input type="date" name="promisedOn" className={sel} /></Field>
+        <div className="space-y-3">
+          <Field label="About" tag="pick">
+            <input type="hidden" name="followAbout" value={followAbout} />
+            <div className="flex flex-wrap gap-2">
+              <Chip on={followAbout === "quote"} onClick={() => setFollowAbout("quote")}>A quotation</Chip>
+              <Chip on={followAbout === "other"} onClick={() => { setFollowAbout("other"); setQuotationId(""); }}>An invoice or other</Chip>
+            </div>
+          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {followAbout === "quote" ? (
+              <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" />
+            ) : (
+              <>
+                <WithPicker
+                  value={followWith}
+                  onChange={(v) => { setFollowWith(v); setCustomerId(""); setSupplierId(""); }}
+                  customers={customers}
+                  suppliers={suppliers}
+                  customerId={customerId}
+                  setCustomerId={setCustomerId}
+                  supplierId={supplierId}
+                  setSupplierId={setSupplierId}
+                />
+                <Field label="Invoice no." tag="type"><input name="invoiceNo" placeholder="Optional" className={sel} /></Field>
+                <Field label="Amount (AED)" tag="type"><input name="amount" inputMode="decimal" placeholder="Optional" className={sel} /></Field>
+              </>
+            )}
+            <Field label="How you were in touch" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+            {(followAbout === "quote" || followWith === "customer") && <ContactInput list={contactList} label="Spoke to" />}
+            <Field label="Their answer" tag="pick"><select name="payResponse" className={sel}>{PAY_RESPONSES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+            <Field label="They promised to pay by" tag="pick"><input type="date" name="promisedOn" className={sel} /></Field>
+          </div>
         </div>
       )}
-
       {kind === "cc" && (
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="What was done" tag="pick"><select name="ccType" className={sel}>{CC_TYPES.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -471,6 +491,40 @@ export function LogForm({ data }: { data: LogData }) {
         <button type="button" onClick={() => setOpen(false)} className="text-[18px] text-slate-500 hover:text-slate-700">Cancel</button>
       </div>
     </form>
+  );
+}
+
+/** Who a follow-up was with: a customer, a supplier, or someone else typed by name. */
+function WithPicker({
+  value, onChange, customers, suppliers, customerId, setCustomerId, supplierId, setSupplierId,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  customers: { id: string; name: string }[];
+  suppliers: { id: string; name: string }[];
+  customerId: string;
+  setCustomerId: (v: string) => void;
+  supplierId: string;
+  setSupplierId: (v: string) => void;
+}) {
+  return (
+    <>
+      <Field label="With" tag="pick">
+        <input type="hidden" name="followWith" value={value} />
+        <div className="flex flex-wrap gap-2">
+          {FOLLOW_WITH.map((w) => (
+            <Chip key={w.v} on={value === w.v} onClick={() => onChange(w.v)}>{w.l}</Chip>
+          ))}
+        </div>
+      </Field>
+      {value === "customer" && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
+      {value === "supplier" && <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />}
+      {value === "someone" && (
+        <Field label="Who" tag="type">
+          <input name="followWho" required placeholder="Name and company / office" className={sel} />
+        </Field>
+      )}
+    </>
   );
 }
 

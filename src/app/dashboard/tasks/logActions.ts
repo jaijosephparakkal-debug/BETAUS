@@ -105,7 +105,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     }
   }
   // A follow-up can be about a quotation or about anything else (topic + who it was with).
-  const followOther = kind === "f" && s("followAbout") === "other";
+  const followOther = (kind === "f" || kind === "pf") && s("followAbout") === "other";
   let followWho = "";
   if (followOther) {
     const w = s("followWith");
@@ -123,7 +123,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
       followWho = c.name;
     }
   }
-  if ((kind === "f" && !followOther) || kind === "pf") {
+  if ((kind === "f" || kind === "pf") && !followOther) {
     if (!s("quotationId")) return { error: "Choose which quotation this is about." };
     quotation = await loadQuote(s("quotationId"));
     if (!quotation) return { error: "That quotation was not found." };
@@ -269,6 +269,13 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     forPerson = sup.name;
     summary = `${sup.name} · ${aed(amount)} · ${s("method")}${s("poNo") ? ` · PO ${s("poNo")}` : ""}${s("reference") ? ` · ${s("reference")}` : ""}`;
     Object.assign(details, { supplier: sup.name, amount, method: s("method"), poNumber: s("poNo") || null, reference: s("reference") || null });
+  } else if (kind === "pf" && followOther) {
+    const inv = s("invoiceNo");
+    const amt = amountOf("amount");
+    title = "Payment follow-up";
+    forPerson = followWho;
+    summary = `${inv ? `Invoice ${inv} · ` : ""}${followWho}${amt > 0 ? ` · ${aed(amt)}` : ""} · ${s("channel")} · ${s("payResponse")}${s("promisedOn") ? ` · promised ${s("promisedOn")}` : ""}`;
+    Object.assign(details, { invoiceNumber: inv || null, amount: amt > 0 ? amt : null, with: followWho, withType: s("followWith"), channel: s("channel"), response: s("payResponse"), promisedOn: s("promisedOn") || null });
   } else if (kind === "pf") {
     title = "Payment follow-up";
     forPerson = customer!.name;
@@ -302,7 +309,21 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
   }
 
   const parentTitle = profile.parent[kind];
-  const parent = await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: parentTitle } });
+  let parent = await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: { equals: parentTitle, mode: "insensitive" } } });
+  // Calls & Emails is shared by everyone and created the first time it is used.
+  if (!parent && parentTitle === "Calls & Emails") {
+    parent = await prisma.task.create({
+      data: {
+        companyId: m.companyId,
+        title: parentTitle,
+        category: parentTitle,
+        description: `${parentTitle} work, from ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}.`,
+        assignedToId: m.id,
+        assignedById: m.managerId ?? m.id,
+        status: "IN_PROGRESS",
+      },
+    });
+  }
   if (!parent) return { error: `Your “${parentTitle}” category was not found.` };
 
   const task = await prisma.task.create({
@@ -318,7 +339,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
       progress: 100,
       completedAt: eventAt,
       taskFor: "OTHERS",
-      forDepartment: DEPT[kind],
+      forDepartment: profile.dept?.[kind] ?? DEPT[kind],
       forPerson: forPerson.slice(0, 200) || null,
       workedForCompany: slug,
       quotationId: quotation?.id ?? null,

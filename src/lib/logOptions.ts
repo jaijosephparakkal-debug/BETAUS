@@ -7,6 +7,8 @@ type Profile = {
   /** Category task each kind is filed under. */
   parent: Record<string, string>;
   next: NextStep[];
+  /** Department recorded for a kind, when it differs from the default (e.g. Jintu's follow-ups are Accounts). */
+  dept?: Record<string, string>;
 };
 const NS_NONE = { v: "none", l: "None" };
 const NS_SELF = { v: "followup", l: "Follow up myself" };
@@ -26,9 +28,10 @@ export const PROFILES: Record<string, Profile> = {
     next: [NS_NONE, NS_SELF, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
   },
   "accounts@gasneeds.com": {
-    kinds: [{ v: "pr", l: "Payment received" }, { v: "pm", l: "Payment made" }, { v: "pf", l: "Payment follow-up" }, { v: "cc", l: "Cheque or cash" }, { v: "ac", l: "Accounts entry" }],
+    kinds: [{ v: "pr", l: "Payment received" }, { v: "pm", l: "Payment made" }, { v: "pf", l: "Payment follow-up" }, { v: "f", l: "Follow-up" }, { v: "cc", l: "Cheque or cash" }, { v: "ac", l: "Accounts entry" }],
     companies: ["gasneeds", "flaretechnical"],
-    parent: { pr: "Payments & Receipts", pm: "Payments & Receipts", pf: "Receivables Follow-up", cc: "Cheques, Cash & Banking", ac: "Bills & Books" },
+    parent: { pr: "Payments & Receipts", pm: "Payments & Receipts", pf: "Receivables Follow-up", f: "Calls & Emails", cc: "Cheques, Cash & Banking", ac: "Bills & Books" },
+    dept: { f: "Accounts" },
     next: [NS_NONE, NS_SELF],
   },
 };

@@ -6,6 +6,11 @@ const PHOTOS: Record<string, string> = {
   "business@gasneeds.com": "/staff/manu.jpg",
   "accounts@gasneeds.com": "/staff/jintu.jpg",
   "jai@gasneeds.com": "/staff/jai.jpg",
+  "ram@flaretechnical.com": "/staff/ram.jpg",
+  "jiyad.m@flaretechnical.com": "/staff/jiyad.jpg",
+  "jashim@flaretechnical.com": "/staff/jashim.jpg",
+  "saroj@flaretechnical.com": "/staff/saroj.jpg",
+  "simi@flaretechnical.com": "/staff/simi.jpg",
 };
 
 export const staffPhoto = (email?: string | null): string | null => (email ? PHOTOS[email.toLowerCase()] ?? null : null);

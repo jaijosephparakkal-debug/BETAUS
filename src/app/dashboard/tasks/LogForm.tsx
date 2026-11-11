@@ -67,7 +67,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "n
 
 export function LogForm({ data }: { data: LogData }) {
   const [state, formAction] = useFormState(createLogEntryAction, {});
-  const [open, setOpen] = useState(!!data.prefill?.quotationId);
+  const [open, setOpen] = useState(!!(data.prefill?.quotationId || data.prefill?.kind));
   const [key, setKey] = useState(0);
   const KINDS = data.profile.kinds;
   const myCompanies = data.companies.filter((c) => data.profile.companies.includes(c.slug));

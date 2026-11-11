@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
 import { RequestContent } from "./RequestContent";
-import { Hero } from "@/components/Hero";
+import { BentoHome } from "@/components/Hero";
+import { kpiScore } from "@/lib/queries";
 import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
@@ -28,7 +29,7 @@ const DUAL_COMPANY_EMAILS = ["finance@flaretechnical.com", "sales@gasneeds.com",
 // Accounts / HR / Sales / Purchase.
 const DEPARTMENT_CONTACT_EMAILS = ["service@flaretechnical.com", "saroj@flaretechnical.com"];
 
-export default async function MyTasksPage({ searchParams }: { searchParams: { quotation?: string } }) {
+export default async function MyTasksPage({ searchParams }: { searchParams: { quotation?: string; kind?: string } }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
   if (isManagingDirector(membership)) redirect("/director");
@@ -135,7 +136,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
         ? (await prisma.unit.findMany({ orderBy: [{ buildingId: "asc" }, { flat: "asc" }] })).map((u) => ({ id: u.id, buildingId: u.buildingId, flat: u.flat, tenant: u.tenantName, status: u.status }))
         : [],
       nextNumbers,
-      prefill: searchParams.quotation ? { kind: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => k.v === "pf") ? "pf" : "f", quotationId: searchParams.quotation } : undefined,
+      prefill: !searchParams.quotation && searchParams.kind && PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => k.v === searchParams.kind) ? { kind: searchParams.kind } : searchParams.quotation ? { kind: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => k.v === "pf") ? "pf" : "f", quotationId: searchParams.quotation } : undefined,
     };
   }
 
@@ -204,6 +205,34 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
   const loggedThisMonth = await prisma.task.count({ where: { assignedToId: membership.id, logKind: { not: null }, createdAt: { gte: monthStartDubai } } });
   const openTaskCount = await prisma.task.count({ where: { assignedToId: membership.id, parentTaskId: { not: null }, status: { not: "COMPLETED" } } });
 
+  // Score ring, team pulse and the quotation in motion.
+  const myKpis = await prisma.kpi.findMany({ where: { membershipId: membership.id } });
+  const score = myKpis.length ? Math.round(myKpis.reduce((a, k) => a + kpiScore(k), 0) / myKpis.length) : null;
+  const handedToMe = await prisma.task.count({ where: { assignedToId: membership.id, logKind: "HANDOVER", status: { not: "COMPLETED" } } });
+  const since = new Date(Date.now() - 30 * 86400000);
+  const hand = await prisma.task.findMany({
+    where: { logKind: "HANDOVER", createdAt: { gte: since }, OR: [{ assignedToId: membership.id }, { assignedById: membership.id }] },
+    orderBy: { createdAt: "desc" },
+    take: 15,
+    include: { assignedTo: { include: { user: true } }, assignedBy: { include: { user: true } } },
+  });
+  const seenPulse = new Set<string>();
+  const pulse: { name: string; email: string }[] = [];
+  for (const t of hand) {
+    const other = t.assignedToId === membership.id ? t.assignedBy : t.assignedTo;
+    if (other.id === membership.id || seenPulse.has(other.userId)) continue;
+    seenPulse.add(other.userId);
+    pulse.push({ name: other.user.name, email: other.user.email });
+    if (pulse.length >= 5) break;
+  }
+  const flowTask = await prisma.task.findFirst({
+    where: { assignedToId: membership.id, quotationId: { not: null }, status: { not: "COMPLETED" } },
+    orderBy: { createdAt: "desc" },
+    include: { quotation: { include: { customer: true } } },
+  });
+  const stageOf = (s: string) => (s === "PAID" ? 3 : s === "DELIVERED" ? 2 : s === "ORDER_RECEIVED" ? 1 : 0);
+  const journey = flowTask?.quotation ? { number: flowTask.quotation.number, customer: flowTask.quotation.customer.name, stage: stageOf(flowTask.quotation.status) } : null;
+
   // Follow-ups that are due today or overdue (Dubai day), for the person's own list.
   const endOfToday = new Date(Math.floor((Date.now() + 4 * 3600 * 1000) / 86400000) * 86400000 + 86400000 - 4 * 3600 * 1000);
   const startOfToday = new Date(endOfToday.getTime() - 86400000);
@@ -216,16 +245,21 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
 
   return (
     <div className="space-y-4">
-      <Hero
+      <BentoHome
         name={membership.user.name}
         email={membership.user.email}
         title={`${membership.title} · ${membership.company.name}`}
         dueCount={due.length}
-        tiles={[
-          { label: "Follow-ups due", value: due.length },
-          { label: "Logged this month", value: loggedThisMonth },
-          { label: "Open tasks", value: openTaskCount },
+        handedToMe={handedToMe}
+        nextHref={due[0] ? `/dashboard/tasks/${due[0].id}` : null}
+        score={score}
+        kinds={useLogForm ? PROFILES[membership.user.email.toLowerCase()].kinds : null}
+        stats={[
+          { label: "Logged this month", value: loggedThisMonth, note: "entries" },
+          { label: "Open tasks", value: openTaskCount, note: "in progress" },
         ]}
+        pulse={pulse}
+        journey={journey}
       />
       {due.length > 0 && (
         <div className="panel-ink rounded-2xl p-5 shadow-lg">
@@ -257,6 +291,8 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
           ))}
         </div>
       )}
+      <div id="needs" />
+      <div id="log" className="scroll-mt-24" />
       {useLogForm && logData ? (
         <LogForm data={logData} />
       ) : projectLogData ? (

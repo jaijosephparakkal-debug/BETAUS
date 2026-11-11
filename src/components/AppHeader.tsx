@@ -69,43 +69,43 @@ export function AppHeader({
   ];
 
   return (
-    <header className="panel-ink border-b border-accent/70">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-[#DFE5EB] px-2.5 py-1.5">
-            <Image
-              src={theme.logo}
-              alt={theme.displayName}
-              width={theme.logoWidth}
-              height={theme.logoHeight}
-              className="h-9 w-auto"
-              priority
-            />
-          </div>
-          <div>
-            <div className="text-[21px] font-semibold text-white">{membership.company.name}</div>
-            <div className="text-[17px] text-[#c9d2da]">
-              {membership.user.name} · {membership.title}
+    <header className="sticky top-0 z-30 px-3 pt-3">
+      <div className="panel-ink mx-auto max-w-6xl rounded-3xl border border-accent/60 shadow-xl">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-[#DFE5EB] px-2 py-1">
+              <Image
+                src={theme.logo}
+                alt={theme.displayName}
+                width={theme.logoWidth}
+                height={theme.logoHeight}
+                className="h-8 w-auto"
+                priority
+              />
+            </div>
+            <div className="hidden leading-tight sm:block">
+              <div className="text-[17px] font-semibold text-white">{membership.company.name}</div>
+              <div className="text-[13px] text-[#c9d2da]">{membership.title}</div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {membershipCount > 1 && canManageAllStaff(membership) && (
-            <Link href="/select-company?switch=1" className="text-[19px] text-[#DFE5EB] underline-offset-2 hover:underline">
-              Switch company
-            </Link>
-          )}
-          {!viewingAsName && (
-            <div className="rounded-full bg-[#DFE5EB] px-2 py-0.5 text-ink">
-              <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
-            </div>
-          )}
-          <Avatar name={membership.user.name} email={membership.user.email} size={40} className="ring-2 ring-accent" />
+          <div className="ml-auto flex items-center gap-2">
+            {membershipCount > 1 && canManageAllStaff(membership) && (
+              <Link href="/select-company?switch=1" className="text-[16px] text-[#DFE5EB] underline-offset-2 hover:underline">
+                Switch company
+              </Link>
+            )}
+            {!viewingAsName && (
+              <div className="rounded-full bg-[#DFE5EB] px-2 py-0.5 text-ink">
+                <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
+              </div>
+            )}
+            <Avatar name={membership.user.name} email={membership.user.email} size={36} className="ring-2 ring-accent" />
+          </div>
+          <nav className="order-last flex w-full gap-1 overflow-x-auto pb-1 md:order-none md:w-auto md:flex-1 md:justify-center md:pb-0">
+            <NavLinks items={navItems} />
+          </nav>
         </div>
       </div>
-      <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-3">
-        <NavLinks items={navItems} />
-      </nav>
     </header>
   );
 }

@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { canSeeProjects, canSeeMaintenance, canSeeAccounts, canSeeQuotations } from "@/lib/teams";
+import { canSeeProjects, canSeeMaintenance, canSeeAccounts } from "@/lib/teams";
 import Link from "next/link";
 import { canManageAllStaff, isManagingDirector, type FullMembership } from "@/lib/auth";
+import { seesGnDepartments } from "@/lib/gnDepartments";
 import { getCompanyTheme } from "@/lib/theme";
 import { AttendanceClock } from "@/components/AttendanceClock";
 
@@ -42,8 +43,18 @@ export function AppHeader({
     ...((membership.company.slug === "flaretechnical" || membership.isDirector) && canSeeMaintenance(membership)
       ? [{ href: "/dashboard/maintenance", label: "Maintenance" }]
       : []),
-    ...(canSeeAccounts(membership) ? [{ href: "/dashboard/accounts", label: "Accounts" }] : []),
-    ...(canSeeQuotations(membership) ? [{ href: "/dashboard/quotations", label: "Quotations" }] : []),
+    // The Flaretech accounts team keeps its Accounts tab; Gas Needs staff use the Gas Needs Accounts page below.
+    ...(canSeeAccounts(membership) && (membership.isDirector || membership.company.slug !== "gasneeds")
+      ? [{ href: "/dashboard/accounts", label: membership.isDirector ? "Accounts (FT)" : "Accounts" }]
+      : []),
+    // Gas Needs department pages (Quotations now lives inside Operation).
+    ...(seesGnDepartments(membership)
+      ? [
+          { href: "/dashboard/dept/operation", label: "Operation" },
+          { href: "/dashboard/dept/purchase", label: "Purchase" },
+          { href: "/dashboard/dept/accounts", label: "Accounts" },
+        ]
+      : []),
     // Abraham sees everyone through Manage My Staff instead of My Team.
     ...(reportCount > 0 && !isManagingDirector(membership)
       ? [{ href: "/dashboard/team", label: "My Team" }]

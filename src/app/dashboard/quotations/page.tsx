@@ -6,6 +6,7 @@ import { canSeeQuotations } from "@/lib/teams";
 import { Card, CompanyTag, formatDate } from "@/components/ui";
 import { LOG_FORM_EMAILS, QUOTE_STATUS, statusLabel } from "@/lib/logOptions";
 import { setQuotationStatusAction } from "./actions";
+import { canSeeAmounts } from "@/lib/gnDepartments";
 
 const ORDER = ["SENT", "REVISED", "REVIEWING", "NEGOTIATING", "ORDER_RECEIVED", "DELIVERED", "PAID", "ON_HOLD", "NOT_AWARDED"];
 
@@ -15,6 +16,7 @@ export default async function QuotationsPage() {
   if (!membership) redirect("/login");
   if (!canSeeQuotations(membership)) redirect("/dashboard");
   const canLog = LOG_FORM_EMAILS.includes(membership.user.email.toLowerCase());
+  const showAmt = canSeeAmounts(membership, "operation");
 
   const quotations = await prisma.quotation.findMany({
     orderBy: { createdAt: "desc" },
@@ -48,7 +50,7 @@ export default async function QuotationsPage() {
               <h2 className="text-[21px] font-semibold text-slate-900">
                 {statusLabel(st)} — {list.length}
               </h2>
-              <span className="text-[17px] text-slate-500">AED {total.toLocaleString("en-US")}</span>
+              {showAmt && <span className="text-[17px] text-slate-500">AED {total.toLocaleString("en-US")}</span>}
             </div>
             <div className="divide-y divide-brand-100">
               {list.map((q) => (
@@ -58,7 +60,7 @@ export default async function QuotationsPage() {
                       <CompanyTag slug={slugOf.get(q.companyId) ?? "gasneeds"} />
                       <Link href={`/dashboard/quotations/customers/${q.customerId}`} className="hover:underline">{q.number}</Link>
                     </span>
-                    <span className="text-[17px] text-slate-600">{q.value ? `AED ${q.value.toLocaleString("en-US")}` : "—"}</span>
+                    {showAmt && <span className="text-[17px] text-slate-600">{q.value ? `AED ${q.value.toLocaleString("en-US")}` : "—"}</span>}
                   </div>
                   <div className="text-[16px] text-slate-500">
                     {q.customer.name} · {q.product}{q.quantity ? ` × ${q.quantity}` : ""} · {formatDate(q.createdAt)}

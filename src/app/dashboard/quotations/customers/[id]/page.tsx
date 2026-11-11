@@ -5,6 +5,7 @@ import { getCurrentMembership } from "@/lib/auth";
 import { canSeeQuotations } from "@/lib/teams";
 import { Card, formatDate } from "@/components/ui";
 import { statusLabel } from "@/lib/logOptions";
+import { canSeeAmounts } from "@/lib/gnDepartments";
 
 const KIND: Record<string, string> = { QUOTATION: "Quotation", FOLLOW_UP: "Follow-up", VISIT: "Visit", PRO: "PRO", HR: "HR", HANDOVER: "Hand-over" };
 
@@ -13,6 +14,7 @@ export default async function CustomerHistoryPage({ params }: { params: { id: st
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
   if (!canSeeQuotations(membership)) redirect("/dashboard");
+  const showAmt = canSeeAmounts(membership, "operation");
 
   const customer = await prisma.customer.findUnique({ where: { id: params.id }, include: { quotations: { orderBy: { createdAt: "desc" } }, contacts: true } });
   if (!customer) notFound();
@@ -26,7 +28,7 @@ export default async function CustomerHistoryPage({ params }: { params: { id: st
 
   return (
     <div className="space-y-6">
-      <Link href="/dashboard/quotations" className="text-[17px] text-brand-600 hover:underline">← Quotations</Link>
+      <Link href="/dashboard/dept/operation" className="text-[17px] text-brand-600 hover:underline">← Operation</Link>
       <div>
         <h1 className="text-[23px] font-semibold text-slate-900">{customer.name}</h1>
         {customer.contacts.length > 0 && <p className="text-[17px] text-slate-500">Contacts: {customer.contacts.map((c) => c.name).join(", ")}</p>}
@@ -39,7 +41,7 @@ export default async function CustomerHistoryPage({ params }: { params: { id: st
             {customer.quotations.map((q) => (
               <div key={q.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[18px]">
                 <span className="font-medium text-slate-900">{q.number} <span className="font-normal text-slate-500">· {q.product}</span></span>
-                <span className="text-[16px] text-slate-500">{q.value ? `AED ${q.value.toLocaleString("en-US")} · ` : ""}{statusLabel(q.status)} · {formatDate(q.createdAt)}</span>
+                <span className="text-[16px] text-slate-500">{showAmt && q.value ? `AED ${q.value.toLocaleString("en-US")} · ` : ""}{statusLabel(q.status)} · {formatDate(q.createdAt)}</span>
               </div>
             ))}
           </div>
@@ -56,7 +58,7 @@ export default async function CustomerHistoryPage({ params }: { params: { id: st
                   <span className="font-medium text-slate-900">{KIND[t.logKind ?? ""] ?? "Task"} · {t.title}</span>
                   <span className="text-[15px] text-slate-500">{when(t.eventAt ?? t.createdAt)}{t.enteredLater ? " · entered later" : ""}</span>
                 </div>
-                {t.description && <div className="text-[16px] text-slate-600">{t.description}</div>}
+                {showAmt && t.description && <div className="text-[16px] text-slate-600">{t.description}</div>}
                 <div className="text-[14px] text-slate-500">
                   {t.assignedTo.user.name}
                   {t.status !== "COMPLETED" && t.followUpAt ? ` · due ${when(t.followUpAt)}` : ""}

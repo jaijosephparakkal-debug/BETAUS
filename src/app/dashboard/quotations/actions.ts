@@ -28,4 +28,7 @@ export async function setQuotationStatusAction(quotationId: string, formData: Fo
     });
   }
   revalidatePath("/dashboard/quotations");
+  revalidatePath("/dashboard/dept/operation");
+  revalidatePath("/dashboard/dept/purchase");
+  revalidatePath("/dashboard/dept/accounts");
 }

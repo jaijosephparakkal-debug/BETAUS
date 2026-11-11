@@ -7,6 +7,8 @@ type Profile = {
   /** Category task each kind is filed under. */
   parent: Record<string, string>;
   next: NextStep[];
+  /** Optional tabs that split the kinds of work (e.g. Maintenance and Accounts for Hashim). */
+  tabs?: { l: string; kinds: string[] }[];
   /** Department recorded for a kind, when it differs from the default (e.g. Jintu's follow-ups are Accounts). */
   dept?: Record<string, string>;
 };
@@ -42,6 +44,7 @@ export const PROFILES: Record<string, Profile> = {
   "accounts@flaretechnical.com": {
     kinds: [{ v: "amc", l: "AMC contract" }, { v: "ppm", l: "PPM report" }, { v: "dcd", l: "DCD attestation" }, { v: "rp", l: "Gas reading report" }, { v: "co", l: "Collection" }, { v: "ac", l: "Accounts entry" }],
     companies: ["flaretechnical"],
+    tabs: [{ l: "Maintenance", kinds: ["amc", "ppm", "dcd", "rp"] }, { l: "Accounts", kinds: ["co", "ac"] }],
     parent: { amc: "Maintenance — AMC, Contracts & Portals", ppm: "Maintenance — Gas Reading & Reports", dcd: "Maintenance — AMC, Contracts & Portals", rp: "Maintenance — Gas Reading & Reports", co: "Accounts — Collections & Follow-ups", ac: "Accounts — Vouchers & Reconciliation" },
     next: [NS_NONE, NS_SELF],
   },

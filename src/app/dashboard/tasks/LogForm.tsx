@@ -20,7 +20,7 @@ export type LogData = {
   buildings: { id: string; code: string | null; name: string; cycle: string | null; rate: number | null; pf: number | null; monthly: number | null; first: number | null; deposit: number | null; connection: number | null; disconnection: number | null }[];
   units: { id: string; buildingId: string; flat: string; tenant: string | null; status: string }[];
   /** What this person's form offers: kinds of work, the companies they can log for, and their next-step choices. */
-  profile: { kinds: { v: string; l: string }[]; companies: string[]; next: { v: string; l: string }[] };
+  profile: { kinds: { v: string; l: string }[]; companies: string[]; next: { v: string; l: string }[]; tabs?: { l: string; kinds: string[] }[] };
   nextNumbers: Record<string, string>;
   prefill?: { kind?: string; quotationId?: string };
 };
@@ -72,6 +72,8 @@ export function LogForm({ data }: { data: LogData }) {
   const myCompanies = data.companies.filter((c) => data.profile.companies.includes(c.slug));
   const [company, setCompany] = useState(myCompanies.find((c) => c.slug === "gasneeds")?.slug ?? myCompanies[0].slug);
   const [kind, setKind] = useState(data.prefill?.kind ?? KINDS[0].v);
+  const tabs = data.profile.tabs;
+  const [tab, setTab] = useState(() => Math.max(0, tabs?.findIndex((t) => t.kinds.includes(data.prefill?.kind ?? KINDS[0].v)) ?? 0));
   const [supplierId, setSupplierId] = useState("");
   const [buildingId, setBuildingId] = useState("");
   const [unitType, setUnitType] = useState("Apartment");
@@ -179,9 +181,23 @@ export function LogForm({ data }: { data: LogData }) {
         )}
       </div>
 
+      {tabs && (
+        <div className="flex gap-1 border-b border-brand-200">
+          {tabs.map((t, i) => (
+            <button
+              type="button"
+              key={t.l}
+              onClick={() => { setTab(i); setKind(t.kinds[0]); setCustomerId(""); }}
+              className={`-mb-px rounded-t-md border px-4 py-1.5 text-[17px] font-medium ${tab === i ? "border-brand-300 border-b-white bg-white text-brand-800" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            >
+              {t.l}
+            </button>
+          ))}
+        </div>
+      )}
       <Field label="Kind of work" tag="pick">
         <div className="flex flex-wrap gap-2">
-          {KINDS.map((k) => (
+          {KINDS.filter((k) => !tabs || tabs[tab].kinds.includes(k.v)).map((k) => (
             <Chip key={k.v} on={kind === k.v} onClick={() => { setKind(k.v); setCustomerId(""); setFollowAbout("quote"); }}>{k.l}</Chip>
           ))}
         </div>

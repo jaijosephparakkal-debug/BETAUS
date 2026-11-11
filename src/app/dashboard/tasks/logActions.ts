@@ -85,6 +85,28 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     return q;
   };
 
+  // "Earlier quotation" (raised before the system): bring it in once under its own number, reuse it next time.
+  let oldQuoteId: string | null = null;
+  if (s("quotationId") === "__old__") {
+    const num = s("oldNumber");
+    if (!num) return { error: "Type the earlier quotation’s number." };
+    const found = await prisma.quotation.findUnique({ where: { number: num } });
+    if (found) {
+      if (found.companyId !== company.id) return { error: `${num} belongs to the other company.` };
+      oldQuoteId = found.id;
+    } else {
+      const c = await pickCustomer();
+      if (typeof c === "string") return { error: c };
+      const val = Number(s("oldValue").replace(/,/g, ""));
+      const d = new Date(Date.now() + 4 * 3600 * 1000);
+      const made = await prisma.quotation.create({
+        data: { companyId: company.id, number: num, year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, seq: null, customerId: c.id, productCategory: "Earlier quotation", product: "Raised before the system", value: val > 0 ? val : null, status: "SENT", legacy: true, createdById: m.id },
+      });
+      oldQuoteId = made.id;
+    }
+  }
+  const qid = () => oldQuoteId ?? s("quotationId");
+
   const amountOf = (k: string) => Number(s(k).replace(/,/g, ""));
   let title = "";
   let forPerson = "";
@@ -95,8 +117,8 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
   const aed = (n: number) => `AED ${n.toLocaleString("en-US")}`;
 
   if (kind === "q" || kind === "v" || kind === "enq" || kind === "pr") {
-    if (kind === "pr" && s("quotationId")) {
-      quotation = await loadQuote(s("quotationId"));
+    if (kind === "pr" && qid()) {
+      quotation = await loadQuote(qid());
       if (!quotation) return { error: "That quotation was not found." };
     } else {
       const c = await pickCustomer();
@@ -124,8 +146,8 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     }
   }
   if ((kind === "f" || kind === "pf") && !followOther) {
-    if (!s("quotationId")) return { error: "Choose which quotation this is about." };
-    quotation = await loadQuote(s("quotationId"));
+    if (!qid()) return { error: "Choose which quotation this is about." };
+    quotation = await loadQuote(qid());
     if (!quotation) return { error: "That quotation was not found." };
   }
   if (customer && contactName) {
@@ -281,7 +303,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     const amount = amountOf("amount");
     if (!poNo) return { error: "Type the PO number." };
     if (!amount || amount <= 0) return { error: "Enter the PO amount in AED." };
-    if (s("quotationId")) quotation = await loadQuote(s("quotationId"));
+    if (qid()) quotation = await loadQuote(qid());
     title = s("poStatus") === "Sent to supplier" || !s("poStatus") ? "PO raised" : `PO — ${s("poStatus").toLowerCase()}`;
     forPerson = sup.name;
     summary = `${poNo} · ${sup.name} · ${aed(amount)} · ${s("poStatus")}${quotation ? ` · for ${quotation.number}` : ""}${s("expectedOn") ? ` · expected ${s("expectedOn")}` : ""}`;
@@ -289,7 +311,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
   } else if (kind === "imp") {
     const sup = await pickSupplier();
     if (typeof sup === "string") return { error: sup };
-    if (s("quotationId")) quotation = await loadQuote(s("quotationId"));
+    if (qid()) quotation = await loadQuote(qid());
     title = s("importStage") || "Shipment update";
     forPerson = sup.name;
     summary = `${sup.name} · ${title}${s("shipRef") ? ` · ${s("shipRef")}` : ""}${s("etaOn") ? ` · ETA ${s("etaOn")}` : ""}${quotation ? ` · ${quotation.number}` : ""}`;

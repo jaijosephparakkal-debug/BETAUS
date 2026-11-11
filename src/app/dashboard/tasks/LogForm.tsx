@@ -240,14 +240,7 @@ export function LogForm({ data }: { data: LogData }) {
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             {followAbout === "quote" ? (
-              <Field label="About which quotation" tag="pick">
-                <select name="quotationId" required value={quotationId} onChange={(e) => setQuotationId(e.target.value)} className={sel}>
-                  <option value="" disabled>Choose quotation…</option>
-                  {quotes.map((q) => (
-                    <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
-                  ))}
-                </select>
-              </Field>
+              <QuotePick customers={customers} quotes={quotes} value={quotationId} onChange={setQuotationId} label="About which quotation" />
             ) : (
               <>
                 <Field label="Topic" tag="pick">
@@ -351,7 +344,7 @@ export function LogForm({ data }: { data: LogData }) {
       {kind === "po" && (
         <div className="grid gap-3 sm:grid-cols-2">
           <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
-          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
+          <QuotePick customers={customers} quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
           <Field label="PO number" tag="type"><input name="poNo" required placeholder="Your PO number" className={sel} /></Field>
           <Field label="Amount (AED)" tag="type"><input name="amount" required inputMode="decimal" placeholder="12000" className={sel} /></Field>
           <Field label="Where it stands" tag="pick"><select name="poStatus" className={sel}>{PO_STATUS.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -362,7 +355,7 @@ export function LogForm({ data }: { data: LogData }) {
       {kind === "imp" && (
         <div className="grid gap-3 sm:grid-cols-2">
           <SupplierPick suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
-          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
+          <QuotePick customers={customers} quotes={quotes} value={quotationId} onChange={setQuotationId} label="For quotation" optional />
           <Field label="Shipment stage" tag="pick"><select name="importStage" className={sel}>{IMPORT_STAGES.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Shipment or tracking reference" tag="type"><input name="shipRef" placeholder="Only if you have it" className={sel} /></Field>
           <Field label="Expected arrival" tag="pick"><input type="date" name="etaOn" className={sel} /></Field>
@@ -371,7 +364,7 @@ export function LogForm({ data }: { data: LogData }) {
 
       {kind === "pr" && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" optional />
+          <QuotePick customers={customers} quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" optional />
           {!quotationId && <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />}
           {!quotationId && <Field label="Payment is for" tag="pick"><select name="payFor" className={sel}>{PAY_FOR.map((c) => <option key={c}>{c}</option>)}</select></Field>}
           {!quotationId && <Field label="Invoice no." tag="type"><input name="invoiceNo" placeholder="Only if you have it" className={sel} /></Field>}
@@ -403,7 +396,7 @@ export function LogForm({ data }: { data: LogData }) {
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             {followAbout === "quote" ? (
-              <QuotePick quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" />
+              <QuotePick customers={customers} quotes={quotes} value={quotationId} onChange={setQuotationId} label="Payment for quotation" />
             ) : (
               <>
                 <WithPicker
@@ -634,20 +627,41 @@ function SupplierPick({ suppliers, value, onChange }: { suppliers: { id: string;
 }
 
 function QuotePick({
-  quotes, value, onChange, label, optional,
+  quotes, value, onChange, label, optional, customers,
 }: {
   quotes: { id: string; number: string; customerName: string; value: number | null; createdAt: string }[];
   value: string; onChange: (v: string) => void; label: string; optional?: boolean;
+  customers?: { id: string; name: string }[];
 }) {
+  const [cust, setCust] = useState("");
   return (
-    <Field label={label} tag="pick">
-      <select name="quotationId" required={!optional} value={value} onChange={(e) => onChange(e.target.value)} className={sel}>
-        {optional ? <option value="">None</option> : <option value="" disabled>Choose quotation…</option>}
-        {quotes.map((q) => (
-          <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
-        ))}
-      </select>
-    </Field>
+    <>
+      <Field label={label} tag="pick">
+        <select name="quotationId" required={!optional} value={value} onChange={(e) => onChange(e.target.value)} className={sel}>
+          {optional ? <option value="">No quotation — other payment</option> : <option value="" disabled>Choose quotation…</option>}
+          {quotes.map((q) => (
+            <option key={q.id} value={q.id}>{q.number} · {q.customerName}{q.value ? ` · AED ${q.value.toLocaleString("en-US")}` : ""} · {fmt(q.createdAt)}</option>
+          ))}
+          <option value="__old__">Earlier quotation — raised before 11 Nov</option>
+        </select>
+      </Field>
+      {value === "__old__" && (
+        <>
+          <Field label="Earlier quotation no." tag="type"><input name="oldNumber" required placeholder="Exactly as on the quotation" className={sel} /></Field>
+          {customers && (
+            <Field label="Customer" tag="pick">
+              <select name="customerId" required value={cust} onChange={(e) => setCust(e.target.value)} className={sel}>
+                <option value="" disabled>Choose customer…</option>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="__new__">+ Add customer</option>
+              </select>
+              {cust === "__new__" && <input name="newCustomer" required placeholder="Customer name" className={`${sel} mt-1`} />}
+            </Field>
+          )}
+          <Field label="Value (AED)" tag="type"><input name="oldValue" inputMode="decimal" placeholder="Only if you know it" className={sel} /></Field>
+        </>
+      )}
+    </>
   );
 }
 

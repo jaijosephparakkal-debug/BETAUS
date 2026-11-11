@@ -11,7 +11,6 @@ import { canUpdateSiteTaskProgress } from "@/lib/siteTasks";
 export type ProjectLogState = { error?: string; ok?: string };
 
 const BACKDATE_DAYS = 7;
-const aed = (n: number) => `AED ${n.toLocaleString("en-US")}`;
 
 /** Saves one Flaretech project-team entry: project, site task, what was done (all picked), and an optional follow-up. */
 export async function createProjectLogAction(_prev: ProjectLogState | undefined, fd: FormData): Promise<ProjectLogState> {
@@ -142,7 +141,8 @@ export async function createProjectLogAction(_prev: ProjectLogState | undefined,
       const n = Number(raw.replace(/,/g, ""));
       if (!Number.isFinite(n) || n < 0) return { error: `“${f.label}” must be a number.` };
       values[f.k] = n;
-      parts.push(f.type === "amount" ? aed(n) : `${f.label}: ${n}`);
+      // Amounts stay out of the description (shown in task lists); the task page shows them to the owner, Abraham and Jai only.
+      if (f.type === "number") parts.push(`${f.label}: ${n}`);
       continue;
     }
     if (f.type === "date" && isNaN(new Date(raw).getTime())) return { error: `“${f.label}” is not a valid date.` };

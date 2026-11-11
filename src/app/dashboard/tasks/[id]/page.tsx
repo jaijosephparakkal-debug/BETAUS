@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { taskForLabel } from "@/lib/taskFor";
 import { notFound, redirect } from "next/navigation";
+
+const AMOUNT_VIEWERS = ["abraham@flaretechnical.com", "jai@gasneeds.com"];
 import { prisma } from "@/lib/db";
 import { getProjectOptions } from "@/lib/queries";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
@@ -53,6 +55,14 @@ export default async function TaskDetailPage({
       },
     },
   });
+  // Flaretech project-log amounts (Ram's payments, Simi's costs and invoices) are private: the person who logged it, Abraham and Jai.
+  const rawAmount = task?.workedForCompany === "flaretechnical" && task.details && typeof task.details === "object" ? (task.details as Record<string, unknown>).amount : null;
+  const privateAmount =
+    typeof rawAmount === "number" &&
+    task &&
+    (task.assignedTo.userId === membership.userId || AMOUNT_VIEWERS.includes(membership.user.email.toLowerCase()))
+      ? rawAmount
+      : null;
   // Company access check by person, not by whichever membership/company
   // happens to be currently active — a few people (Jai, Abraham) hold real
   // memberships at both companies, so their own task in the "other" company
@@ -148,6 +158,12 @@ export default async function TaskDetailPage({
         )}
         {task.description && (
           <p className="mt-1 text-[19px] text-slate-600">{task.description}</p>
+        )}
+        {privateAmount !== null && (
+          <p className="mt-1 text-[18px] font-medium text-slate-800">
+            Amount: AED {privateAmount.toLocaleString("en-US")}{" "}
+            <span className="text-[14px] font-normal text-slate-400">· only {task.assignedTo.user.name.split(" ")[0]}, Abraham and Jai see this</span>
+          </p>
         )}
         <div className="mt-2 text-[17px] text-slate-500">
           {task.subtasks.length > 0 ? "" : `Assigned to ${task.assignedTo.user.name} by ${task.assignedBy.user.name} · `}

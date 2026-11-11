@@ -6,6 +6,8 @@ import { getKpisFor, getCompletionsFor, kpiScore } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
 import { Card, DonutChart, CompanyTag } from "@/components/ui";
 import { CompletionRollup } from "@/components/CompletionRollup";
+import { LiveKpis } from "@/components/LiveKpis";
+import { getLiveKpis } from "@/lib/liveKpis";
 
 export default async function MyKpisPage() {
   const membership = await getCurrentMembership();
@@ -29,6 +31,8 @@ export default async function MyKpisPage() {
     completions.push(...mCompletions);
   }
 
+  const live = await getLiveKpis(membership.userId);
+
   const months = buildCompletionRollup(
     completions.map((c) => ({ id: c.id, title: c.title, completedAt: c.completedAt! }))
   );
@@ -44,6 +48,7 @@ export default async function MyKpisPage() {
           Download my report (PDF)
         </a>
       </div>
+      {live && <LiveKpis data={live} viewerEmail={membership.user.email} name="you" />}
       <div className="space-y-5">
         {groupKpis(kpis).map((sec) => (
           <div key={sec.label}>

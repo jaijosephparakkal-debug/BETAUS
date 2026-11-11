@@ -1,4 +1,6 @@
 import { Avatar } from "@/components/Avatar";
+import { LiveKpis } from "@/components/LiveKpis";
+import { getLiveKpis } from "@/lib/liveKpis";
 import Link from "next/link";
 import { startViewAsAction } from "@/app/director/view-as/actions";
 import { groupKpis } from "@/lib/kpiSections";
@@ -81,6 +83,7 @@ export default async function StaffProfilePage({
   });
   if (memberships.length === 0) notFound();
   const person = memberships[0].user;
+  const live = await getLiveKpis(params.userId);
   const ids = memberships.map((m) => m.id);
   const slugOf = new Map(memberships.map((m) => [m.id, m.company.slug]));
 
@@ -312,6 +315,8 @@ export default async function StaffProfilePage({
           </a>
         </div>
       </Card>
+
+      {live && <LiveKpis data={live} viewerEmail={membership.user.email} name={person.name.split(" ")[0]} />}
 
       {/* KPIs */}
       <Card>

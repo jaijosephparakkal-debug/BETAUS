@@ -5,6 +5,7 @@ import { LOG_FORM_EMAILS, PROFILES } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
 import { nextEstimateNumber } from "@/lib/projectEstimates";
+import { getPotentialProjects } from "@/lib/potentialProjects";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
@@ -161,18 +162,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
           return { number: String(d.estimateNumber), label: t.project?.name ?? t.forPerson ?? String(d.for ?? "") };
         });
         projectLogData.nextEstimate = await nextEstimateNumber(ft.id, new Date());
-        const pots = await prisma.task.findMany({
-          where: { companyId: ft.id, details: { path: ["potentialProject"], not: Prisma.DbNull } },
-          orderBy: { createdAt: "desc" },
-          take: 500,
-          select: { details: true },
-        });
-        const seenPot = new Set<string>();
-        for (const t of pots) {
-          const n = (t.details as Record<string, unknown>).potentialProject;
-          if (typeof n === "string" && n) seenPot.add(n);
-        }
-        projectLogData.potentials = Array.from(seenPot);
+        projectLogData.potentials = (await getPotentialProjects(ft.id)).filter((x) => !x.closed).map((x) => x.name);
       }
       // Names the team has logged before (who they met, emailed, who inspected), newest first.
       const past = await prisma.task.findMany({

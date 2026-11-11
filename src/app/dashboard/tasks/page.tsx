@@ -2,8 +2,12 @@ import { redirect } from "next/navigation";
 import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
 import { LOG_FORM_EMAILS, PROFILES } from "@/lib/logOptions";
+import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
+import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
+import { nextEstimateNumber } from "@/lib/projectEstimates";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { getCurrentMembership, isManagingDirector } from "@/lib/auth";
 import { getTasksFor, getAssignedTasksFor, getTaskForChoices } from "@/lib/queries";
 import { markTaskNotificationsRead } from "@/lib/notifications";
@@ -123,6 +127,69 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
     };
   }
 
+  // The Flaretech project team logs work with their own form: project -> site task -> what was done.
+  const projectProfile = PROJECT_PROFILES[membership.user.email.toLowerCase()];
+  let projectLogData: ProjectLogData | null = null;
+  if (projectProfile && !useLogForm) {
+    const ft = await prisma.company.findUnique({ where: { slug: "flaretechnical" } });
+    if (ft) {
+      const projects = await prisma.project.findMany({
+        where: { companyId: ft.id, type: "PROJECT", status: { not: "COMPLETED" } },
+        orderBy: { name: "asc" },
+        include: { siteTasks: { orderBy: { sortOrder: "asc" }, select: { id: true, title: true, progress: true, weight: true } } },
+      });
+      projectLogData = {
+        profile: projectProfile,
+        projects: projects.map((p) => ({ id: p.id, name: p.name, number: p.number, sites: p.siteTasks })),
+        customers: (await prisma.customer.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
+        suppliers: (await prisma.supplier.findMany({ where: { companyId: ft.id }, orderBy: { name: "asc" }, select: { id: true, name: true } })),
+        names: [],
+        estimates: [],
+        nextEstimate: "",
+        potentials: [],
+      };
+      // Saroj's estimation numbers: the ones already given (to pick for revisions and quotations) and the next one.
+      if (projectProfile.kinds.some((k) => k.fields.some((f) => f.type === "estimate"))) {
+        const given = await prisma.task.findMany({
+          where: { companyId: ft.id, logKind: "ESTIMATE", details: { path: ["newEstimate"], equals: true } },
+          orderBy: { createdAt: "desc" },
+          take: 300,
+          select: { details: true, forPerson: true, project: { select: { name: true } } },
+        });
+        projectLogData.estimates = given.map((t) => {
+          const d = t.details as Record<string, unknown>;
+          return { number: String(d.estimateNumber), label: t.project?.name ?? t.forPerson ?? String(d.for ?? "") };
+        });
+        projectLogData.nextEstimate = await nextEstimateNumber(ft.id, new Date());
+        const pots = await prisma.task.findMany({
+          where: { companyId: ft.id, details: { path: ["potentialProject"], not: Prisma.DbNull } },
+          orderBy: { createdAt: "desc" },
+          take: 500,
+          select: { details: true },
+        });
+        const seenPot = new Set<string>();
+        for (const t of pots) {
+          const n = (t.details as Record<string, unknown>).potentialProject;
+          if (typeof n === "string" && n) seenPot.add(n);
+        }
+        projectLogData.potentials = Array.from(seenPot);
+      }
+      // Names the team has logged before (who they met, emailed, who inspected), newest first.
+      const past = await prisma.task.findMany({
+        where: { companyId: ft.id, workedForCompany: "flaretechnical", details: { not: Prisma.DbNull }, eventAt: { not: null } },
+        orderBy: { createdAt: "desc" },
+        take: 600,
+        select: { details: true },
+      });
+      const seen = new Set<string>();
+      for (const t of past) {
+        const d = (t.details ?? {}) as Record<string, unknown>;
+        for (const [k, v] of Object.entries(d)) if (k.endsWith("Name") && typeof v === "string" && v.trim()) seen.add(v.trim());
+      }
+      projectLogData.names = Array.from(seen).slice(0, 300);
+    }
+  }
+
   // Follow-ups that are due today or overdue (Dubai day), for the person's own list.
   const endOfToday = new Date(Math.floor((Date.now() + 4 * 3600 * 1000) / 86400000) * 86400000 + 86400000 - 4 * 3600 * 1000);
   const startOfToday = new Date(endOfToday.getTime() - 86400000);
@@ -156,6 +223,8 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       )}
       {useLogForm && logData ? (
         <LogForm data={logData} />
+      ) : projectLogData ? (
+        <ProjectLogForm data={projectLogData} />
       ) : (
       <AssignToColleagueForm
         selfId={membership.id}

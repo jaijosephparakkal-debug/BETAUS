@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
 import { LOG_FORM_EMAILS, PROFILES } from "@/lib/logOptions";
 import { SUB_CATEGORIES, SUB_PREFIX, COMMON_TITLE, COMMON_ID, COMMON_ITEMS } from "@/lib/subCategories";
@@ -100,11 +101,13 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
     const allCompanies = await prisma.company.findMany({ select: { id: true, slug: true, name: true }, orderBy: { name: "asc" } });
     const customers = await prisma.customer.findMany({ orderBy: { name: "asc" }, include: { contacts: true } });
     const quotations = await prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 300, include: { customer: true } });
-    const year = new Date(Date.now() + 4 * 3600 * 1000).getUTCFullYear();
+    const nowDubai = new Date(Date.now() + 4 * 3600 * 1000);
+    const year = nowDubai.getUTCFullYear();
+    const month = nowDubai.getUTCMonth() + 1;
     const nextNumbers: Record<string, string> = {};
     for (const c of allCompanies) {
-      const last = await prisma.quotation.findFirst({ where: { companyId: c.id, year, seq: { not: null } }, orderBy: { seq: "desc" }, select: { seq: true } });
-      nextNumbers[c.slug] = `${c.slug === "gasneeds" ? "GN" : "FT"}-Q-${year}-${String((last?.seq ?? 0) + 1).padStart(4, "0")}`;
+      const last = await prisma.quotation.findFirst({ where: { companyId: c.id, year, month, seq: { not: null } }, orderBy: { seq: "desc" }, select: { seq: true } });
+      nextNumbers[c.slug] = quotationNumber(c.slug === "gasneeds" ? "GN" : "FT", year, month, (last?.seq ?? 0) + 1);
     }
     logData = {
       companies: allCompanies,

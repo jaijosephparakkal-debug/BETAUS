@@ -144,13 +144,15 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
         return { needsConfirm: true, error: `${dup.number} was already made for this customer and product in the last week. If this is a new quotation, tick “This is a new quotation” and save again.` };
       }
     }
-    const year = new Date(eventAt.getTime() + DUBAI_MS).getUTCFullYear();
+    const dubaiWhen = new Date(eventAt.getTime() + DUBAI_MS);
+    const year = dubaiWhen.getUTCFullYear();
+    const month = dubaiWhen.getUTCMonth() + 1;
     const base = { companyId: company.id, customerId: customer!.id, contactName: contactName || null, productCategory: category, product, quantity: s("quantity") || null, value, status, docUrl, createdById: m.id };
     if (existing) {
       if (await prisma.quotation.findUnique({ where: { number: existing } })) return { error: `${existing} is already in the system.` };
-      quotation = await prisma.quotation.create({ data: { ...base, number: existing, year, seq: null, legacy: true } });
+      quotation = await prisma.quotation.create({ data: { ...base, number: existing, year, month, seq: null, legacy: true } });
     } else {
-      quotation = await createQuotationNumbered(base, slug === "gasneeds" ? "GN" : "FT", year);
+      quotation = await createQuotationNumbered(base, slug === "gasneeds" ? "GN" : "FT", year, month);
     }
     title = status === "SENT" ? "Product quotation sent" : status === "REVISED" ? "Quotation revised" : "Quotation update";
     forPerson = customer!.name;

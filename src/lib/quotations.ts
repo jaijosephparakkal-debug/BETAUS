@@ -9,21 +9,26 @@ export function dubaiInputToDate(s: string) {
 }
 
 /** Creates a quotation with the next number for its company and year (GN-Q-2026-0001), retrying if two are saved at once. */
+export const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+export const quotationNumber = (prefix: string, year: number, month: number, seq: number) =>
+  `${prefix}-Q-${year}-${MONTHS[month - 1]}-${String(seq).padStart(4, "0")}`;
+
 export async function createQuotationNumbered(
-  data: Omit<Parameters<typeof prisma.quotation.create>[0]["data"], "number" | "seq" | "year"> & { companyId: string },
+  data: Omit<Parameters<typeof prisma.quotation.create>[0]["data"], "number" | "seq" | "year" | "month"> & { companyId: string },
   prefix: string,
-  year: number
+  year: number,
+  month: number
 ) {
   for (let attempt = 0; attempt < 4; attempt++) {
     const last = await prisma.quotation.findFirst({
-      where: { companyId: data.companyId, year, seq: { not: null } },
+      where: { companyId: data.companyId, year, month, seq: { not: null } },
       orderBy: { seq: "desc" },
       select: { seq: true },
     });
     const seq = (last?.seq ?? 0) + 1;
-    const number = `${prefix}-Q-${year}-${String(seq).padStart(4, "0")}`;
+    const number = quotationNumber(prefix, year, month, seq);
     try {
-      return await prisma.quotation.create({ data: { ...(data as object), number, seq, year } as Parameters<typeof prisma.quotation.create>[0]["data"] });
+      return await prisma.quotation.create({ data: { ...(data as object), number, seq, year, month } as Parameters<typeof prisma.quotation.create>[0]["data"] });
     } catch (e) {
       if ((e as { code?: string }).code !== "P2002" || attempt === 3) throw e;
     }

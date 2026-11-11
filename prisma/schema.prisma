@@ -396,6 +396,7 @@ model Quotation {
   companyId       String
   number          String   @unique
   year            Int
+  month           Int      @default(0) // 1-12; the number carries the month, e.g. GN-Q-2026-NOV-0001, and restarts each month
   seq             Int?
   customerId      String
   contactName     String?
@@ -413,7 +414,7 @@ model Quotation {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   tasks    Task[]
 
-  @@unique([companyId, year, seq])
+  @@unique([companyId, year, month, seq])
   @@index([customerId])
 }
 

@@ -21,7 +21,10 @@ export default async function DirectorLayout({
   const pendingApprovalCount = await prisma.approvalRequest.count({
     where: { approverId: membership.id, status: "PENDING" },
   });
-  const attendanceEntry = await clockInIfNeeded(membership.id);
+  // A director's attendance always sits on their first membership, whichever company they have switched to,
+  // so switching company never clocks them in a second time.
+  const home = await prisma.membership.findFirst({ where: { userId: membership.userId }, orderBy: { createdAt: "asc" } });
+  const attendanceEntry = await clockInIfNeeded((home ?? membership).id);
   const taskNotificationCount = await getUnreadTaskNotificationCount(membership.id);
 
   const theme = getCompanyTheme(membership.company.slug);

@@ -284,6 +284,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
           { k: "for", label: "For", type: "select", options: ["New tender", "Variation", "Rectification works", "Additional works", "Price revision"] },
           { k: "client", label: "Client", type: "who", options: ["Client", "Main contractor", "Consultant", "Developer"], nameOptional: true },
           { k: "status", label: "Status", type: "select", options: ["In progress", "Sent to Ram for review", "Approved internally", "Sent to client"] },
+          { k: "amount", label: "Estimated value (AED) — private", type: "amount", optional: true },
         ],
       },
       {
@@ -294,6 +295,7 @@ export const PROJECT_PROFILES: Record<string, PProfile> = {
           { k: "rev", label: "Revision", type: "select", options: REV },
           { k: "status", label: "Where it stands", type: "select", options: ["With the client", "Negotiating", "Awarded", "Not awarded", "On hold"] },
           { k: "to", label: "Sent to", type: "who", options: ["Client", "Main contractor", "Consultant", "Developer"], nameOptional: true },
+          { k: "amount", label: "Quoted value (AED) — private", type: "amount", optional: true },
         ],
       },
       {

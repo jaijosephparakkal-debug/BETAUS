@@ -253,5 +253,9 @@ export async function getLiveKpis(userId: string, monthKey?: string) {
 
 const AMOUNT_VIEWERS = ["abraham@flaretechnical.com", "jai@gasneeds.com"];
 /** AED KPIs: the person themselves, Abraham and Jai. */
-export const canSeePrivateKpis = (viewerEmail: string, ownerEmail: string) =>
-  viewerEmail.toLowerCase() === ownerEmail.toLowerCase() || AMOUNT_VIEWERS.includes(viewerEmail.toLowerCase());
+export const canSeePrivateKpis = (viewerEmail: string, ownerEmail: string) => {
+  const v = viewerEmail.toLowerCase();
+  // Saroj's estimation figures: Saroj and Abraham only.
+  if (ownerEmail.toLowerCase() === "saroj@flaretechnical.com") return v === "saroj@flaretechnical.com" || v.startsWith("abraham@");
+  return v === ownerEmail.toLowerCase() || AMOUNT_VIEWERS.includes(v);
+};

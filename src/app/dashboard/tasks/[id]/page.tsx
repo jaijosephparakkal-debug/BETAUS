@@ -3,6 +3,9 @@ import { taskForLabel } from "@/lib/taskFor";
 import { notFound, redirect } from "next/navigation";
 
 const AMOUNT_VIEWERS = ["abraham@flaretechnical.com", "jai@gasneeds.com"];
+// Estimation figures (AED) are for Saroj and Abraham only.
+const ESTIMATION_KINDS = ["ESTIMATE", "PROJECT_QUOTATION", "SUPPLIER_PRICE"];
+const ESTIMATION_VIEWERS = ["abraham@flaretechnical.com", "abraham@gasneeds.com", "saroj@flaretechnical.com"];
 import { prisma } from "@/lib/db";
 import { getProjectOptions } from "@/lib/queries";
 import { getCurrentMembership, isManagerOf } from "@/lib/auth";
@@ -60,7 +63,9 @@ export default async function TaskDetailPage({
   const privateAmount =
     typeof rawAmount === "number" &&
     task &&
-    (task.assignedTo.userId === membership.userId || AMOUNT_VIEWERS.includes(membership.user.email.toLowerCase()))
+    (ESTIMATION_KINDS.includes(task.logKind ?? "")
+      ? ESTIMATION_VIEWERS.includes(membership.user.email.toLowerCase())
+      : task.assignedTo.userId === membership.userId || AMOUNT_VIEWERS.includes(membership.user.email.toLowerCase()))
       ? rawAmount
       : null;
   // Company access check by person, not by whichever membership/company

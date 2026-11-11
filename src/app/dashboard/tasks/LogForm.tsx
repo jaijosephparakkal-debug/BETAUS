@@ -7,7 +7,7 @@ import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
   PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
-  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, LEAD_SOURCES, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
 
 export type LogData = {
   companies: { id: string; slug: string; name: string }[];
@@ -354,6 +354,7 @@ export function LogForm({ data }: { data: LogData }) {
           </Field>
           <Field label="Quantity" tag="type"><input name="quantity" placeholder="e.g. 10" className={sel} /></Field>
           <Field label="How it came in" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Lead source" tag="pick"><select name="leadSource" className={sel}>{LEAD_SOURCES.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Where it stands" tag="pick"><select name="enqStatus" className={sel}>{ENQ_STATUS.map((c) => <option key={c}>{c}</option>)}</select></Field>
         </div>
       )}
@@ -473,15 +474,15 @@ export function LogForm({ data }: { data: LogData }) {
             <SupplierPick key={`${kind}-${f.n}`} suppliers={suppliers} value={supplierId} onChange={setSupplierId} />
           ) : f.t === "staff" ? (
             <Field key={`${kind}-${f.n}`} label={f.l} tag="pick">
-              <select name={f.n} required className={sel} defaultValue="">
-                <option value="" disabled>Choose from the staff directory…</option>
+              <select name={f.n} required={f.req} className={sel} defaultValue="">
+                <option value="" disabled={!!f.req}>{f.req ? "Choose from the staff directory…" : "Myself or not needed"}</option>
                 {data.employees.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}
               </select>
             </Field>
           ) : f.t === "project" ? (
             <Field key={`${kind}-${f.n}`} label={f.l} tag="pick">
-              <select name={f.n} required className={sel} defaultValue="">
-                <option value="" disabled>Choose project…</option>
+              <select name={f.n} required={f.req} className={sel} defaultValue="">
+                <option value="" disabled={!!f.req}>{f.req ? "Choose project…" : "No project"}</option>
                 {(data.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}</option>)}
               </select>
             </Field>

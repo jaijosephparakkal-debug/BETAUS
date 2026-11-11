@@ -180,6 +180,10 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
         vals[f.n] = x.name;
         continue;
       }
+      if ((f.t === "staff" || f.t === "project") && !f.req && !s(f.n)) {
+        vals[f.n] = "";
+        continue;
+      }
       if (f.t === "staff") {
         const e = await prisma.employee.findFirst({ where: { name: s(f.n) }, select: { id: true } });
         if (!e) return { error: `${f.l}: choose from the staff directory.` };
@@ -193,6 +197,11 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
         continue;
       }
       vals[f.n] = s(f.n);
+    }
+    if (vals.link) {
+      const l = cleanLink(vals.link);
+      if (!l) return { error: "That link does not look right. Paste the full web address." };
+      vals.link = l;
     }
     if (g.parentFrom && vals[g.parentFrom]) parentOverride = vals[g.parentFrom];
     for (const f of g.fields) if (f.req && !vals[f.n]) return { error: `${f.l}: fill this in.` };
@@ -322,8 +331,9 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     if (!category || !product) return { error: "Choose the product." };
     title = s("enqStatus") || "Enquiry received";
     forPerson = customer!.name;
-    summary = `${customer!.name} · ${product}${s("quantity") ? ` × ${s("quantity")}` : ""} · ${s("channel")} · ${title}`;
-    Object.assign(details, { productCategory: category, product, quantity: s("quantity") || null, channel: s("channel"), status: title });
+    const leadSource = s("leadSource") || null;
+    summary = `${customer!.name} · ${product}${s("quantity") ? ` × ${s("quantity")}` : ""} · ${s("channel")}${leadSource ? ` · from ${leadSource}` : ""} · ${title}`;
+    Object.assign(details, { productCategory: category, product, quantity: s("quantity") || null, channel: s("channel"), status: title, leadSource });
   } else if (kind === "po") {
     const sup = await pickSupplier();
     if (typeof sup === "string") return { error: sup };

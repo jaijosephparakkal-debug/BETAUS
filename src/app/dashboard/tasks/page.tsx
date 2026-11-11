@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
+import { RequestContent } from "./RequestContent";
 import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
@@ -190,6 +191,13 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
     }
   }
 
+  // Anyone except Jai can ask Jai for a design or content; Jai sees the open requests.
+  const isJai = membership.user.email.toLowerCase() === "jai@gasneeds.com";
+  const requestProjects = isJai ? [] : await prisma.project.findMany({ where: { type: "PROJECT", company: { slug: "flaretechnical" } }, orderBy: { name: "asc" }, select: { id: true, name: true, number: true } });
+  const openRequests = isJai
+    ? await prisma.task.findMany({ where: { assignedToId: membership.id, logKind: "CONTENT_REQUEST", status: { not: "COMPLETED" } }, orderBy: { deadline: "asc" }, take: 30 })
+    : [];
+
   // Follow-ups that are due today or overdue (Dubai day), for the person's own list.
   const endOfToday = new Date(Math.floor((Date.now() + 4 * 3600 * 1000) / 86400000) * 86400000 + 86400000 - 4 * 3600 * 1000);
   const startOfToday = new Date(endOfToday.getTime() - 86400000);
@@ -219,6 +227,18 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
               </a>
             );
           })}
+        </div>
+      )}
+      {!isJai && !membership.viewingAs && <RequestContent projects={requestProjects} />}
+      {isJai && openRequests.length > 0 && (
+        <div className="rounded-lg border border-brand-300 bg-brand-50 p-3">
+          <div className="mb-1 text-[19px] font-semibold text-slate-900">Requests for you — {openRequests.length}</div>
+          {openRequests.map((t) => (
+            <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block py-1 text-[17px] hover:underline">
+              {t.title}
+              <span className="text-slate-500">{" · "}{t.description?.split(" · ")[0]}{t.deadline ? ` · by ${t.deadline.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Dubai" })}` : ""}</span>
+            </a>
+          ))}
         </div>
       )}
       {useLogForm && logData ? (

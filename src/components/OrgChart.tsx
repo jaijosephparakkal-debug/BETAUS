@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { OrgNode } from "@/lib/queries";
+import { Avatar } from "@/components/Avatar";
 
 function OrgNodeCard({ node }: { node: OrgNode }) {
   return (
@@ -10,6 +11,7 @@ function OrgNodeCard({ node }: { node: OrgNode }) {
           : "border-brand-200 bg-surface hover:border-brand-200"
       }`}
     >
+      {node.photo && <Avatar name={node.name} photo={node.photo} size={56} className="mx-auto mb-1.5" />}
       <div className="truncate text-[19px] font-semibold text-slate-900">
         {node.name}
       </div>
@@ -84,12 +86,16 @@ function initials(name: string) {
 function PersonRow({ node, href, color, lead }: { node: OrgNode; href: string | null; color: string; lead: boolean }) {
   const body = (
     <div className="flex items-center gap-3">
-      <div
-        className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${lead ? "h-11 w-11 text-[16px] text-white" : "h-9 w-9 text-[13px]"}`}
-        style={lead ? { background: color } : { background: `${color}1a`, color }}
-      >
-        {initials(node.name)}
-      </div>
+      {node.photo ? (
+        <Avatar name={node.name} photo={node.photo} size={lead ? 44 : 36} />
+      ) : (
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${lead ? "h-11 w-11 text-[16px] text-white" : "h-9 w-9 text-[13px]"}`}
+          style={lead ? { background: color } : { background: `${color}1a`, color }}
+        >
+          {initials(node.name)}
+        </div>
+      )}
       <div className="min-w-0">
         <div className={`break-words leading-snug text-slate-900 ${lead ? "text-[18px] font-semibold" : "text-[16px] font-medium"}`}>{node.name}</div>
         <div className="break-words text-[14px] leading-snug text-slate-500">{node.title}</div>

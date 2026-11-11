@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/Avatar";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -47,9 +48,12 @@ export default async function TeamMemberPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[23px] font-semibold text-slate-900">{target.user.name}</h1>
-          <div className="text-[19px] text-slate-500">{target.title}</div>
+        <div className="flex items-center gap-3">
+          <Avatar name={target.user.name} email={target.user.email} size={60} />
+          <div>
+            <h1 className="text-[23px] font-semibold text-slate-900">{target.user.name}</h1>
+            <div className="text-[19px] text-slate-500">{target.title}</div>
+          </div>
         </div>
         <a
           href={`/api/reports/my-kpi?membershipId=${target.id}`}

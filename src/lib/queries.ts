@@ -1,3 +1,4 @@
+import { staffPhoto } from "@/lib/staffPhotos";
 import { prisma } from "@/lib/db";
 import { staffWhere, hasStaffProfile, shownInCompany } from "@/lib/visibleStaff";
 
@@ -322,6 +323,8 @@ export type OrgNode = {
   title: string;
   department: string | null;
   isDirector: boolean;
+  /** Headshot path, if we have one. */
+  photo: string | null;
   /** Has a staff profile page for directors to open (everyone but the Managing Director). */
   hasProfile: boolean;
   children: OrgNode[];
@@ -356,6 +359,7 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
       title: m.title,
       department: m.department,
       isDirector: m.isDirector,
+      photo: staffPhoto(m.user.email),
       hasProfile: hasStaffProfile(m.user.email),
       children: (childrenOf.get(id) ?? []).map(build),
     };

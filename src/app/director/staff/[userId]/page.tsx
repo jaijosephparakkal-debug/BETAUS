@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/Avatar";
 import Link from "next/link";
 import { startViewAsAction } from "@/app/director/view-as/actions";
 import { groupKpis } from "@/lib/kpiSections";
@@ -247,7 +248,9 @@ export default async function StaffProfilePage({
 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="flex items-start gap-4">
+          <Avatar name={person.name} email={person.email} size={72} />
+          <div>
           <h1 className="text-[26px] font-semibold text-slate-900">{person.name}</h1>
           <div className="mt-1 space-y-1">
             {memberships.map((m) => (
@@ -260,6 +263,7 @@ export default async function StaffProfilePage({
             ))}
           </div>
           <div className="mt-1 text-[15px] text-slate-400">{person.email}</div>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           {memberships.map((m) => (

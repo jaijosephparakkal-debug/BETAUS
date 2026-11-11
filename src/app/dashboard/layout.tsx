@@ -23,9 +23,6 @@ export default async function DashboardLayout({
   // little latency for much lower peak connection pressure on the database.
   const reportCount = await prisma.membership.count({ where: { managerId: membership.id } });
   const membershipCount = await getMembershipCount();
-  const pendingApprovalCount = await prisma.approvalRequest.count({
-    where: { approverId: membership.id, status: "PENDING" },
-  });
   // While a director is viewing as someone, never clock that person in or out.
   const attendanceEntry = membership.viewingAs ? null : await clockInIfNeeded(membership.id);
   const taskNotificationCount = await getUnreadTaskNotificationCount(membership.id);
@@ -41,7 +38,6 @@ export default async function DashboardLayout({
         membership={membership}
         reportCount={reportCount}
         membershipCount={membershipCount}
-        pendingApprovalCount={pendingApprovalCount}
         taskNotificationCount={taskNotificationCount}
         clockInIso={attendanceEntry ? attendanceEntry.clockIn.toISOString() : null}
         autoClockedOut={!attendanceEntry && !membership.viewingAs}

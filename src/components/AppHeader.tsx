@@ -10,7 +10,6 @@ export function AppHeader({
   membership,
   reportCount,
   membershipCount,
-  pendingApprovalCount = 0,
   taskNotificationCount = 0,
   clockInIso = null,
   autoClockedOut = false,
@@ -19,7 +18,6 @@ export function AppHeader({
   membership: FullMembership;
   reportCount: number;
   membershipCount: number;
-  pendingApprovalCount?: number;
   taskNotificationCount?: number;
   clockInIso?: string | null;
   autoClockedOut?: boolean;
@@ -59,7 +57,6 @@ export function AppHeader({
     ...(reportCount > 0 && !isManagingDirector(membership)
       ? [{ href: "/dashboard/team", label: "My Team" }]
       : []),
-    { href: "/dashboard/approvals", label: "Approvals", badge: pendingApprovalCount },
     ...(membership.isDirector
       ? [
           ...(canManageAllStaff(membership) ? [{ href: "/director/staff", label: "Manage My Staff" }] : []),

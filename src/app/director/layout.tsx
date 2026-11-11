@@ -18,9 +18,6 @@ export default async function DirectorLayout({
   // Sequential rather than Promise.all — see dashboard/layout.tsx for why.
   const reportCount = await prisma.membership.count({ where: { managerId: membership.id } });
   const membershipCount = await getMembershipCount();
-  const pendingApprovalCount = await prisma.approvalRequest.count({
-    where: { approverId: membership.id, status: "PENDING" },
-  });
   // A director's attendance always sits on their first membership, whichever company they have switched to,
   // so switching company never clocks them in a second time.
   const home = await prisma.membership.findFirst({ where: { userId: membership.userId }, orderBy: { createdAt: "asc" } });
@@ -38,7 +35,6 @@ export default async function DirectorLayout({
         membership={membership}
         reportCount={reportCount}
         membershipCount={membershipCount}
-        pendingApprovalCount={pendingApprovalCount}
         taskNotificationCount={taskNotificationCount}
         clockInIso={attendanceEntry ? attendanceEntry.clockIn.toISOString() : null}
         autoClockedOut={!attendanceEntry}

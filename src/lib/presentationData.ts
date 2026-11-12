@@ -219,6 +219,29 @@ export async function buildDeckData(userId: string, themeSlug: string, range: Pe
     }
   }
 
+  // Attendance days the person edited in this period, and how many times.
+  const editedRows = await prisma.attendanceEntry.findMany({
+    where: { membershipId: { in: ids }, isManual: true, clockIn: { gte: P.start, lt: P.end } },
+    orderBy: { clockIn: "asc" },
+  });
+  const hm = (d: Date) => {
+    const t = new Date(d.getTime() + DUBAI);
+    return `${String(t.getUTCHours()).padStart(2, "0")}:${String(t.getUTCMinutes()).padStart(2, "0")}`;
+  };
+  const attendanceEdits = {
+    days: new Set(editedRows.map((e) => dubaiDay(e.clockIn))).size,
+    times: editedRows.reduce((s, e) => s + Math.max(1, e.editCount), 0),
+    rows: editedRows.slice(0, 8).map((e) => {
+      const dt = new Date(e.clockIn.getTime() + DUBAI);
+      return {
+        date: `${dt.getUTCDate()} ${MON[dt.getUTCMonth()]}`,
+        was: e.origClockIn ? `${hm(e.origClockIn)}${e.origClockOut ? `-${hm(e.origClockOut)}` : ""}` : "no entry",
+        now: `${hm(e.clockIn)}${e.clockOut ? `-${hm(e.clockOut)}` : ""}`,
+        note: (e.manualNote ?? "").slice(0, 60),
+      };
+    }),
+  };
+
   const person = home.user;
   const deck: Deck = {
     company: home.company.slug === "gasneeds" ? "gasneeds" : "flaretechnical",
@@ -245,6 +268,7 @@ export async function buildDeckData(userId: string, themeSlug: string, range: Pe
     open,
     handedOpen,
     fortnights,
+    attendanceEdits,
   };
   const { staffPhoto } = await import("@/lib/staffPhotos");
   return {

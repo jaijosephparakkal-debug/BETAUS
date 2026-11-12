@@ -22,7 +22,12 @@ export function reconcileEndLabel(email: string) {
   return EXTENDED[email.toLowerCase()]?.label ?? RECONCILE_WINDOW.endLabel;
 }
 
+/** Staff can correct their own days at any time; every edit is flagged, counted and shown in their review report. */
 export function isReconcileOpen(email: string, now = new Date()) {
+  return true;
+}
+
+export function isReconcileWindowOpen(email: string, now = new Date()) {
   const m = dubaiMinutesOfDay(now);
   const sp = SPECIAL[email.toLowerCase()];
   if (sp && dubaiDateKey(now) === sp.date && m >= sp.startMin && m < sp.endMin) return true;

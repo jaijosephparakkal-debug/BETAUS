@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
 import { cancelClockOutReminder } from "@/lib/clockOutReminder";
-import { isReconcileOpen, canBulkReconcile, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
+import { canBulkReconcile, RECONCILE_FROM } from "@/lib/reconcile";
 
 type State = { error?: string; ok?: boolean };
 
@@ -27,13 +27,9 @@ function checkTimes(dateKey: string, inT: string, outT: string, note: string, no
   return { clockIn, clockOut } as const;
 }
 
-const closedMsg = `The reconciliation window (${RECONCILE_WINDOW.label}) is closed.`;
-
 export async function saveEntryAction(entryId: string, _prev: State | undefined, formData: FormData): Promise<State> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
-
   const entry = await prisma.attendanceEntry.findUnique({ where: { id: entryId }, include: { membership: true } });
   if (!entry || entry.membership.userId !== me.userId) return { error: "Entry not found." };
 
@@ -52,10 +48,12 @@ export async function saveEntryAction(entryId: string, _prev: State | undefined,
       isManual: true,
       manualNote: note.trim(),
       manualAt: now,
+      editCount: { increment: 1 },
       ...(entry.isManual ? {} : { origClockIn: entry.clockIn, origClockOut: entry.clockOut }),
     },
   });
   revalidatePath("/dashboard/reconcile");
+  revalidatePath("/dashboard");
   revalidatePath("/director/attendance");
   return { ok: true };
 }
@@ -63,8 +61,6 @@ export async function saveEntryAction(entryId: string, _prev: State | undefined,
 export async function addEntryAction(_prev: State | undefined, formData: FormData): Promise<State> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
-
   const membershipId = String(formData.get("membershipId") || "");
   const mine = await prisma.membership.findFirst({ where: { id: membershipId, userId: me.userId } });
   if (!mine) return { error: "Choose one of your own roles." };
@@ -88,9 +84,11 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
       isManual: true,
       manualNote: note.trim(),
       manualAt: now,
+      editCount: 1,
     },
   });
   revalidatePath("/dashboard/reconcile");
+  revalidatePath("/dashboard");
   revalidatePath("/director/attendance");
   return { ok: true };
 }
@@ -98,7 +96,6 @@ export async function addEntryAction(_prev: State | undefined, formData: FormDat
 export async function addBulkEntriesAction(rows: { date: string; in: string; out: string }[]): Promise<{ error?: string; added?: number }> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
   if (!canBulkReconcile(me.user.email)) return { error: "Not available for your account." };
   if (rows.length === 0 || rows.length > 40) return { error: "Nothing to save." };
 
@@ -130,8 +127,6 @@ export async function addBulkEntriesAction(rows: { date: string; in: string; out
 export async function deleteManualEntryAction(entryId: string): Promise<State> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!isReconcileOpen(me.user.email)) return { error: closedMsg };
-
   const entry = await prisma.attendanceEntry.findUnique({ where: { id: entryId }, include: { membership: true } });
   if (!entry || entry.membership.userId !== me.userId) return { error: "Entry not found." };
   if (!entry.isManual || entry.origClockIn) return { error: "Only an entry added by hand can be removed." };

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { DUBAI_OFFSET_MS, dubaiDateKey } from "@/lib/attendance";
-import { isReconcileOpen, reconcileEndLabel, RECONCILE_FROM, RECONCILE_WINDOW } from "@/lib/reconcile";
+import { isReconcileOpen, RECONCILE_FROM } from "@/lib/reconcile";
 import { EntryForm, AddForm, RemoveButton } from "./ReconcileForms";
 
 function hhmm(d: Date) {
@@ -42,16 +42,18 @@ export default async function ReconcilePage() {
       <div>
         <h1 className="text-[23px] font-semibold text-slate-900">Reconcile my attendance</h1>
         <p className="text-[19px] text-slate-500">
-          {open
-            ? `The window is open until ${reconcileEndLabel(me.user.email)}. Correct a login/logout time or add a missed shift, with a reason. Every change is flagged as “Corrected manually” in attendance reports.`
-            : `The reconciliation window is open ${RECONCILE_WINDOW.label} (29 Oct 2026). It is closed right now, so these records are read-only.`}
+          Correct a login or logout time, or add a shift on a day you missed, with a reason. Every change is flagged as “Corrected manually”, and the number of days and times you edited is shown in your two-week and monthly review report.
         </p>
       </div>
+      {(() => {
+        const edited = new Set(entries.filter((e) => e.isManual && e.clockIn >= new Date(Date.now() - 14 * 86400000)).map((e) => dubaiDateKey(e.clockIn)));
+        return <p className="text-[17px] text-slate-500">Days you edited in the last 14 days: <b>{edited.size}</b></p>;
+      })()}
       {days.map((day) => {
         const list = byDay.get(day) ?? [];
         return (
           <Card key={day}>
-            <div className="mb-2 text-[19px] font-semibold text-slate-900">
+            <div id={`d-${day}`} className="mb-2 scroll-mt-40 text-[19px] font-semibold text-slate-900">
               {new Date(`${day}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}
             </div>
             <div className="space-y-2">
@@ -69,7 +71,8 @@ export default async function ReconcilePage() {
                     />
                     {e.isManual && (
                       <div className="flex flex-wrap items-center gap-3 text-[15px] text-amber-700">
-                        <span>Corrected manually</span>
+                        <span>Corrected manually{e.editCount > 0 ? ` · edited ${e.editCount} ${e.editCount === 1 ? "time" : "times"}` : ""}</span>
+                        {e.origClockIn && <span className="text-slate-500">Original: {hhmm(e.origClockIn)}{e.origClockOut ? `–${hhmm(e.origClockOut)}` : ""}</span>}
                         {open && !e.origClockIn && <RemoveButton entryId={e.id} />}
                       </div>
                     )}

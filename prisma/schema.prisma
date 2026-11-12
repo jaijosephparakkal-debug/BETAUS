@@ -115,6 +115,7 @@ model AttendanceEntry {
   isManual     Boolean   @default(false) // set when the times were entered/changed by hand in a reconciliation window
   manualNote   String? // the reason the person gave for the manual change
   manualAt     DateTime? // when the manual change was made
+  editCount    Int       @default(0) // how many times the person edited this day
   origClockIn  DateTime? // the recorded times before the first manual change (null for entries added by hand)
   origClockOut DateTime?
   reminderDay  String? // "YYYY-MM-DD" (Dubai) a clock-out reminder email was scheduled for — see src/lib/clockOutReminder.ts

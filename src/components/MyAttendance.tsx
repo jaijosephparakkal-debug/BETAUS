@@ -31,6 +31,7 @@ export async function MyAttendance({ userId, monthParam, base = "/dashboard" }: 
           </p>
         </div>
         <div className="flex items-center gap-2 text-[17px]">
+          <Link href="/dashboard/reconcile" className="rounded-full bg-accent px-3 py-1 font-semibold text-on-accent hover:opacity-90">Edit my days</Link>
           <Link href={`${base}?month=${monthKey(prev.year, prev.month)}#attendance`} className="rounded-full border border-white/30 px-3 py-1 text-white hover:bg-white/10">← Prev</Link>
           {!isCurrent && <Link href={`${base}#attendance`} className="rounded-full border border-white/30 px-3 py-1 text-white hover:bg-white/10">This month</Link>}
           {!isCurrent && <Link href={`${base}?month=${monthKey(next.year, next.month)}#attendance`} className="rounded-full border border-white/30 px-3 py-1 text-white hover:bg-white/10">Next →</Link>}
@@ -48,8 +49,8 @@ export async function MyAttendance({ userId, monthParam, base = "/dashboard" }: 
           const absent = !rec && !onLeave && isWorkingDay(k) && k >= person.joined && k < todayKey;
           const cls = rec ? (rec.late ? "bg-amber-400/20" : "bg-emerald-400/20") : onLeave ? "bg-sky-400/20" : absent ? "bg-red-500/25" : isHoliday(k) ? "bg-white/5" : "bg-white/[0.03]";
           return (
-            <div key={i} className={`min-h-[64px] rounded-lg p-1.5 text-left ${cls} ${k === todayKey ? "ring-2 ring-inset ring-accent" : ""}`}>
-              <div className="text-[13px] text-[#c9d2da]">{d}</div>
+            <Link key={i} href={`/dashboard/reconcile#d-${k}`} title="Edit this day" className={`block min-h-[64px] rounded-lg p-1.5 text-left hover:ring-2 hover:ring-accent ${cls} ${k === todayKey ? "ring-2 ring-inset ring-accent" : ""}`}>
+              <div className="flex items-center justify-between text-[13px] text-[#c9d2da]"><span>{d}</span>{rec?.corrected && <span className="rounded bg-white/15 px-1 text-[10px] leading-4 text-white">edited</span>}</div>
               {rec ? (
                 <div className="text-[12px] leading-tight text-white">
                   <div>{rec.first}</div>
@@ -62,12 +63,12 @@ export async function MyAttendance({ userId, monthParam, base = "/dashboard" }: 
               ) : isHoliday(k) ? (
                 <div className="text-[12px] text-[#9fb0bc]">Off</div>
               ) : null}
-            </div>
+            </Link>
           );
         })}
       </div>
       <p className="mt-2 text-[14px] text-[#9fb0bc]">
-        Green = logged in (first login and last logout). Amber = a late first login. Blue = annual leave. Red = no login on a working day. Only you can see this.
+        Green = logged in (first login and last logout). Amber = a late first login. Blue = annual leave. Red = no login on a working day. “edited” = you corrected that day. Tap any day to edit it; the number of days you edit is shown in your review report.
       </p>
     </Card>
   );

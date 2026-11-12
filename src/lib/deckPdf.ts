@@ -26,6 +26,7 @@ export type Deck = {
   open: { due: string; title: string; overdue: boolean }[];
   handedOpen: number;
   fortnights?: { label: string; entries: number; onTime: number | null; passed: number }[];
+  attendanceEdits?: { days: number; times: number; rows: { date: string; was: string; now: string; note: string }[] };
 };
 
 export type DeckAssets = { logo: Uint8Array; logoIsPng: boolean; art: Uint8Array; photo?: Uint8Array };
@@ -335,6 +336,33 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
       s.line(64, y + 24, 896, y + 24, th.ice, 0.5, 0.13);
     });
     if (deck.deliveries.length === 0) s.text("No entries in this period.", 64, 154, { size: 12, color: th.ice, op: 0.7 });
+  });
+
+  // ---- Attendance edits ----
+  slides.push((s, n, total) => {
+    bg(s, 0.3);
+    chrome(s, "Attendance", "Days you edited", n, total);
+    s.panel(44, 110, 872, 380);
+    const a = deck.attendanceEdits ?? { days: 0, times: 0, rows: [] };
+    s.text(String(a.days), 64, 126, { size: 44, bold: true, color: th.hi });
+    s.text(a.days === 1 ? "day edited" : "days edited", 64, 178, { size: 12, color: th.ice, op: 0.85 });
+    s.text(String(a.times), 230, 126, { size: 44, bold: true });
+    s.text(a.times === 1 ? "edit made" : "edits made", 230, 178, { size: 12, color: th.ice, op: 0.85 });
+    s.text(a.days === 0 ? "No attendance days were edited in this period." : "Attendance days you corrected yourself, with the reason you gave.", 64, 206, { size: 10.5, color: th.ice, op: 0.75 });
+    if (a.rows.length) {
+      s.text("DAY", 64, 236, { size: 8.5, bold: true, color: th.ice, op: 0.7 });
+      s.text("WAS", 150, 236, { size: 8.5, bold: true, color: th.ice, op: 0.7 });
+      s.text("NOW", 300, 236, { size: 8.5, bold: true, color: th.ice, op: 0.7 });
+      s.text("REASON", 450, 236, { size: 8.5, bold: true, color: th.ice, op: 0.7 });
+      a.rows.forEach((r, i) => {
+        const y = 256 + i * 28;
+        s.text(r.date, 64, y, { size: 11, bold: true });
+        s.text(r.was, 150, y, { size: 11, color: th.ice, op: 0.8 });
+        s.text(r.now, 300, y, { size: 11 });
+        s.text(r.note, 450, y, { size: 10.5, color: th.ice, op: 0.85, max: 440 });
+        s.line(64, y + 20, 896, y + 20, th.ice, 0.5, 0.13);
+      });
+    }
   });
 
   // ---- 8. KPI snapshot ----

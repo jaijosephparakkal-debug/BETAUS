@@ -2,14 +2,16 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { canManageAllStaff, getCurrentMembership } from "@/lib/auth";
 import { Card } from "@/components/ui";
-import { RECIPIENTS, buildEmail } from "@/lib/rolloutEmail";
-import { SendButton } from "./SendButton";
+import { RECIPIENTS, buildEmail, ML_RECIPIENTS, buildMalayalamEmail } from "@/lib/rolloutEmail";
+import { SendButton, SendMalayalamButton } from "./SendButton";
 
 export default async function RolloutPage() {
   const m = await getCurrentMembership();
   if (!m || !canManageAllStaff(m)) redirect("/dashboard");
   const done = await prisma.numberCounter.findUnique({ where: { key: "rollout-email-2026-11" } });
   const sample = buildEmail(RECIPIENTS[0]);
+  const mlDone = await prisma.numberCounter.findUnique({ where: { key: "rollout-email-ml-2026-11" } });
+  const mlSample = buildMalayalamEmail(ML_RECIPIENTS[0]);
   return (
     <div className="space-y-4">
       <h1 className="text-[23px] font-semibold text-slate-900">Roll-out email</h1>
@@ -30,7 +32,14 @@ export default async function RolloutPage() {
       </Card>
       <Card>
         <p className="mb-2 text-[19px] font-medium text-slate-800">Preview, as it reads for {RECIPIENTS[0].name}</p>
-        <div className="rounded-lg border border-slate-200 bg-white p-4" dangerouslySetInnerHTML={{ __html: sample.html }} />
+        <div className="rounded-lg p-4" style={{ background: "#fff" }} dangerouslySetInnerHTML={{ __html: sample.html }} />
+      </Card>
+      <Card>
+        <p className="mb-2 text-[19px] font-medium text-slate-800">
+          Malayalam email for {ML_RECIPIENTS.map((r) => r.name).join(" and ")}
+        </p>
+        <div className="mb-4"><SendMalayalamButton alreadySent={!!mlDone} /></div>
+        <div className="rounded-lg p-4" style={{ background: "#fff" }} dangerouslySetInnerHTML={{ __html: mlSample.html }} />
       </Card>
     </div>
   );

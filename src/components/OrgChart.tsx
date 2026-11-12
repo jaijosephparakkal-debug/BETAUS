@@ -141,7 +141,7 @@ function Reports({ nodes, staffLinks, color }: { nodes: OrgNode[]; staffLinks: b
 function TeamCard({ node, staffLinks, color }: { node: OrgNode; staffLinks: boolean; color: string }) {
   const href = staffLinks && node.hasProfile ? `/director/staff/${node.userId}` : null;
   return (
-    <div className="overflow-hidden rounded-xl border bg-surface shadow-sm" style={{ borderColor: `${color}33` }}>
+    <div className="overflow-hidden rounded-xl border bg-surface shadow-sm" style={{ borderColor: `${color}33` }} data-org-team>
       <div className="h-1" style={{ background: color }} />
       <div className="p-4">
         {node.department && (

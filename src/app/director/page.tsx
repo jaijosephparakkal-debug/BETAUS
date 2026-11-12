@@ -14,6 +14,7 @@ import { Card, SegmentedDonut, StatusBadge, CompanyTag, formatDate } from "@/com
 import { MergedOrgChart } from "@/components/OrgChart";
 import { staffPhoto } from "@/lib/staffPhotos";
 import { MyAttendance } from "@/components/MyAttendance";
+import { DeckDownload } from "@/components/DeckDownload";
 import { getCompanyTheme } from "@/lib/theme";
 import { dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
@@ -280,6 +281,7 @@ export default async function DirectorPage({ searchParams }: { searchParams: { m
       </Card>
 
       <MyAttendance userId={membership.userId} monthParam={searchParams.month} base="/director" />
+      <DeckDownload />
 
       <Card>
         <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Combined performance</h2>

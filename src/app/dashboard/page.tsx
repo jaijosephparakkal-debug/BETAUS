@@ -12,6 +12,7 @@ import {
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 import { OrgChart } from "@/components/OrgChart";
 import { MyAttendance } from "@/components/MyAttendance";
+import { DeckDownload } from "@/components/DeckDownload";
 
 export default async function DashboardOverviewPage({ searchParams }: { searchParams: { month?: string } }) {
   const membership = await getCurrentMembership();
@@ -63,6 +64,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
       )}
 
       <MyAttendance userId={membership.userId} monthParam={searchParams.month} />
+      <DeckDownload />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

@@ -47,7 +47,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-[16px] ${on ? "border-ink bg-ink text-white shadow-md" : "border-slate-300 bg-white text-slate-700 hover:border-ink"}`}
+      className={`rounded-full border px-3 py-1 text-[16px] ${on ? "border-accent bg-accent text-on-accent shadow-md" : "border-slate-300 bg-white text-slate-700 hover:border-accent"}`}
     >
       {children}
     </button>

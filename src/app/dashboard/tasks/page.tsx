@@ -281,12 +281,12 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       )}
       {!isJai && !membership.viewingAs && <RequestContent projects={requestProjects} />}
       {isJai && openRequests.length > 0 && (
-        <div className="rounded-lg border border-brand-300 bg-brand-50 p-3">
-          <div className="mb-1 text-[19px] font-semibold text-slate-900">Requests for you — {openRequests.length}</div>
+        <div className="panel-ink art-flip rounded-2xl p-5 shadow-lg">
+          <div className="mb-1 text-[19px] font-semibold text-white">Requests for you — {openRequests.length}</div>
           {openRequests.map((t) => (
-            <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block py-1 text-[17px] hover:underline">
+            <a key={t.id} href={`/dashboard/tasks/${t.id}`} className="block py-1 text-[17px] text-white hover:underline">
               {t.title}
-              <span className="text-slate-500">{" · "}{t.description?.split(" · ")[0]}{t.deadline ? ` · by ${t.deadline.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Dubai" })}` : ""}</span>
+              <span className="text-[#c9d2da]">{" · "}{t.description?.split(" · ")[0]}{t.deadline ? ` · by ${t.deadline.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Dubai" })}` : ""}</span>
             </a>
           ))}
         </div>

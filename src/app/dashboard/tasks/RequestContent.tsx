@@ -18,28 +18,28 @@ function Send() {
 export function RequestContent({ projects }: { projects: { id: string; name: string; number: string | null }[] }) {
   const [state, action] = useFormState(requestContentAction, {});
   return (
-    <details className="rounded-lg border border-brand-200 bg-white p-3">
-      <summary className="cursor-pointer text-[19px] font-semibold text-slate-900">Need a design, video or content? Ask Jai</summary>
+    <details className="panel-ink art-flip art-soft rounded-2xl p-4 shadow-lg">
+      <summary className="cursor-pointer text-[19px] font-semibold text-white">Need a design, video or content? Ask Jai</summary>
       <form action={action} className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="block text-[16px] text-slate-600">What you need
+        <label className="block text-[16px] text-[#c9d2da]">What you need
           <select name="type" className={sel}>{REQUEST_TYPES.map((t) => <option key={t}>{t}</option>)}</select>
         </label>
-        <label className="block text-[16px] text-slate-600">For
+        <label className="block text-[16px] text-[#c9d2da]">For
           <select name="for" className={sel}>{MKT_FOR.map((t) => <option key={t}>{t}</option>)}</select>
         </label>
-        <label className="block text-[16px] text-slate-600">Project (if it is for one)
+        <label className="block text-[16px] text-[#c9d2da]">Project (if it is for one)
           <select name="projectId" className={sel} defaultValue="">
             <option value="">No project</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}</option>)}
           </select>
         </label>
-        <label className="block text-[16px] text-slate-600">Needed by
+        <label className="block text-[16px] text-[#c9d2da]">Needed by
           <input type="date" name="needBy" required className={sel} />
         </label>
-        <label className="block text-[16px] text-slate-600">Link to the brief or files (Drive, Zoho…)
+        <label className="block text-[16px] text-[#c9d2da]">Link to the brief or files (Drive, Zoho…)
           <input name="link" placeholder="Optional" className={sel} />
         </label>
-        <label className="block text-[16px] text-slate-600">Note (one line)
+        <label className="block text-[16px] text-[#c9d2da]">Note (one line)
           <input name="note" maxLength={200} placeholder="Optional" className={sel} />
         </label>
         <div className="flex items-center gap-3 sm:col-span-2">

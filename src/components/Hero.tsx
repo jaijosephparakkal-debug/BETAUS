@@ -121,22 +121,22 @@ export function BentoHome({
         )}
       </div>
 
-      <div className="panel-light col-span-2 rounded-3xl p-4 text-ink shadow-lg">
-        <div className="text-[12px] tracking-[0.14em] text-slate-500">IN MOTION</div>
+      <div className="panel-ink art-flip art-soft col-span-2 rounded-3xl p-4 shadow-lg">
+        <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">IN MOTION</div>
         {journey ? (
           <>
             <div className="mt-3 flex items-center gap-1">
               {STAGES.map((s, i) => (
                 <div key={s} className="flex flex-1 items-center gap-1 last:flex-none">
-                  <span className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[13px] ${i < journey.stage ? "border-ink bg-ink text-white" : i === journey.stage ? "border-accent bg-accent font-semibold text-on-accent" : "border-slate-300 text-slate-500"}`}>{s}</span>
-                  {i < STAGES.length - 1 && <span className="h-0.5 flex-1 bg-slate-300" />}
+                  <span className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[13px] ${i < journey.stage ? "border-white/60 bg-white/20 text-white" : i === journey.stage ? "border-accent bg-accent font-semibold text-on-accent" : "border-white/30 text-[#9fb0bc]"}`}>{s}</span>
+                  {i < STAGES.length - 1 && <span className="h-0.5 flex-1 bg-white/25" />}
                 </div>
               ))}
             </div>
-            <div className="mt-2 text-[14px] text-slate-600">{journey.number} · {journey.customer}</div>
+            <div className="mt-2 text-[14px] text-[#c9d2da]">{journey.number} · {journey.customer}</div>
           </>
         ) : (
-          <p className="mt-3 text-[14px] text-slate-500">No quotation in motion for you right now.</p>
+          <p className="mt-3 text-[14px] text-[#9fb0bc]">No quotation in motion for you right now.</p>
         )}
       </div>
     </section>

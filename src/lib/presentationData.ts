@@ -65,11 +65,18 @@ export async function buildDeckData(userId: string, themeSlug: string, range: Pe
   const lenP = Math.round((P.end.getTime() - P.start.getTime()) / DAY);
   const lenQ = Math.round((Q.end.getTime() - Q.start.getTime()) / DAY);
 
-  const rows = await prisma.task.findMany({
+  const logged = await prisma.task.findMany({
     where: { assignedToId: { in: ids }, logKind: { not: null, notIn: ["HANDOVER", "CONTENT_REQUEST"] }, eventAt: { gte: Q.start, lt: P.end } },
     select: { id: true, title: true, category: true, eventAt: true, forPerson: true, project: { select: { name: true } } },
-    orderBy: { eventAt: "asc" },
   });
+  // Work done before the structured forms (ordinary completed tasks) counts too, dated by when it was completed.
+  const plain = await prisma.task.findMany({
+    where: { assignedToId: { in: ids }, logKind: null, completedAt: { gte: Q.start, lt: P.end }, subtasks: { none: {} } },
+    select: { id: true, title: true, category: true, completedAt: true, forPerson: true, project: { select: { name: true } } },
+  });
+  const rows = [...logged, ...plain.map((t) => ({ id: t.id, title: t.title, category: t.category, eventAt: t.completedAt, forPerson: t.forPerson, project: t.project }))].sort(
+    (a, b) => a.eventAt!.getTime() - b.eventAt!.getTime()
+  );
   const inP = rows.filter((r) => r.eventAt! >= P.start);
   const inQ = rows.filter((r) => r.eventAt! < P.start);
   const idxP = (d: Date) => dubaiDay(d) - dubaiDay(P.start);

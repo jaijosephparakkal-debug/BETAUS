@@ -333,3 +333,16 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink .text-highlight, .theme-light .card-themed .text-highlight { color: #D30A0A !important; }
 .theme-light .panel-ink [class*="border-white/"], .theme-light .card-themed [class*="border-white/"] { border-color: rgba(17, 18, 23, 0.25) !important; }
 .theme-light .panel-ink [class~="bg-white/5"], .theme-light .card-themed [class~="bg-white/5"], .theme-light .panel-ink [class~="bg-white/10"], .theme-light .card-themed [class~="bg-white/10"] { background-color: rgba(17, 18, 23, 0.05) !important; }
+
+/* Ice-gray chips and buttons become Racing Red in the light variant; ring numbers turn dark. */
+.theme-light .panel-ink a[class~="bg-white/10"], .theme-light .panel-ink a[class~="bg-white/20"],
+.theme-light .card-themed a[class~="bg-white/10"], .theme-light .card-themed a[class~="bg-white/20"] {
+  background-color: #EF233C !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(239, 35, 60, 0.25);
+}
+.theme-light .panel-ink a[class~="bg-white/10"]:hover, .theme-light .panel-ink a[class~="bg-white/20"]:hover { background-color: #CD1830 !important; }
+.theme-light .panel-ink a[class~="hover:bg-white/10"][class*="border-white"] { border-color: #EF233C !important; color: #D30A0A !important; }
+.theme-light .panel-ink svg text[fill="#fff"], .theme-light .card-themed svg text[fill="#fff"] { fill: #111217 !important; }
+.theme-light .panel-ink svg circle[stroke="rgba(223,229,235,0.18)"] { stroke: rgba(17, 18, 23, 0.12) !important; }
+.theme-light .panel-ink .bg-white\/25 { background-color: rgba(17, 18, 23, 0.2) !important; }

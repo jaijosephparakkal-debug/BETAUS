@@ -162,7 +162,7 @@ export default async function DirectorPage({ searchParams }: { searchParams: { m
           <div>
             <h1 className="text-[23px] font-semibold text-slate-900">Overview</h1>
             <p className="text-[17px] text-slate-500">
-              {membership.user.name} · {perCompany.map((b) => b.company.name).join(" & ")}
+              {membership.user.name} · {membership.title}
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { quotationNumber } from "@/lib/quotations";
 import { LogForm, type LogData } from "./LogForm";
 import { RequestContent } from "./RequestContent";
 import { BentoHome } from "@/components/Hero";
+import { periodOptions } from "@/lib/presentationData";
 import { kpiScore } from "@/lib/queries";
 import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
@@ -248,7 +249,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       <BentoHome
         name={membership.user.name}
         email={membership.user.email}
-        title={`${membership.title} · ${membership.company.name}`}
+        title={membership.title}
         dueCount={due.length}
         handedToMe={handedToMe}
         nextHref={due[0] ? `/dashboard/tasks/${due[0].id}` : null}
@@ -260,6 +261,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
         ]}
         pulse={pulse}
         journey={journey}
+        deck={periodOptions()}
       />
       {due.length > 0 && (
         <div className="panel-ink art-left rounded-2xl p-5 shadow-lg">

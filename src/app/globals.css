@@ -275,7 +275,7 @@ input[type="range"]::-moz-range-track {
 .card-themed text.fill-slate-900 { fill: #fff !important; }
 .card-themed circle[stroke="#e2e8f0"] { stroke: rgba(223, 229, 235, 0.18) !important; }
 
-/* ---- Light variant (Antony): white panels, Obsidian text, Racing Red accents — the dark look turned inside out. ---- */
+/* ---- Light variant: white panels, dark text, company accent (red for Gasneeds, orange for Flaretech). Chosen with the header toggle. ---- */
 .theme-light .card-themed {
   background-color: #fff !important;
   --card-text: 17 18 23;
@@ -292,10 +292,10 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink .text-slate-200,
 .theme-light .panel-ink .text-slate-300,
 .theme-light .card-themed .text-white:not(.bg-brand-600):not(.bg-accent) { color: #111217 !important; }
-.theme-light .panel-ink a.hover\:text-white:hover { color: #D30A0A !important; }
-.theme-light .panel-ink .hover\:bg-white\/10:hover { background-color: rgba(211, 10, 10, 0.08) !important; }
+.theme-light .panel-ink a.hover\:text-white:hover { color: rgb(var(--brand-600)) !important; }
+.theme-light .panel-ink .hover\:bg-white\/10:hover { background-color: rgb(var(--brand-600) / 0.08) !important; }
 /* Active tab in the header: Racing Red with white text. */
-.theme-light .panel-ink a.bg-\[\#DFE5EB\] { background-color: #EF233C !important; color: #fff !important; }
+.theme-light .panel-ink a.bg-\[\#DFE5EB\] { background-color: rgb(var(--accent)) !important; color: rgb(var(--on-accent)) !important; }
 .theme-light .card-themed .bg-white,
 .theme-light .card-themed .bg-surface,
 .theme-light .card-themed input, .theme-light .card-themed select, .theme-light .card-themed textarea,
@@ -308,18 +308,18 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink input::placeholder, .theme-light .panel-ink textarea::placeholder { color: rgba(17, 18, 23, 0.45); }
 .theme-light .card-themed option, .theme-light .panel-ink option { background-color: #fff; color: #111217; }
 .theme-light .card-themed .bg-slate-50, .theme-light .card-themed .bg-gray-50 { background-color: rgba(17, 18, 23, 0.04) !important; }
-.theme-light .card-themed .bg-brand-50 { background-color: rgba(211, 10, 10, 0.05) !important; }
-.theme-light .card-themed .bg-brand-100 { background-color: rgba(211, 10, 10, 0.1) !important; }
+.theme-light .card-themed .bg-brand-50 { background-color: rgb(var(--brand-600) / 0.05) !important; }
+.theme-light .card-themed .bg-brand-100 { background-color: rgb(var(--brand-600) / 0.1) !important; }
 .theme-light .card-themed .border-slate-100, .theme-light .card-themed .border-slate-200, .theme-light .card-themed .border-slate-300,
 .theme-light .card-themed .border-gray-100, .theme-light .card-themed .border-gray-200,
 .theme-light .card-themed .border-brand-100, .theme-light .card-themed .border-brand-200, .theme-light .card-themed .border-brand-300 { border-color: rgba(17, 18, 23, 0.14) !important; }
-.theme-light .card-themed .text-brand-600, .theme-light .card-themed .text-brand-700, .theme-light .card-themed .text-brand-800 { color: #D30A0A !important; }
+.theme-light .card-themed .text-brand-600, .theme-light .card-themed .text-brand-700, .theme-light .card-themed .text-brand-800 { color: rgb(var(--brand-600)) !important; }
 .theme-light .card-themed .text-brand-900 { color: #111217 !important; }
 .theme-light .card-themed .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
 .theme-light .card-themed .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(17, 18, 23, 0.12) !important; }
 .theme-light .card-themed img[alt$="LLC"] { background: none; padding: 0; }
 .theme-light .card-themed .bg-surface { background-color: rgba(17, 18, 23, 0.03) !important; border-color: rgba(17, 18, 23, 0.12) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
-.theme-light .card-themed .hover\:bg-slate-50:hover { background-color: rgba(211, 10, 10, 0.06) !important; }
+.theme-light .card-themed .hover\:bg-slate-50:hover { background-color: rgb(var(--brand-600) / 0.06) !important; }
 .theme-light .card-themed text.fill-slate-900 { fill: #111217 !important; }
 .theme-light .card-themed circle[stroke="#e2e8f0"] { stroke: rgba(17, 18, 23, 0.12) !important; }
 
@@ -330,19 +330,23 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink .text-sky-300, .theme-light .card-themed .text-sky-300 { color: #0369a1 !important; }
 .theme-light .panel-ink .text-amber-300, .theme-light .card-themed .text-amber-300 { color: #b45309 !important; }
 .theme-light .panel-ink .text-red-300, .theme-light .card-themed .text-red-300 { color: #b91c1c !important; }
-.theme-light .panel-ink .text-highlight, .theme-light .card-themed .text-highlight { color: #D30A0A !important; }
+.theme-light .panel-ink .text-highlight, .theme-light .card-themed .text-highlight { color: rgb(var(--brand-600)) !important; }
 .theme-light .panel-ink [class*="border-white/"], .theme-light .card-themed [class*="border-white/"] { border-color: rgba(17, 18, 23, 0.25) !important; }
 .theme-light .panel-ink [class~="bg-white/5"], .theme-light .card-themed [class~="bg-white/5"], .theme-light .panel-ink [class~="bg-white/10"], .theme-light .card-themed [class~="bg-white/10"] { background-color: rgba(17, 18, 23, 0.05) !important; }
 
 /* Ice-gray chips and buttons become Racing Red in the light variant; ring numbers turn dark. */
 .theme-light .panel-ink a[class~="bg-white/10"], .theme-light .panel-ink a[class~="bg-white/20"],
 .theme-light .card-themed a[class~="bg-white/10"], .theme-light .card-themed a[class~="bg-white/20"] {
-  background-color: #EF233C !important;
-  color: #fff !important;
-  box-shadow: 0 4px 12px rgba(239, 35, 60, 0.25);
+  background-color: rgb(var(--accent)) !important;
+  color: rgb(var(--on-accent)) !important;
+  box-shadow: 0 4px 12px rgb(var(--accent) / 0.25);
 }
-.theme-light .panel-ink a[class~="bg-white/10"]:hover, .theme-light .panel-ink a[class~="bg-white/20"]:hover { background-color: #CD1830 !important; }
-.theme-light .panel-ink a[class~="hover:bg-white/10"][class*="border-white"] { border-color: #EF233C !important; color: #D30A0A !important; }
+.theme-light .panel-ink a[class~="bg-white/10"]:hover, .theme-light .panel-ink a[class~="bg-white/20"]:hover { background-color: rgb(var(--button-bg-hover)) !important; }
+.theme-light .panel-ink a[class~="hover:bg-white/10"][class*="border-white"] { border-color: rgb(var(--accent)) !important; color: rgb(var(--brand-600)) !important; }
 .theme-light .panel-ink svg text[fill="#fff"], .theme-light .card-themed svg text[fill="#fff"] { fill: #111217 !important; }
 .theme-light .panel-ink svg circle[stroke="rgba(223,229,235,0.18)"] { stroke: rgba(17, 18, 23, 0.12) !important; }
 .theme-light .panel-ink .bg-white\/25 { background-color: rgba(17, 18, 23, 0.2) !important; }
+
+.theme-light .theme-toggle { color: #111217; border-color: rgba(17, 18, 23, 0.3); }
+.theme-light .theme-toggle:hover { background-color: rgb(var(--brand-600) / 0.08); }
+.theme-light .panel-ink a.text-\[\#DFE5EB\] { color: #111217 !important; }

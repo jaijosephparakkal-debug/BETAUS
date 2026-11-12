@@ -4,6 +4,7 @@ import { getCurrentMembership, getMembershipCount } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AppHeader } from "@/components/AppHeader";
 import { getCompanyTheme } from "@/lib/theme";
+import { themeIsLight } from "@/lib/themeMode";
 import { clockInIfNeeded } from "@/lib/attendance";
 import { getUnreadTaskNotificationCount } from "@/lib/notifications";
 
@@ -30,7 +31,7 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className={`min-h-screen ${membership.user.email.toLowerCase() === "sales@gasneeds.com" ? "theme-light" : ""}`}
+      className={`min-h-screen ${themeIsLight(membership.user.email) ? "theme-light" : ""}`}
       style={{ ...theme.vars, background: theme.pageBackground }}
     >
       <AppHeader

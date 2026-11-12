@@ -7,6 +7,8 @@ import { getCompanyTheme } from "@/lib/theme";
 import { AttendanceClock } from "@/components/AttendanceClock";
 import { NavLinks } from "@/components/NavLinks";
 import { Avatar } from "@/components/Avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { themeIsLight } from "@/lib/themeMode";
 
 export function AppHeader({
   membership,
@@ -99,6 +101,7 @@ export function AppHeader({
                 <AttendanceClock clockInIso={clockInIso} autoClockedOut={autoClockedOut} />
               </div>
             )}
+            <ThemeToggle light={themeIsLight(membership.user.email)} />
             <Avatar name={membership.user.name} email={membership.user.email} size={36} className="ring-2 ring-accent" />
           </div>
           <nav className="order-last flex w-full min-w-0 flex-wrap gap-1 pb-1 [&>*]:shrink-0">

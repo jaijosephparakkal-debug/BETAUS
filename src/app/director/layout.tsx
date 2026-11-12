@@ -3,6 +3,7 @@ import { getCurrentMembership, getMembershipCount } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AppHeader } from "@/components/AppHeader";
 import { getCompanyTheme } from "@/lib/theme";
+import { themeIsLight } from "@/lib/themeMode";
 import { clockInIfNeeded } from "@/lib/attendance";
 import { getUnreadTaskNotificationCount } from "@/lib/notifications";
 
@@ -28,7 +29,7 @@ export default async function DirectorLayout({
 
   return (
     <div
-      className="min-h-screen"
+      className={`min-h-screen ${themeIsLight(membership.user.email) ? "theme-light" : ""}`}
       style={{ ...theme.vars, background: theme.pageBackground }}
     >
       <AppHeader

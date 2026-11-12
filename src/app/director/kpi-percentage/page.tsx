@@ -157,7 +157,7 @@ export default async function KpiPercentagePage() {
                     <span className="truncate text-[19px] font-medium text-slate-900">{e.user.name}</span>
                     {e.isDirector && (
                       <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[13px] text-brand-700">
-                        Director
+                        Admin
                       </span>
                     )}
                   </div>

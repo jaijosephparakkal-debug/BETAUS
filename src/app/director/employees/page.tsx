@@ -58,7 +58,7 @@ export default async function EmployeesPage() {
                   {e.user.name}
                   {e.isDirector && (
                     <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[17px] text-brand-700">
-                      Director
+                      Admin
                     </span>
                   )}
                 </td>

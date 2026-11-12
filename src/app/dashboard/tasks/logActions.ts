@@ -478,6 +478,29 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
       },
     });
   }
+  if (dueAt && next === "inform_abraham") {
+    const informParent =
+      (await prisma.task.findFirst({ where: { assignedToId: m.id, parentTaskId: null, title: { in: [profile.parent.f ?? "", profile.parent.pf ?? ""].filter(Boolean) } } })) ?? parent;
+    await prisma.task.create({
+      data: {
+        companyId: m.companyId,
+        title: "Inform Abraham sir",
+        description: `${title}: ${summary}`.slice(0, 500),
+        assignedToId: m.id,
+        assignedById: m.id,
+        parentTaskId: informParent.id,
+        category: informParent.category ?? informParent.title,
+        status: "NOT_STARTED",
+        deadline: dueAt,
+        followUpAt: dueAt,
+        quotationId: quotation?.id ?? null,
+        customerId: customer ? (customer as Cust).id : quotation?.customerId ?? null,
+        logKind: "INFORM_ABRAHAM",
+        workedForCompany: slug,
+        eventAt: new Date(),
+      },
+    });
+  }
   if (dueAt && (next === "manu" || next === "jintu") && quotation) {
     await createHandOver({ to: next, quotationId: quotation.id, assignedById: m.id, dueAt, companySlug: slug });
   }

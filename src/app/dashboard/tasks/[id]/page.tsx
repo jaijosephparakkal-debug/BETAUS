@@ -18,6 +18,7 @@ import {
   isOverdue,
 } from "@/components/ui";
 import ProgressForm from "./ProgressForm";
+import InformCloseForm from "./InformCloseForm";
 import MilestoneWeightForm from "./MilestoneWeightForm";
 import { QuickStatusToggle } from "./QuickStatusToggle";
 import { TaskLinks } from "./TaskLinks";
@@ -265,7 +266,14 @@ export default async function TaskDetailPage({
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && (
+      {isOwner && task.logKind === "INFORM_ABRAHAM" && task.status !== "COMPLETED" && (
+        <Card>
+          <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Inform Abraham sir — close this task</h2>
+          <InformCloseForm taskId={task.id} />
+        </Card>
+      )}
+
+      {isOwner && task.subtasks.length === 0 && !(task.logKind === "INFORM_ABRAHAM" && task.status !== "COMPLETED") && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Mark status</h2>
           <QuickStatusToggle
@@ -277,7 +285,7 @@ export default async function TaskDetailPage({
         </Card>
       )}
 
-      {isOwner && task.subtasks.length === 0 && (
+      {isOwner && task.subtasks.length === 0 && !(task.logKind === "INFORM_ABRAHAM" && task.status !== "COMPLETED") && (
         <Card>
           <h2 className="mb-3 text-[21px] font-semibold text-slate-900">Log an update</h2>
           <ProgressForm taskId={task.id} />

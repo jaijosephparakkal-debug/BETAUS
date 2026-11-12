@@ -78,6 +78,7 @@ export async function logProgressAction(
   if (!body) {
     return { error: "Add a short update before saving." };
   }
+  if (task.logKind === INFORM_KIND && progress >= 100) return { error: INFORM_RULE };
 
   const status =
     progress >= 100 ? "COMPLETED" : progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
@@ -97,6 +98,56 @@ export async function logProgressAction(
     }),
   ]);
 
+  if (task.parentTaskId) {
+    await recomputeTaskProgress(task.parentTaskId);
+    revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
+  }
+  revalidatePath(`/dashboard/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+const INFORM_KIND = "INFORM_ABRAHAM";
+const INFORM_RULE = "This task closes only when you write what was informed and what Abraham sir decided. Use the form on this page.";
+
+/** Closes an "Inform Abraham sir" task: both what was informed and what was decided must be written. */
+export async function closeInformTaskAction(
+  taskId: string,
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const membership = await getCurrentMembership();
+  if (!membership) return { error: "Not signed in." };
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task || task.logKind !== INFORM_KIND || !(await isSelfTask(membership, task))) {
+    return { error: "You can only close your own task." };
+  }
+  const informed = String(formData.get("informed") || "").trim();
+  const decision = String(formData.get("decision") || "").trim();
+  if (informed.length < 5) return { error: "Write what was informed to Abraham sir." };
+  if (decision.length < 3) return { error: "Write the decision taken by Abraham sir." };
+  const when = String(formData.get("when") || "");
+  const parsed = when ? new Date(when) : new Date();
+  const completedAt = isNaN(parsed.getTime()) ? new Date() : parsed;
+
+  await prisma.$transaction([
+    prisma.taskComment.create({
+      data: { taskId, authorId: task.assignedToId, body: `Informed Abraham sir: ${informed}`, progressAt: 100 },
+    }),
+    prisma.taskComment.create({
+      data: { taskId, authorId: task.assignedToId, body: `Decision by Abraham sir: ${decision}`, progressAt: 100 },
+    }),
+    prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: "COMPLETED",
+        progress: 100,
+        completedAt,
+        details: { ...((task.details as object) ?? {}), informed, decision },
+      },
+    }),
+  ]);
   if (task.parentTaskId) {
     await recomputeTaskProgress(task.parentTaskId);
     revalidatePath(`/dashboard/tasks/${task.parentTaskId}`);
@@ -141,6 +192,7 @@ export async function quickToggleTaskStatusAction(
   if (!QUICK_STATUSES.includes(targetStatus)) {
     return { error: "Invalid status." };
   }
+  if (task.logKind === INFORM_KIND && targetStatus === "COMPLETED") return { error: INFORM_RULE };
 
   const progress =
     targetStatus === "COMPLETED"
@@ -228,6 +280,7 @@ export async function setTaskProgressAction(
   if (!PROGRESS_STEPS.includes(progress)) {
     return { error: "Invalid progress value." };
   }
+  if (task.logKind === INFORM_KIND && progress === 100) return { error: INFORM_RULE };
 
   let completedAt: Date | null = null;
   if (progress === 100) {

@@ -16,6 +16,8 @@ type Profile = {
 };
 const NS_NONE = { v: "none", l: "None" };
 const NS_SELF = { v: "followup", l: "Follow up myself" };
+/** Creates a reminder task that can only be closed by writing what was informed and what Abraham sir decided. */
+const NS_INFORM = { v: "inform_abraham", l: "Inform Abraham sir" };
 
 /** Who gets the structured work-log form, and what it offers them. */
 export const PROFILES: Record<string, Profile> = {
@@ -23,7 +25,7 @@ export const PROFILES: Record<string, Profile> = {
     kinds: [{ v: "q", l: "Quotation" }, { v: "f", l: "Follow-up" }, { v: "v", l: "Customer visit" }, { v: "pro", l: "PRO" }, { v: "hr", l: "HR" }, { v: "av", l: "Visit or meeting" }],
     companies: ["gasneeds", "flaretechnical"],
     parent: { q: "Sales — Quotations", f: "Sales — Follow-ups", v: "Sales — Customer Visits", pro: "PRO — Government & Admin", hr: "HR — Staff & Insurance", av: "Sales — Customer Visits" },
-    next: [NS_NONE, NS_SELF, { v: "manu", l: "Hand over to Manu — purchase follow-up" }, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
+    next: [NS_NONE, NS_SELF, NS_INFORM, { v: "manu", l: "Hand over to Manu — purchase follow-up" }, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
   },
   "business@gasneeds.com": {
     kinds: [{ v: "q", l: "Quotation" }, { v: "enq", l: "Enquiry" }, { v: "po", l: "Purchase order" }, { v: "imp", l: "Import or delivery" }, { v: "f", l: "Follow-up" }],

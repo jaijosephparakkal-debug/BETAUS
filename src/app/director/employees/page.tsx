@@ -56,11 +56,6 @@ export default async function EmployeesPage() {
               <tr key={e.id} className="border-b border-slate-100 last:border-0">
                 <td className="px-4 py-3 text-[21px] font-medium text-slate-900">
                   {e.user.name}
-                  {e.isDirector && (
-                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[17px] text-brand-700">
-                      Admin
-                    </span>
-                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">{e.title}</td>
                 <td className="px-4 py-3 text-slate-600">

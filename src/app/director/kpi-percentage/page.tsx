@@ -39,7 +39,7 @@ export default async function KpiPercentagePage() {
   // of two separate sections. No company switch involved anywhere here.
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
 
-  const employees: { id: string; title: string; department: string | null; isDirector: boolean; companySlug: string; user: { name: string } }[] = [];
+  const employees: { id: string; userId: string; title: string; department: string | null; isDirector: boolean; companySlug: string; user: { name: string } }[] = [];
   const tasks: { assignedToId: string; status: string; completedAt: Date | null; companySlug: string }[] = [];
   const perCompanyTotals: { slug: string; name: string; completed: number; total: number }[] = [];
 
@@ -92,6 +92,18 @@ export default async function KpiPercentagePage() {
   }
   const trendPoints = days.map((d) => ({ label: d.label, value: completedByDay.get(d.key) ?? 0 }));
 
+  // One card per person: someone who works for both firms (Jai, Abraham) is a single card with both company tags.
+  const people = new Map<string, { key: string; name: string; title: string; department: string | null; slugs: string[]; counts: Counts }>();
+  for (const e of employees) {
+    const c = byEmployee.get(e.id) ?? emptyCounts();
+    const p = people.get(e.userId) ?? { key: e.userId, name: e.user.name, title: e.title, department: e.department, slugs: [], counts: emptyCounts() };
+    if (!p.slugs.includes(e.companySlug)) p.slugs.push(e.companySlug);
+    p.counts.NOT_STARTED += c.NOT_STARTED;
+    p.counts.IN_PROGRESS += c.IN_PROGRESS;
+    p.counts.COMPLETED += c.COMPLETED;
+    people.set(e.userId, p);
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -135,12 +147,12 @@ export default async function KpiPercentagePage() {
         <h2 className="mb-1 text-[19px] font-semibold text-slate-900">By role & responsibility</h2>
         <p className="mb-4 text-[17px] text-slate-500">Each person's own task completion, broken down by status.</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {employees.map((e) => {
-            const counts = byEmployee.get(e.id) ?? emptyCounts();
+          {Array.from(people.values()).map((e) => {
+            const counts = e.counts;
             const total = counts.NOT_STARTED + counts.IN_PROGRESS + counts.COMPLETED;
             const pct = total > 0 ? Math.round((counts.COMPLETED / total) * 100) : 0;
             return (
-              <div key={e.id} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3">
+              <div key={e.key} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3">
                 <SegmentedDonut
                   size={72}
                   strokeWidth={9}
@@ -153,13 +165,8 @@ export default async function KpiPercentagePage() {
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <CompanyTag slug={e.companySlug} />
-                    <span className="truncate text-[19px] font-medium text-slate-900">{e.user.name}</span>
-                    {e.isDirector && (
-                      <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[13px] text-brand-700">
-                        Admin
-                      </span>
-                    )}
+                    {e.slugs.map((sl) => <CompanyTag key={sl} slug={sl} />)}
+                    <span className="truncate text-[19px] font-medium text-slate-900">{e.name}</span>
                   </div>
                   <div className="truncate text-[15px] text-slate-500">
                     {e.title}

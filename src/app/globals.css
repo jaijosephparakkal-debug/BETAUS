@@ -284,10 +284,10 @@ input[type="range"]::-moz-range-track {
   border-color: rgba(17, 18, 23, 0.1) !important;
   box-shadow: 0 8px 24px rgba(17, 18, 23, 0.08);
 }
-.theme-light .card-themed::before { background-image: var(--art-light); opacity: 0.5; mix-blend-mode: multiply; }
+.theme-light .card-themed::before { background-image: var(--art-light); opacity: 0.3; mix-blend-mode: multiply; }
 .theme-light .panel-ink { background-color: #fff; color: #111217; box-shadow: 0 8px 24px rgba(17, 18, 23, 0.1); }
-.theme-light .panel-ink::before { background-image: var(--art-light); opacity: 0.6; mix-blend-mode: multiply; }
-.theme-light .panel-ink.art-header::before { opacity: 0.45; }
+.theme-light .panel-ink::before { background-image: var(--art-light); opacity: 0.3; mix-blend-mode: multiply; }
+.theme-light .panel-ink.art-header::before { opacity: 0.35; }
 .theme-light .panel-ink .text-white:not(.bg-brand-600):not(.bg-accent),
 .theme-light .panel-ink .text-slate-200,
 .theme-light .panel-ink .text-slate-300,
@@ -322,3 +322,14 @@ input[type="range"]::-moz-range-track {
 .theme-light .card-themed .hover\:bg-slate-50:hover { background-color: rgba(211, 10, 10, 0.06) !important; }
 .theme-light .card-themed text.fill-slate-900 { fill: #111217 !important; }
 .theme-light .card-themed circle[stroke="#e2e8f0"] { stroke: rgba(17, 18, 23, 0.12) !important; }
+
+/* Hard-coded pale text from the dark design, darkened for white panels. */
+.theme-light .panel-ink [class*="text-[#c9d2da]"], .theme-light .panel-ink [class*="text-[#9fb0bc]"],
+.theme-light .card-themed [class*="text-[#c9d2da]"], .theme-light .card-themed [class*="text-[#9fb0bc]"] { color: #5b6470 !important; }
+.theme-light .panel-ink .text-emerald-300, .theme-light .card-themed .text-emerald-300 { color: #047857 !important; }
+.theme-light .panel-ink .text-sky-300, .theme-light .card-themed .text-sky-300 { color: #0369a1 !important; }
+.theme-light .panel-ink .text-amber-300, .theme-light .card-themed .text-amber-300 { color: #b45309 !important; }
+.theme-light .panel-ink .text-red-300, .theme-light .card-themed .text-red-300 { color: #b91c1c !important; }
+.theme-light .panel-ink .text-highlight, .theme-light .card-themed .text-highlight { color: #D30A0A !important; }
+.theme-light .panel-ink [class*="border-white/"], .theme-light .card-themed [class*="border-white/"] { border-color: rgba(17, 18, 23, 0.25) !important; }
+.theme-light .panel-ink [class*="bg-white/"]:not(button), .theme-light .card-themed [class*="bg-white/"]:not(button) { background-color: rgba(17, 18, 23, 0.05) !important; }

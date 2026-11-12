@@ -7,6 +7,7 @@ export function DeckDownload({ userId }: { userId?: string }) {
   const q = userId ? `&user=${userId}` : "";
   return (
     <Card>
+      <div id="deck" />
       <h2 className="text-[21px] font-semibold text-white">Review presentation</h2>
       <p className="mt-1 text-[16px] text-[#c9d2da]">
         A ready-to-present PDF of your work for the review meeting: results, charts, who you worked with, and what is next. Two-week decks for each half of the month, and a full-month deck.

@@ -8,7 +8,7 @@ const STAGES = ["Quoted", "Ordered", "Delivered", "Paid"];
 
 /** The home grid at the top of My Tasks: a greeting tile, score ring, quick log tiles, live numbers, team pulse and the quotation in motion. */
 export function BentoHome({
-  name, email, title, dueCount, handedToMe, nextHref, score, kinds, stats, pulse, journey,
+  name, email, title, dueCount, handedToMe, nextHref, score, kinds, stats, pulse, journey, deck,
 }: {
   name: string;
   email: string;
@@ -21,6 +21,7 @@ export function BentoHome({
   stats: { label: string; value: number; note: string }[];
   pulse: PulsePerson[];
   journey: Journey;
+  deck: { range: string; name: string; label: string }[];
 }) {
   const dubai = new Date(Date.now() + 4 * 3600 * 1000);
   const h = dubai.getUTCHours();
@@ -138,6 +139,22 @@ export function BentoHome({
         ) : (
           <p className="mt-3 text-[14px] text-[#9fb0bc]">No quotation in motion for you right now.</p>
         )}
+      </div>
+
+      <div className="panel-ink art-left art-soft col-span-2 rounded-3xl p-4 shadow-lg md:col-span-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="text-[12px] tracking-[0.14em] text-[#9fb0bc]">REVIEW PRESENTATION</div>
+            <div className="text-[15px] text-[#c9d2da]">A PDF of your work for the review meeting, with charts. Download it and present.</div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {deck.map((o) => (
+              <a key={o.range} href={`/api/presentation?range=${o.range}`} className="rounded-full bg-accent px-4 py-1.5 text-[15px] font-semibold text-on-accent shadow-md hover:opacity-90">
+                {o.name} <span className="font-normal opacity-80">· PDF</span>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

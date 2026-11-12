@@ -278,44 +278,6 @@ export default async function DirectorPage() {
         )}
       </Card>
 
-      {/* 3. Approvals */}
-      <Card>
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[21px] font-semibold text-slate-900">
-            <Link href="/director/approvals" className="hover:text-brand-600 hover:underline">
-              Approvals — {overall.pendingApprovals} pending
-            </Link>
-          </h2>
-          <Link href="/director/approvals" className="text-[17px] text-brand-600 hover:underline">
-            All approvals →
-          </Link>
-        </div>
-        {pendingApprovals.length === 0 ? (
-          <p className="text-[17px] text-slate-500">No pending approvals.</p>
-        ) : (
-          <div className="divide-y divide-brand-100">
-            {pendingApprovals.map((r) => (
-              <Link
-                key={r.id}
-                href={`/dashboard/approvals/${r.id}`}
-                className="flex items-center justify-between gap-3 py-2.5 hover:bg-brand-50/40"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <CompanyTag slug={slugByCompanyId.get(r.companyId) ?? ""} />
-                  <div className="min-w-0">
-                    <div className="truncate text-[17px] font-medium text-slate-900">{r.title}</div>
-                    <div className="truncate text-[15px] text-slate-500">
-                      {r.requestedBy.user.name} → {r.approver.user.name} · {formatDate(r.createdAt)}
-                    </div>
-                  </div>
-                </div>
-                <StatusBadge status={r.status} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </Card>
-
       <Card>
         <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Combined performance</h2>
         <p className="mb-3 text-[15px] text-slate-500">Every number below is both firms added together.</p>

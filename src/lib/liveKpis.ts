@@ -39,6 +39,10 @@ export const LIVE_KPI_EMAILS = [
   "jashim@flaretechnical.com",
   "saroj@flaretechnical.com",
   "simi@flaretechnical.com",
+  "alerts@flaretechnical.com",
+  "service@flaretechnical.com",
+  "accounts@flaretechnical.com",
+  "finance@flaretechnical.com",
 ];
 
 async function logs(ids: string[], kinds: string[], r: Range) {
@@ -50,9 +54,98 @@ async function logs(ids: string[], kinds: string[], r: Range) {
 const when = (t: { eventAt: Date | null; completedAt: Date | null; createdAt: Date }) => t.eventAt ?? t.completedAt ?? t.createdAt;
 const count = (rows: { logKind: string | null }[], kind: string) => rows.filter((t) => t.logKind === kind).length;
 
-async function compute(email: string, ids: string[], r: Range): Promise<LiveKpi[]> {
+const stageOf = (t: { details: unknown }, k: string) => str(det(t.details)[k]);
+
+async function computeRole(email: string, ids: string[], r: Range): Promise<LiveKpi[]> {
   const now = new Date();
   switch (email) {
+    case "alerts@flaretechnical.com": {
+      // Flexie: gas reading, billing and collections by building.
+      const l = await logs(ids, ["METER_READING", "GAS_INVOICE", "COLLECTION", "REFUND", "OUTSTANDING_REPORT"], r);
+      const read = new Set(l.filter((t) => t.logKind === "METER_READING").map((t) => str(det(t.details).building)).filter(Boolean));
+      const totalB = await prisma.building.count();
+      const refunds = await prisma.task.findMany({ where: { assignedToId: { in: ids }, logKind: "REFUND" }, select: { eventAt: true, details: true } });
+      const byKey = new Map<string, { asked?: Date; paid?: Date }>();
+      for (const t of refunds) {
+        const d = det(t.details);
+        const key = `${str(d.building)}|${str(d.unit)}`;
+        const e = byKey.get(key) ?? {};
+        const at = t.eventAt!;
+        if (str(d.refundStage) === "Disconnection requested" && (!e.asked || at < e.asked)) e.asked = at;
+        if (str(d.refundStage) === "Refund paid" && (!e.paid || at > e.paid)) e.paid = at;
+        byKey.set(key, e);
+      }
+      const cycle = [...byKey.values()].filter((e) => e.asked && e.paid && e.paid >= r.start && e.paid < r.end).map((e) => (e.paid!.getTime() - e.asked!.getTime()) / DAY);
+      return [
+        { label: "Meter readings", value: count(l, "METER_READING"), hint: "Meter reading entries" },
+        { label: "Buildings read", value: pct(read.size, totalB), unit: "%", hint: "Buildings with a reading this month ÷ all buildings" },
+        { label: "Gas invoices issued", value: count(l, "GAS_INVOICE"), hint: "Gas invoice entries" },
+        { label: "Collections logged", value: count(l, "COLLECTION"), hint: "Collection entries" },
+        { label: "Days from disconnection to refund", value: avg(cycle), unit: "days", lowerIsBetter: true, hint: "Average days from the disconnection request to the refund being paid (refunds paid this month)" },
+        { label: "Outstanding reports", value: count(l, "OUTSTANDING_REPORT"), hint: "Outstanding report entries" },
+      ];
+    }
+    case "service@flaretechnical.com": {
+      // Jayaprakash: service requests, enquiries and FSM visits.
+      const l = await logs(ids, ["ENQUIRY", "FSM_SCHEDULE", "INVOICE_LINK", "CALL_EMAIL"], r);
+      const srs = await prisma.task.findMany({ where: { assignedToId: { in: ids }, logKind: "SERVICE_REQUEST" }, select: { eventAt: true, details: true } });
+      const bySr = new Map<string, { first: Date; done?: Date }>();
+      for (const t of srs) {
+        const no = stageOf(t, "srNo");
+        if (!no) continue;
+        const at = t.eventAt!;
+        const e = bySr.get(no) ?? { first: at };
+        if (at < e.first) e.first = at;
+        if (stageOf(t, "srStage") === "Done" && (!e.done || at > e.done)) e.done = at;
+        bySr.set(no, e);
+      }
+      const all = [...bySr.values()];
+      const raised = all.filter((e) => e.first >= r.start && e.first < r.end).length;
+      const closed = all.filter((e) => e.done && e.done >= r.start && e.done < r.end);
+      const enq = l.filter((t) => t.logKind === "ENQUIRY");
+      const answered = enq.filter((t) => ["Answered", "Quotation sent", "Closed"].includes(stageOf(t, "enqStatus"))).length;
+      return [
+        { label: "Service requests raised", value: raised, hint: "New service requests (connection, disconnection, complaint) this month" },
+        { label: "Service requests closed", value: closed.length, hint: "Requests taken to Done this month" },
+        { label: "Days to close a request", value: avg(closed.map((e) => (e.done!.getTime() - e.first.getTime()) / DAY)), unit: "days", lowerIsBetter: true, hint: "Average days from the first entry to Done" },
+        { label: "FSM visits completed", value: l.filter((t) => t.logKind === "FSM_SCHEDULE" && ["Visited", "Closed"].includes(stageOf(t, "fsmStage"))).length, hint: "FSM jobs visited or closed" },
+        { label: "Enquiries handled", value: enq.length, hint: "Enquiry entries" },
+        { label: "Enquiries answered", value: pct(answered, enq.length), unit: "%", hint: "Enquiries answered, quoted or closed ÷ all enquiries" },
+        { label: "Invoices and payment links", value: count(l, "INVOICE_LINK"), hint: "Invoices generated and payment links created or sent" },
+      ];
+    }
+    case "accounts@flaretechnical.com": {
+      // Hashim: AMC, PPM and DCD (maintenance) plus collections and accounts entries.
+      const l = await logs(ids, ["AMC_RENEWAL", "PPM_REPORT", "DCD_ATTESTATION", "REPORT", "COLLECTION", "ACCOUNTS_ENTRY"], r);
+      const agreed = l.filter((t) => t.logKind === "AMC_RENEWAL" && ["Renewal agreed", "Contract signed"].includes(stageOf(t, "amcStage")));
+      const before = agreed.filter((t) => { const exp = stageOf(t, "renewalOn"); return exp && dateOnly(when(t)) <= exp; });
+      return [
+        { label: "AMC renewals agreed", value: agreed.length, hint: "Renewals agreed or contracts signed" },
+        { label: "Renewals agreed before expiry", value: pct(before.length, agreed.length), unit: "%", hint: "Agreed on or before the contract's expiry date" },
+        { label: "PPM reports submitted", value: l.filter((t) => t.logKind === "PPM_REPORT" && stageOf(t, "ppmStage") === "Report submitted").length, hint: "PPM reports taken to Submitted" },
+        { label: "DCD attestations done", value: l.filter((t) => t.logKind === "DCD_ATTESTATION" && stageOf(t, "dcdStage") === "Attested").length, hint: "DCD attestations taken to Attested" },
+        { label: "Gas reading reports", value: count(l, "REPORT"), hint: "Gas reading, outstanding and detail reports" },
+        { label: "Collections logged", value: count(l, "COLLECTION"), hint: "Collection entries" },
+        { label: "Accounts entries", value: count(l, "ACCOUNTS_ENTRY"), hint: "Payment, bills, reconciliation and payroll entries" },
+      ];
+    }
+    case "finance@flaretechnical.com": {
+      // Shafeek: head of finance for both firms.
+      const l = await logs(ids, ["FIN_BANK_REC", "FIN_VAT", "FIN_CORPORATE_TAX", "FIN_PAYROLL", "FIN_SUPPLIER_PAYMENT", "FIN_ADJUSTMENTS", "FIN_REPORT", "FIN_APPROVAL", "FIN_RECEIVABLE", "FIN_AUDIT"], r);
+      const filed = l.filter((t) => ["FIN_VAT", "FIN_CORPORATE_TAX"].includes(t.logKind ?? "") && ["Submitted", "Paid", "Acknowledgement received"].includes(stageOf(t, "stage")));
+      const withDue = filed.filter((t) => stageOf(t, "due"));
+      const filedOnTime = withDue.filter((t) => dateOnly(when(t)) <= stageOf(t, "due"));
+      return [
+        { label: "Bank reconciliations done", value: l.filter((t) => t.logKind === "FIN_BANK_REC" && stageOf(t, "what") === "Done").length, hint: "Reconciliations taken to Done" },
+        { label: "Tax filings", value: filed.length, hint: "VAT and corporate tax submitted, paid or acknowledged" },
+        { label: "Tax filed before the due date", value: pct(filedOnTime.length, withDue.length), unit: "%", hint: "Filings made on or before the due date entered" },
+        { label: "Payroll runs paid", value: l.filter((t) => t.logKind === "FIN_PAYROLL" && stageOf(t, "stage") === "Paid").length, hint: "Payroll entries taken to Paid" },
+        { label: "Supplier payments made", value: l.filter((t) => t.logKind === "FIN_SUPPLIER_PAYMENT" && stageOf(t, "stage") === "Paid").length, hint: "Supplier payments taken to Paid" },
+        { label: "Month-end close", value: l.filter((t) => t.logKind === "FIN_ADJUSTMENTS" && stageOf(t, "what") === "Month-end close" && stageOf(t, "stage") === "Done").length, hint: "Month-end close entries marked Done" },
+        { label: "Reports sent to management", value: l.filter((t) => t.logKind === "FIN_REPORT" && stageOf(t, "stage") === "Submitted to Abraham sir").length, hint: "Reports taken to Submitted to Abraham sir" },
+        { label: "Approvals given", value: count(l, "FIN_APPROVAL"), hint: "Approval entries" },
+      ];
+    }
     case "sales@gasneeds.com": {
       const sent = await prisma.quotation.count({ where: { createdById: { in: ids }, createdAt: { gte: r.start, lt: r.end } } });
       const decided = await prisma.quotation.findMany({
@@ -231,6 +324,67 @@ async function compute(email: string, ids: string[], r: Range): Promise<LiveKpi[
     }
   }
   return [];
+}
+
+const EXCUSED = ["Was away from the office", "No network at the time"];
+/** Sundays do not count as waiting days. */
+const workDays = (a: Date, b: Date) => {
+  let n = 0;
+  for (let t = a.getTime(); t < b.getTime(); t += DAY) if (new Date(t + 4 * 3600 * 1000).getUTCDay() !== 0) n++;
+  return n;
+};
+
+/**
+ * Responsiveness, for everyone, judged fairly: each measure is a rate or an average against the person's own due dates,
+ * with a day's grace, Sundays not counted, and back-dated entries excused when the reason was being away or having no network.
+ */
+async function responsiveness(ids: string[], r: Range): Promise<LiveKpi[]> {
+  const now = new Date();
+  const rows = await prisma.task.findMany({
+    where: { assignedToId: { in: ids }, logKind: { not: null, notIn: ["HANDOVER", "CONTENT_REQUEST"] }, eventAt: { gte: r.start, lt: r.end } },
+    select: { eventAt: true, createdAt: true, backdateReason: true },
+  });
+  const late = rows.filter((t) => t.createdAt.getTime() - t.eventAt!.getTime() > DAY && !EXCUSED.includes(t.backdateReason ?? ""));
+  const buckets = new Map<number, number>();
+  for (const t of late) {
+    const k = Math.floor(t.createdAt.getTime() / (30 * 60000));
+    buckets.set(k, (buckets.get(k) ?? 0) + 1);
+  }
+  const bulk = [...buckets.values()].filter((n) => n >= 5).reduce((s, n) => s + n, 0);
+
+  const ho = await prisma.task.findMany({
+    where: { assignedToId: { in: ids }, logKind: { in: ["HANDOVER", "CONTENT_REQUEST"] }, createdAt: { gte: r.start, lt: r.end } },
+    select: { createdAt: true, completedAt: true, status: true, followUpAt: true, deadline: true },
+  });
+  let ok = 0;
+  let judged = 0;
+  const speeds: number[] = [];
+  for (const t of ho) {
+    const due = (t.followUpAt ?? t.deadline)?.getTime() ?? null;
+    const limit = due !== null ? due + DAY : null;
+    if (t.status === "COMPLETED" && t.completedAt) {
+      speeds.push(workDays(t.createdAt, t.completedAt));
+      judged++;
+      if (limit !== null ? t.completedAt.getTime() <= limit : workDays(t.createdAt, t.completedAt) <= 2) ok++;
+    } else if (limit !== null ? limit < now.getTime() : workDays(t.createdAt, now) > 2) judged++;
+  }
+  const dl = await prisma.task.findMany({
+    where: { assignedToId: { in: ids }, parentTaskId: { not: null }, deadline: { gte: r.start, lt: r.end < now ? r.end : now } },
+    select: { status: true, completedAt: true, deadline: true },
+  });
+  const onTimeDl = dl.filter((t) => t.status === "COMPLETED" && t.completedAt && t.completedAt.getTime() <= t.deadline!.getTime() + DAY).length;
+  return [
+    { label: "Logged the same day", value: pct(rows.length - late.length, rows.length), unit: "%", hint: "Entries logged within a day of when the work happened. Entries back-dated because you were away or had no network are not counted against you." },
+    { label: "Entries logged late", value: late.length, lowerIsBetter: true, hint: "Entries logged more than a day after the work, without an excused reason" },
+    { label: "Bulk-updated entries", value: bulk, lowerIsBetter: true, hint: "Late entries added in one sitting (five or more within half an hour)" },
+    { label: "Hand-overs answered on time", value: pct(ok, judged), unit: "%", hint: "Work handed to you that was finished by its due date (a day's grace), or within two working days when no date was set" },
+    { label: "Days to finish handed-over work", value: avg(speeds), unit: "days", lowerIsBetter: true, hint: "Average working days (Sundays excluded) from receiving hand-overs and requests to finishing them" },
+    { label: "Tasks finished by their due date", value: pct(onTimeDl, dl.length), unit: "%", hint: "Tasks with a due date this month that were completed by it (a day's grace)" },
+  ];
+}
+
+async function compute(email: string, ids: string[], r: Range): Promise<LiveKpi[]> {
+  return [...(await computeRole(email, ids, r)), ...(await responsiveness(ids, r))];
 }
 
 /** This month and last month for one person, matched by label. */

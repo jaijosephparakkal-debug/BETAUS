@@ -228,6 +228,7 @@ input[type="range"]::-moz-range-track {
 
 /* Dark surfaces: translucent fields, light borders, links in the highlight colour. */
 .card-themed .bg-white,
+.card-themed .bg-surface,
 .card-themed input, .card-themed select, .card-themed textarea,
 .panel-ink input, .panel-ink select, .panel-ink textarea {
   background-color: rgba(255, 255, 255, 0.08) !important;
@@ -257,3 +258,12 @@ input[type="range"]::-moz-range-track {
   border-radius: 14px;
   padding: 6px 12px;
 }
+
+/* Frosted glass for panels nested inside dark cards (org chart teams and similar). */
+.card-themed .bg-surface {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-color: rgba(223, 229, 235, 0.22) !important;
+}
+.card-themed .hover\:bg-slate-50:hover { background-color: rgba(255, 255, 255, 0.1) !important; }

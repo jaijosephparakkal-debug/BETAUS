@@ -208,7 +208,12 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     let building: { id: string; name: string; code: string | null } | null = null;
     if (g.building) {
       const bid = s("buildingId");
-      building = bid ? await prisma.building.findUnique({ where: { id: bid } }) : null;
+      if (bid.startsWith("site:")) {
+        const site = await prisma.project.findUnique({ where: { id: bid.slice(5) }, select: { id: true, name: true, type: true, number: true } });
+        building = site ? { id: site.id, name: site.number ? `${site.name} (${site.number})` : site.name, code: site.type } : null;
+      } else {
+        building = bid ? await prisma.building.findUnique({ where: { id: bid } }) : null;
+      }
       if (!building && g.building === "req") return { error: "Choose the building." };
     }
     const unitType = s("unitType");

@@ -17,7 +17,7 @@ export type LogData = {
   agencies: { id: string; name: string }[];
   quotations: { id: string; number: string; companyId: string; customerId: string; customerName: string; value: number | null; createdAt: string }[];
   suppliers: { id: string; companyId: string; name: string }[];
-  buildings: { id: string; code: string | null; name: string; cycle: string | null; rate: number | null; pf: number | null; monthly: number | null; first: number | null; deposit: number | null; connection: number | null; disconnection: number | null }[];
+  buildings: { id: string; group?: string; code: string | null; name: string; cycle: string | null; rate: number | null; pf: number | null; monthly: number | null; first: number | null; deposit: number | null; connection: number | null; disconnection: number | null }[];
   units: { id: string; buildingId: string; flat: string; tenant: string | null; status: string }[];
   projects?: { id: string; name: string; number: string | null }[];
   /** What this person's form offers: kinds of work, the companies they can log for, and their next-step choices. */
@@ -461,6 +461,7 @@ export function LogForm({ data }: { data: LogData }) {
             <BuildingUnit
               data={data}
               required={GENERIC[kind].building === "req"}
+              noUnit={!!GENERIC[kind].noUnit}
               buildingId={buildingId}
               setBuildingId={(v) => { setBuildingId(v); setUnitId(""); }}
               unitType={unitType}
@@ -703,9 +704,9 @@ function QuotePick({
 }
 
 function BuildingUnit({
-  data, required, buildingId, setBuildingId, unitType, setUnitType, unitId, setUnitId,
+  data, required, noUnit, buildingId, setBuildingId, unitType, setUnitType, unitId, setUnitId,
 }: {
-  data: LogData; required: boolean; buildingId: string; setBuildingId: (v: string) => void;
+  data: LogData; required: boolean; noUnit?: boolean; buildingId: string; setBuildingId: (v: string) => void;
   unitType: string; setUnitType: (v: string) => void; unitId: string; setUnitId: (v: string) => void;
 }) {
   const b = data.buildings.find((x) => x.id === buildingId);
@@ -715,12 +716,17 @@ function BuildingUnit({
   const aed = (n: number | null) => (n == null ? "—" : `AED ${n.toLocaleString("en-US")}`);
   return (
     <>
-      <Field label="Building" tag="pick">
+      <Field label={noUnit ? "Site" : "Building"} tag="pick">
         <select name="buildingId" required={required} value={buildingId} onChange={(e) => setBuildingId(e.target.value)} className={sel}>
-          <option value="">{required ? "Choose building…" : "No building"}</option>
-          {data.buildings.map((x) => <option key={x.id} value={x.id}>{x.code ? `${x.code} · ` : ""}{x.name}</option>)}
+          <option value="">{required ? "Choose building or site…" : "No building"}</option>
+          {Array.from(new Set(data.buildings.map((x) => x.group ?? "Buildings"))).map((g) => (
+            <optgroup key={g} label={g}>
+              {data.buildings.filter((x) => (x.group ?? "Buildings") === g).map((x) => <option key={x.id} value={x.id}>{g === "Buildings" && x.code ? `${x.code} · ` : ""}{x.name}</option>)}
+            </optgroup>
+          ))}
         </select>
       </Field>
+      {!noUnit && !b?.id.startsWith("site:") && (
       <Field label="Bill cycle and charges" tag="auto">
         <div className="rounded-md bg-slate-50 px-2 py-1.5 text-[14px] text-slate-600">
           {b ? (
@@ -738,7 +744,8 @@ function BuildingUnit({
           )}
         </div>
       </Field>
-      {b && (
+      )}
+      {b && !noUnit && !b.id.startsWith("site:") && (
         <>
           <input type="hidden" name="unitType" value={unitType} />
           <div className="sm:col-span-2">

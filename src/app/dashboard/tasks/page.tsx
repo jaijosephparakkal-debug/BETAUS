@@ -129,7 +129,11 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
       suppliers: (await prisma.supplier.findMany({ orderBy: { name: "asc" } })).map((x) => ({ id: x.id, companyId: x.companyId, name: x.name })),
       profile: { kinds: PROFILES[membership.user.email.toLowerCase()].kinds, companies: PROFILES[membership.user.email.toLowerCase()].companies, next: PROFILES[membership.user.email.toLowerCase()].next, tabs: PROFILES[membership.user.email.toLowerCase()].tabs },
       buildings: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.building)
-        ? (await prisma.building.findMany({ orderBy: { name: "asc" } })).map((b) => ({ id: b.id, code: b.code, name: b.name, cycle: b.billCycle, rate: b.unitRate, pf: b.pressureFactor, monthly: b.monthlyCharge, first: b.firstBill, deposit: b.securityDeposit, connection: b.connectionCharge, disconnection: b.disconnectionCharge }))
+        ? [
+            ...(await prisma.building.findMany({ orderBy: { name: "asc" } })).map((b) => ({ id: b.id, group: "Buildings", code: b.code, name: b.name, cycle: b.billCycle, rate: b.unitRate, pf: b.pressureFactor, monthly: b.monthlyCharge, first: b.firstBill, deposit: b.securityDeposit, connection: b.connectionCharge, disconnection: b.disconnectionCharge })),
+            // Maintenance contract sites are on the same list, so AMC, PPM and DCD work is picked, not typed.
+            ...(await prisma.project.findMany({ where: { type: { in: ["AMC", "DLP"] }, company: { slug: "flaretechnical" } }, orderBy: { name: "asc" }, select: { id: true, name: true, type: true, number: true } })).map((p) => ({ id: `site:${p.id}`, group: `${p.type} sites`, code: p.type, name: p.number ? `${p.name} (${p.number})` : p.name, cycle: null, rate: null, pf: null, monthly: null, first: null, deposit: null, connection: null, disconnection: null })),
+          ]
         : [],
       projects: PROFILES[membership.user.email.toLowerCase()].kinds.some((k) => GENERIC[k.v]?.fields.some((f) => f.t === "project"))
         ? (await prisma.project.findMany({ where: { type: "PROJECT", company: { slug: "flaretechnical" } }, orderBy: { name: "asc" }, select: { id: true, name: true, number: true } }))

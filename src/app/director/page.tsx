@@ -13,6 +13,7 @@ import {
 import { Card, SegmentedDonut, StatusBadge, CompanyTag, formatDate } from "@/components/ui";
 import { MergedOrgChart } from "@/components/OrgChart";
 import { staffPhoto } from "@/lib/staffPhotos";
+import { MyAttendance } from "@/components/MyAttendance";
 import { getCompanyTheme } from "@/lib/theme";
 import { dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
@@ -38,7 +39,7 @@ function StatBox({
   );
 }
 
-export default async function DirectorPage() {
+export default async function DirectorPage({ searchParams }: { searchParams: { month?: string } }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
   if (!membership.isDirector) redirect("/dashboard");
@@ -277,6 +278,8 @@ export default async function DirectorPage() {
           </div>
         )}
       </Card>
+
+      <MyAttendance userId={membership.userId} monthParam={searchParams.month} base="/director" />
 
       <Card>
         <h2 className="mb-1 text-[21px] font-semibold text-slate-900">Combined performance</h2>

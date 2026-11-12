@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { OrgNode } from "@/lib/queries";
 import { Avatar } from "@/components/Avatar";
+import { OrgLinks, type OrgPair } from "@/components/OrgLinks";
+
+const secondTag = (n: OrgNode) =>
+  n.second ? (n.second.label === "Estimation" ? `🔒 Estimation · direct to ${n.second.managerName}` : `Also ${n.second.label} · ${n.second.managerName}`) : null;
 
 function OrgNodeCard({ node }: { node: OrgNode }) {
   return (
@@ -16,6 +20,7 @@ function OrgNodeCard({ node }: { node: OrgNode }) {
         {node.name}
       </div>
       <div className="truncate text-[17px] text-slate-500">{node.title}</div>
+      {secondTag(node) && <div className="mt-1 text-[13px] text-highlight">{secondTag(node)}</div>}
       {node.department && (
         <div className="mt-1 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[15px] font-medium uppercase tracking-wide text-brand-700">
           {node.department}
@@ -85,7 +90,7 @@ function initials(name: string) {
 /** One person in the director's chart — avatar, full name and title, never cut off. */
 function PersonRow({ node, href, color, lead }: { node: OrgNode; href: string | null; color: string; lead: boolean }) {
   const body = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3" data-org-id={node.id}>
       {node.photo ? (
         <Avatar name={node.name} photo={node.photo} size={lead ? 44 : 36} />
       ) : (
@@ -99,6 +104,8 @@ function PersonRow({ node, href, color, lead }: { node: OrgNode; href: string | 
       <div className="min-w-0">
         <div className={`break-words leading-snug text-slate-900 ${lead ? "text-[18px] font-semibold" : "text-[16px] font-medium"}`}>{node.name}</div>
         <div className="break-words text-[14px] leading-snug text-slate-500">{node.title}</div>
+        {secondTag(node) && <div className="mt-0.5 inline-block rounded-full border border-dashed border-highlight/70 px-2 text-[12px] text-highlight">{secondTag(node)}</div>}
+        {node.alsoReports.length > 0 && <div className="mt-0.5 text-[12px] text-highlight">Also: {node.alsoReports.join(", ")}</div>}
       </div>
     </div>
   );
@@ -175,15 +182,26 @@ export function MergedOrgChart({
   /** Each person opens their Manage My Staff profile. */
   staffLinks?: boolean;
 }) {
+  const rootIds = new Set(branches.map((b) => b.tree?.id).filter(Boolean) as string[]);
+  const pairs: OrgPair[] = [];
+  const walk = (n: OrgNode) => {
+    if (n.second) pairs.push({ from: n.id, to: rootIds.has(n.second.managerId) ? "md" : n.second.managerId, kind: rootIds.has(n.second.managerId) ? "direct" : "second" });
+    n.children.forEach(walk);
+  };
+  branches.forEach((b) => b.tree && walk(b.tree));
+  const rank = (d: string | null) => {
+    const i = ["projects", "accounts", "maintenance"].indexOf((d ?? "").toLowerCase());
+    return i === -1 ? 9 : i;
+  };
   return (
-    <div>
-      <div className="mx-auto w-fit rounded-xl border border-slate-800 bg-slate-900 px-6 py-3 text-center shadow-md">
+    <OrgLinks pairs={pairs}>
+      <div className="mx-auto w-fit rounded-xl border border-slate-800 bg-slate-900 px-6 py-3 text-center shadow-md" data-org-md>
         {directorPhoto && <Avatar name={directorName} photo={directorPhoto} size={64} className="mx-auto mb-2 ring-2 ring-accent" />}
         <div className="text-[19px] font-semibold text-white">{directorName}</div>
         <div className="text-[15px] text-slate-300">{directorTitle}</div>
       </div>
       {branches.map((b) => {
-        const teams = b.tree?.children ?? [];
+        const teams = [...(b.tree?.children ?? [])].sort((x, y) => rank(x.department) - rank(y.department));
         return (
           <div key={b.label}>
             <Drop />
@@ -207,6 +225,6 @@ export function MergedOrgChart({
           </div>
         );
       })}
-    </div>
+    </OrgLinks>
   );
 }

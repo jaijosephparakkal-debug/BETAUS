@@ -327,6 +327,10 @@ export type OrgNode = {
   photo: string | null;
   /** Has a staff profile page for directors to open (everyone but the Managing Director). */
   hasProfile: boolean;
+  /** A second reporting line: who, and for which area (shown in the org chart only). */
+  second: { managerId: string; managerName: string; label: string } | null;
+  /** People who also report to this person for an area, e.g. "Hashim (Maintenance)". */
+  alsoReports: string[];
   children: OrgNode[];
 };
 
@@ -338,6 +342,10 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
   const shown = memberships.filter((m) => shownInCompany(m.user.email, m.company.slug));
 
   const byId = new Map(shown.map((m) => [m.id, m]));
+  const alsoOf = new Map<string, string[]>();
+  for (const m of shown) {
+    if (m.secondManagerId) alsoOf.set(m.secondManagerId, [...(alsoOf.get(m.secondManagerId) ?? []), `${m.user.name} (${m.secondLabel ?? "second role"})`]);
+  }
   const childrenOf = new Map<string, string[]>();
   let rootId: string | null = null;
 
@@ -361,6 +369,8 @@ export async function getOrgTree(companyId: string): Promise<OrgNode | null> {
       isDirector: m.isDirector,
       photo: staffPhoto(m.user.email),
       hasProfile: hasStaffProfile(m.user.email),
+      second: m.secondManagerId && byId.get(m.secondManagerId) ? { managerId: m.secondManagerId, managerName: byId.get(m.secondManagerId)!.user.name, label: m.secondLabel ?? "second role" } : null,
+      alsoReports: alsoOf.get(m.id) ?? [],
       children: (childrenOf.get(id) ?? []).map(build),
     };
   }

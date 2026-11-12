@@ -72,6 +72,9 @@ model Membership {
   department String?
   isDirector Boolean  @default(false)
   managerId  String?
+  /// A second reporting line shown in the org chart only (e.g. Hashim to Jayaprakash for Maintenance).
+  secondManagerId String?
+  secondLabel     String?
   createdAt  DateTime @default(now())
 
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)

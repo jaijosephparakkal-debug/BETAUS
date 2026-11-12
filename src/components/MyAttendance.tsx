@@ -4,7 +4,7 @@ import { dubaiDateKey } from "@/lib/attendance";
 import { daysInMonth, getMonthCalendar, isHoliday, isWorkingDay, keyOf, monthKey, monthLabel, parseMonth, shiftMonth, summarize } from "@/lib/attendanceCalendar";
 
 /** Read-only attendance calendar for the signed-in person: their own days only. */
-export async function MyAttendance({ userId, monthParam }: { userId: string; monthParam?: string }) {
+export async function MyAttendance({ userId, monthParam, base = "/dashboard" }: { userId: string; monthParam?: string; base?: string }) {
   const { year, month } = parseMonth(monthParam);
   const [person] = await getMonthCalendar(year, month, userId);
   if (!person) return null;
@@ -17,7 +17,6 @@ export async function MyAttendance({ userId, monthParam }: { userId: string; mon
   const firstDow = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
   const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: n }, (_, i) => i + 1)];
   while (cells.length % 7) cells.push(null);
-  const base = "/dashboard";
   return (
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-2">

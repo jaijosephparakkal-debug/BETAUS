@@ -65,7 +65,7 @@ export default async function DirectorKpiPage({
       <div>
         <h1 className="text-[23px] font-semibold text-slate-900">KPI</h1>
         <p className="text-[17px] text-slate-500">
-          KPI achievement (current vs target) across Flare Technical &amp; Gas Needs.
+          Actual figures for every KPI. Scores come from percentage rates only (such as on-time and accuracy) until targets are agreed in January.
         </p>
       </div>
 

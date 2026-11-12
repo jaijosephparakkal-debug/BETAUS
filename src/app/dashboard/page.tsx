@@ -11,8 +11,9 @@ import {
 } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 import { OrgChart } from "@/components/OrgChart";
+import { MyAttendance } from "@/components/MyAttendance";
 
-export default async function DashboardOverviewPage() {
+export default async function DashboardOverviewPage({ searchParams }: { searchParams: { month?: string } }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
 
@@ -60,6 +61,8 @@ export default async function DashboardOverviewPage() {
           </div>
         </Card>
       )}
+
+      <MyAttendance userId={membership.userId} monthParam={searchParams.month} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

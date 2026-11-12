@@ -11,7 +11,7 @@ export async function postMessageAction(
 ): Promise<{ error?: string }> {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
-  if (!membership.isDirector) return { error: "Only the director can post." };
+  if (!membership.isDirector) return { error: "Only management can post." };
 
   const body = String(formData.get("body") || "").trim();
   if (!body) return { error: "Write a message first." };

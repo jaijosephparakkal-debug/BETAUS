@@ -16,7 +16,7 @@ async function assertCanManageProjects() {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." as const };
   if (!canAddProjects(membership)) {
-    return { error: "Only the Projects team or the director can add projects." as const };
+    return { error: "Only the Projects team or management can add projects." as const };
   }
   return { membership };
 }

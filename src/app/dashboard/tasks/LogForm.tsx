@@ -331,7 +331,7 @@ export function LogForm({ data }: { data: LogData }) {
           <Field label="Topic" tag="pick"><select name="hrTopic" className={sel}>{HR_TOPICS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Action" tag="pick"><select name="hrAction" className={sel}>{HR_ACTIONS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Confidential" tag="pick">
-            <select name="confidential" className={sel}><option value="no">No</option><option value="yes">Yes — directors only</option></select>
+            <select name="confidential" className={sel}><option value="no">No</option><option value="yes">Yes — management only</option></select>
           </Field>
         </div>
       )}

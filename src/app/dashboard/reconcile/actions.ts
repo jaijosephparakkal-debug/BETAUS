@@ -103,7 +103,7 @@ export async function addBulkEntriesAction(rows: { date: string; in: string; out
   if (rows.length === 0 || rows.length > 40) return { error: "Nothing to save." };
 
   const now = new Date();
-  const note = "Times entered manually by the director";
+  const note = "Times entered manually by management";
   const data = [];
   for (const r of rows) {
     if (r.date < RECONCILE_FROM || r.date > dubaiDateKey(now)) return { error: `${r.date}: pick a date from 26 Sep up to today.` };

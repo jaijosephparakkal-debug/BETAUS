@@ -9,7 +9,7 @@ export const maxDuration = 30;
 
 const RANGES: PeriodRange[] = ["cur", "prev", "month", "prevmonth"];
 
-/** A review deck (PDF) made from the signed-in person's own logged work. Directors can ask for anyone's. */
+/** A review deck (PDF) made from the signed-in person's own logged work. Management can ask for anyone's. */
 export async function GET(req: Request) {
   const m = await getCurrentMembership();
   if (!m) return new NextResponse("Not signed in.", { status: 401 });

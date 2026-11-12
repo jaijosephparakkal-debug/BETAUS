@@ -10,7 +10,7 @@ const FLAG = "rollout-email-2026-11";
 
 export async function sendRolloutAction(_prev: { message?: string; error?: string } | undefined): Promise<{ message?: string; error?: string }> {
   const m = await getCurrentMembership();
-  if (!m || m.viewingAs || !canManageAllStaff(m)) return { error: "Only the director can send this." };
+  if (!m || m.viewingAs || !canManageAllStaff(m)) return { error: "Only management can send this." };
   const done = await prisma.numberCounter.findUnique({ where: { key: FLAG } });
   if (done) return { error: "This email has already been sent. Nothing was sent again." };
   const ok: string[] = [];
@@ -31,7 +31,7 @@ const ML_FLAG = "rollout-email-ml-2026-11";
 
 export async function sendRolloutMalayalamAction(_prev: { message?: string; error?: string } | undefined): Promise<{ message?: string; error?: string }> {
   const m = await getCurrentMembership();
-  if (!m || m.viewingAs || !canManageAllStaff(m)) return { error: "Only the director can send this." };
+  if (!m || m.viewingAs || !canManageAllStaff(m)) return { error: "Only management can send this." };
   const done = await prisma.numberCounter.findUnique({ where: { key: ML_FLAG } });
   if (done) return { error: "The Malayalam email has already been sent. Nothing was sent again." };
   const ok: string[] = [];

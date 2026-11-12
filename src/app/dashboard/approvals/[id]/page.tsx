@@ -77,7 +77,7 @@ export default async function ApprovalDetailPage({
         )}
         {isAuditing && (
           <p className="mt-2 text-[17px] text-slate-400">
-            You&rsquo;re viewing this as the director — it wasn&rsquo;t sent
+            You&rsquo;re viewing this as management — it wasn&rsquo;t sent
             to you, so it&rsquo;s read-only.
           </p>
         )}

@@ -11,7 +11,7 @@ export async function updateEmployeeEmailAction(
 ): Promise<{ error?: string; ok?: boolean }> {
   const membership = await getCurrentMembership();
   if (!membership) return { error: "Not signed in." };
-  if (!membership.isDirector) return { error: "Only the director can do this." };
+  if (!membership.isDirector) return { error: "Only management can do this." };
 
   const email = String(formData.get("email") || "").trim().toLowerCase();
   if (!email || !email.includes("@")) return { error: "Enter a valid email." };
@@ -41,7 +41,7 @@ export async function addEmployeeAction(
 ): Promise<{ error?: string; ok?: boolean }> {
   const me = await getCurrentMembership();
   if (!me) return { error: "Not signed in." };
-  if (!me.isDirector) return { error: "Only the director can do this." };
+  if (!me.isDirector) return { error: "Only management can do this." };
 
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();

@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, pushGraphicsState, popGraphicsState, rectangle, clip, endPath, type PDFFont, type PDFPage, type PDFImage } from "pdf-lib";
 
 /** Everything a review deck shows. Built from a person's own logged work (see presentationData.ts). */
 export type Deck = {
@@ -139,6 +139,8 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
     s.page.drawImage(art, { x: W - w, y: 0, width: w, height: H, opacity });
   };
 
+  const noWork = deck.entries === 0;
+
   // ---- common chrome ----
   const chrome = (s: Slide, kicker: string, title: string, n: number, total: number) => {
     s.text(kicker.toUpperCase(), 44, 34, { size: 9, color: th.hi, bold: true });
@@ -165,18 +167,24 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
     s.text(deck.name, 44, 206, { size: 46, bold: true });
     s.text(deck.title, 44, 262, { size: 20, color: th.hi, bold: true });
     s.text(deck.companyName, 44, 290, { size: 13, color: th.ice, op: 0.8 });
-    s.wrap(`Prepared from ${deck.entries} entries you logged in OWN IT. Figures are actual results; KPI scores are provisional until targets are set.`, 44, 336, 400, { size: 11, color: th.ice, op: 0.75 });
+    s.wrap(noWork ? "No work was logged in OWN IT in this period, so this report shows only attendance and KPIs. Figures are actual results." : `Prepared from ${deck.entries} entries you logged in OWN IT. Figures are actual results; scores come from percentage rates only until targets are agreed.`, 44, 336, 400, { size: 11, color: th.ice, op: 0.75 });
     if (photo) {
       const px = W - 250;
       s.rrect(px - 4, 130 - 4, 188, 188, 16, { fill: th.accent });
-      s.page.drawImage(photo, { x: px, y: H - 130 - 180, width: 180, height: 180 });
+      // Fill the square without squashing: scale to cover, keep the top (the face), and clip to the square.
+      const box = 180, wy = H - 130 - box;
+      const k = Math.max(box / photo.width, box / photo.height);
+      const iw = photo.width * k, ih = photo.height * k;
+      s.page.pushOperators(pushGraphicsState(), rectangle(px, wy, box, box), clip(), endPath());
+      s.page.drawImage(photo, { x: px - (iw - box) / 2, y: wy + box - ih, width: iw, height: ih });
+      s.page.pushOperators(popGraphicsState());
     }
     s.text(`OWN IT  |  Confidential, for the review meeting`, 44, H - 26, { size: 8.5, color: th.ice, op: 0.55 });
     void n; void total;
   });
 
   // ---- 2. at a glance ----
-  slides.push((s, n, total) => {
+  if (!noWork) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "At a glance", "What you got done", n, total);
     const d = (a: number, b: number) => (a - b >= 0 ? `+${a - b}` : `${a - b}`);
@@ -210,7 +218,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- 3. work mix ----
-  slides.push((s, n, total) => {
+  if (!noWork) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "Work mix", "Where your time went", n, total);
     s.panel(44, 110, 400, 380);
@@ -274,7 +282,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- 5. trajectory ----
-  slides.push((s, n, total) => {
+  if (!noWork) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "Trajectory", "Are you moving up?", n, total);
     s.panel(44, 110, 872, 380);
@@ -300,7 +308,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- 6. people ----
-  slides.push((s, n, total) => {
+  if (!noWork) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "People and partners", "Who you worked with", n, total);
     const col = (x: number, title: string, rows: { name: string; count: number }[], empty: string) => {
@@ -321,7 +329,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- 7. key deliveries ----
-  slides.push((s, n, total) => {
+  if (!noWork) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "Key deliveries", "What you delivered", n, total);
     s.panel(44, 110, 872, 380);
@@ -391,7 +399,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- month only: fortnight comparison ----
-  if (deck.kind === "month" && deck.fortnights) {
+  if (deck.kind === "month" && deck.fortnights && !noWork) {
     slides.push((s, n, total) => {
       bg(s, 0.3);
       chrome(s, "Month in two halves", "First fortnight against second", n, total);

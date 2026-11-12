@@ -247,3 +247,10 @@ input[type="range"]::-moz-range-track {
 .card-themed .text-brand-900 { color: #fff !important; }
 .card-themed .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
 .card-themed .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(223, 229, 235, 0.18) !important; }
+
+/* Company logos on dark cards sit on an ice-gray tile so the dark parts stay readable. */
+.card-themed img[alt$="LLC"] {
+  background-color: #dfe5eb;
+  border-radius: 14px;
+  padding: 6px 12px;
+}

@@ -4,7 +4,8 @@ import { LogForm, type LogData } from "./LogForm";
 import { RequestContent } from "./RequestContent";
 import { BentoHome } from "@/components/Hero";
 import { periodOptions } from "@/lib/presentationData";
-import { kpiScore } from "@/lib/queries";
+import { kpiScore, avgScores } from "@/lib/queries";
+import { liveRatesFor } from "@/lib/liveKpis";
 import { LOG_FORM_EMAILS, PROFILES, GENERIC } from "@/lib/logOptions";
 import { ProjectLogForm, type ProjectLogData } from "./ProjectLogForm";
 import { PROJECT_PROFILES } from "@/lib/projectLogOptions";
@@ -208,7 +209,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
 
   // Score ring, team pulse and the quotation in motion.
   const myKpis = await prisma.kpi.findMany({ where: { membershipId: membership.id } });
-  const score = myKpis.length ? Math.round(myKpis.reduce((a, k) => a + kpiScore(k), 0) / myKpis.length) : null;
+  const score = avgScores([...myKpis.map((k) => kpiScore(k)), ...(await liveRatesFor(membership.userId))]);
   const handedToMe = await prisma.task.count({ where: { assignedToId: membership.id, logKind: "HANDOVER", status: { not: "COMPLETED" } } });
   const since = new Date(Date.now() - 30 * 86400000);
   const hand = await prisma.task.findMany({

@@ -223,6 +223,8 @@ model Kpi {
   unit         String?
   period       String?
   lowerIsBetter Boolean @default(false)
+  /// True once the target has been agreed (from January). Until then only rates are scored.
+  targetSet    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

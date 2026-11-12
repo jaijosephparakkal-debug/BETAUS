@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { kpiScore } from "@/lib/queries";
+import { kpiScore, avgScores } from "@/lib/queries";
 import { sendReportEmail } from "@/lib/mailer";
 
 export type PeriodReport = {
@@ -8,7 +8,7 @@ export type PeriodReport = {
   firm: {
     headcount: number;
     tasksCompleted: number;
-    avgKpiScore: number;
+    avgKpiScore: number | null;
     bestDepartment: { name: string; avgScore: number } | null;
     worstDepartment: { name: string; avgScore: number } | null;
   };
@@ -17,7 +17,7 @@ export type PeriodReport = {
     title: string;
     tasksCompleted: number;
     kpiCount: number;
-    avgKpiScore: number;
+    avgKpiScore: number | null;
   }[];
 };
 
@@ -46,9 +46,7 @@ export async function buildFirmReport(
 
   const staff = memberships.map((m) => {
     const scores = m.kpis.map((k) => kpiScore(k));
-    const avgKpiScore = scores.length
-      ? Math.round(scores.reduce((s, x) => s + x, 0) / scores.length)
-      : 0;
+    const avgKpiScore = avgScores(scores);
     return {
       name: m.user.name,
       title: m.title,
@@ -60,10 +58,8 @@ export async function buildFirmReport(
   });
 
   const tasksCompleted = staff.reduce((s, x) => s + x.tasksCompleted, 0);
-  const scoredStaff = staff.filter((s) => s.kpiCount > 0);
-  const avgKpiScore = scoredStaff.length
-    ? Math.round(scoredStaff.reduce((s, x) => s + x.avgKpiScore, 0) / scoredStaff.length)
-    : 0;
+  const scoredStaff = staff.filter((s): s is typeof s & { avgKpiScore: number } => s.avgKpiScore !== null);
+  const avgKpiScore = avgScores(scoredStaff.map((s) => s.avgKpiScore));
 
   const deptScores = new Map<string, number[]>();
   for (const s of scoredStaff) {
@@ -100,7 +96,7 @@ export function renderReportHtml(report: PeriodReport): string {
         <td style="padding:6px 10px;border:1px solid #e2e8f0">${s.title}</td>
         <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${s.tasksCompleted}</td>
         <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${
-          s.kpiCount ? `${s.avgKpiScore}%` : "—"
+          s.avgKpiScore !== null ? `${s.avgKpiScore}%` : "—"
         }</td>
       </tr>`
     )
@@ -113,7 +109,7 @@ export function renderReportHtml(report: PeriodReport): string {
       <p>
         <strong>${report.firm.headcount}</strong> staff ·
         <strong>${report.firm.tasksCompleted}</strong> tasks completed this period ·
-        avg KPI score <strong>${report.firm.avgKpiScore}%</strong>
+        avg KPI score <strong>${report.firm.avgKpiScore === null ? "—" : `${report.firm.avgKpiScore}%`}</strong>
       </p>
       ${
         report.firm.bestDepartment

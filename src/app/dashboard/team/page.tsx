@@ -38,9 +38,9 @@ export default async function MyTeamPage() {
                   <div>
                     <div className="flex items-center justify-between text-[17px] text-slate-500">
                       <span>KPI achievement</span>
-                      <span>{summary.avgKpiScore}%</span>
+                      <span>{summary.avgKpiScore === null ? "—" : `${summary.avgKpiScore}%`}</span>
                     </div>
-                    <ProgressBar value={summary.avgKpiScore} />
+                    <ProgressBar value={summary.avgKpiScore ?? 0} />
                   </div>
                 </div>
               </Card>

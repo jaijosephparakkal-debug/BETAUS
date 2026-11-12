@@ -387,6 +387,16 @@ async function compute(email: string, ids: string[], r: Range): Promise<LiveKpi[
   return [...(await computeRole(email, ids, r)), ...(await responsiveness(ids, r))];
 }
 
+/** The rate-type live KPIs (percentages, higher is better) for this month: these are scored directly, with no target. */
+export async function liveRatesFor(userId: string): Promise<number[]> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: { memberships: { select: { id: true } } } });
+  if (!user) return [];
+  const email = user.email.toLowerCase();
+  if (!LIVE_KPI_EMAILS.includes(email)) return [];
+  const items = await compute(email, user.memberships.map((m) => m.id), monthRange());
+  return items.filter((k) => k.unit === "%" && !k.lowerIsBetter && k.value !== null).map((k) => Math.max(0, Math.min(100, k.value as number)));
+}
+
 /** This month and last month for one person, matched by label. */
 export async function getLiveKpis(userId: string, monthKey?: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, include: { memberships: { select: { id: true } } } });

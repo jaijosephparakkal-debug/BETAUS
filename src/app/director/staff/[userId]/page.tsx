@@ -1,6 +1,6 @@
 import { Avatar } from "@/components/Avatar";
 import { LiveKpis } from "@/components/LiveKpis";
-import { getLiveKpis } from "@/lib/liveKpis";
+import { getLiveKpis, liveRatesFor } from "@/lib/liveKpis";
 import Link from "next/link";
 import { startViewAsAction } from "@/app/director/view-as/actions";
 import { groupKpis } from "@/lib/kpiSections";
@@ -10,7 +10,7 @@ import { staffWhere } from "@/lib/visibleStaff";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
-import { getTasksFor, getKpisFor, getTimelineFor, kpiScore } from "@/lib/queries";
+import { getTasksFor, getKpisFor, getTimelineFor, kpiScore, avgScores, kpiTargetText } from "@/lib/queries";
 import {
   OFFICE_START,
   OFFICE_END,
@@ -126,7 +126,7 @@ export default async function StaffProfilePage({
   const completed = tasks.filter((t) => t.status === "COMPLETED");
   const pending = tasks.filter((t) => t.status !== "COMPLETED");
   const overdue = tasks.filter(isOverdueTask);
-  const avgKpi = kpis.length ? Math.round(kpis.reduce((s, k) => s + kpiScore(k), 0) / kpis.length) : null;
+  const avgKpi = avgScores([...kpis.map((k) => kpiScore(k)), ...(await liveRatesFor(person.id))]);
 
   const filter: TaskFilter =
     searchParams.tasks && Object.prototype.hasOwnProperty.call(TASK_FILTERS, searchParams.tasks) ? (searchParams.tasks as TaskFilter) : "all";
@@ -340,11 +340,11 @@ export default async function StaffProfilePage({
                         </span>
                         <span className="shrink-0 text-slate-500">
                           {k.current}
-                          {k.unit ?? ""} / {k.target}
-                          {k.unit ?? ""} · {kpiScore(k)}%
+                          {k.unit ?? ""}{kpiTargetText(k)}
+                          {kpiScore(k) !== null && ` · ${kpiScore(k)}%`}
                         </span>
                       </div>
-                      <ProgressBar value={kpiScore(k)} />
+                      {kpiScore(k) !== null && <ProgressBar value={kpiScore(k) as number} />}
                     </div>
                   ))}
                 </div>

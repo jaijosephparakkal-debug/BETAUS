@@ -60,7 +60,7 @@ export default async function MyKpisPage() {
           const score = kpiScore(kpi);
           return (
             <Card key={kpi.id} className="flex items-center gap-4">
-              <DonutChart value={score} size={72} strokeWidth={8} />
+              {score !== null ? <DonutChart value={score} size={72} strokeWidth={8} /> : <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border border-dashed border-slate-300 text-[15px] text-slate-500">{kpi.current}{kpi.unit ?? ""}</div>}
               <div>
                 <h3 className="flex items-center gap-2 text-[21px] font-medium text-slate-900">
                   {showCompanyTag && <CompanyTag slug={kpi.companySlug} />}
@@ -70,9 +70,8 @@ export default async function MyKpisPage() {
                   <div className="text-[17px] text-slate-500">{kpi.period}</div>
                 )}
                 <div className="mt-1 text-[17px] text-slate-500">
-                  Current: {kpi.current}
-                  {kpi.unit ?? ""} · Target: {kpi.target}
-                  {kpi.unit ?? ""}
+                  Actual: {kpi.current}
+                  {kpi.unit ?? ""}{kpi.targetSet ? ` · Target: ${kpi.target}${kpi.unit ?? ""}` : " · no target yet"}
                 </div>
               </div>
             </Card>

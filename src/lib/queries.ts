@@ -1,5 +1,6 @@
 import { staffPhoto } from "@/lib/staffPhotos";
 import { prisma } from "@/lib/db";
+import { liveRatesFor } from "@/lib/liveKpis";
 import { staffWhere, hasStaffProfile, shownInCompany } from "@/lib/visibleStaff";
 
 export function getLatestDirectorMessage(companyId: string) {
@@ -155,12 +156,31 @@ export async function getTimelineFor(membershipId: string) {
   }));
 }
 
-export function kpiScore(kpi: { target: number; current: number; lowerIsBetter?: boolean }) {
-  if (kpi.target <= 0) return 0;
-  // Turnaround-style KPIs: at or under the target is 100%, slower scores less.
-  if (kpi.lowerIsBetter) return kpi.current <= 0 ? 100 : Math.min(100, Math.round((kpi.target / kpi.current) * 100));
-  return Math.min(100, Math.round((kpi.current / kpi.target) * 100));
+export type KpiLike = { target: number; current: number; lowerIsBetter?: boolean; unit?: string | null; targetSet?: boolean };
+
+/**
+ * Score for one KPI, or null when it is not scored. With an agreed target it is the percentage of the target. Without one
+ * (until January) a rate (a % where higher is better) scores as itself, 0 to 100; counts and AED figures are shown but not scored.
+ */
+export function kpiScore(kpi: KpiLike): number | null {
+  if (kpi.targetSet) {
+    if (kpi.target <= 0) return 0;
+    // Turnaround-style KPIs: at or under the target is 100%, slower scores less.
+    if (kpi.lowerIsBetter) return kpi.current <= 0 ? 100 : Math.min(100, Math.round((kpi.target / kpi.current) * 100));
+    return Math.min(100, Math.round((kpi.current / kpi.target) * 100));
+  }
+  if (kpi.unit === "%" && !kpi.lowerIsBetter) return Math.max(0, Math.min(100, Math.round(kpi.current)));
+  return null;
 }
+
+/** Average of the scores that exist (unscored KPIs are skipped), or null when there are none. */
+export const avgScores = (xs: (number | null)[]) => {
+  const v = xs.filter((x): x is number => x !== null);
+  return v.length ? Math.round(v.reduce((s, x) => s + x, 0) / v.length) : null;
+};
+
+/** " / 24" when the target is agreed, nothing while it is only provisional. */
+export const kpiTargetText = (k: { target: number; unit?: string | null; targetSet?: boolean }) => (k.targetSet ? ` / ${k.target}${k.unit ?? ""}` : "");
 
 export async function getCompanyRollup(companyId: string) {
   const [tasks, kpis, memberships] = await Promise.all([
@@ -184,11 +204,7 @@ export async function getCompanyRollup(companyId: string) {
     ? Math.round(tasks.reduce((s, t) => s + t.progress, 0) / totalTasks)
     : 0;
 
-  const avgKpiScore = kpis.length
-    ? Math.round(
-        kpis.reduce((s, k) => s + kpiScore(k), 0) / kpis.length
-      )
-    : 0;
+  const avgKpiScore = avgScores(kpis.map((k) => kpiScore(k)));
 
   return {
     totalTasks,
@@ -303,9 +319,7 @@ export async function getMembershipSummary(membershipId: string) {
   const avgTaskProgress = tasks.length
     ? Math.round(tasks.reduce((s, t) => s + t.progress, 0) / tasks.length)
     : 0;
-  const avgKpiScore = kpis.length
-    ? Math.round(kpis.reduce((s, k) => s + kpiScore(k), 0) / kpis.length)
-    : 0;
+  const avgKpiScore = avgScores(kpis.map((k) => kpiScore(k)));
   const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
 
   return {
@@ -400,14 +414,15 @@ export async function getKpiOverview() {
     name: string;
     titles: string[];
     companySlugs: string[];
-    kpis: { id: string; name: string; current: number; target: number; unit: string | null; period: string | null; score: number; companySlug: string }[];
+    kpis: { id: string; name: string; current: number; target: number; unit: string | null; period: string | null; score: number | null; targetSet: boolean; companySlug: string }[];
+    live: number[];
     avgScore: number | null;
   };
   const people = new Map<string, PersonKpis>();
   for (const m of memberships) {
     let p = people.get(m.userId);
     if (!p) {
-      p = { userId: m.userId, name: m.user.name, titles: [], companySlugs: [], kpis: [], avgScore: null };
+      p = { userId: m.userId, name: m.user.name, titles: [], companySlugs: [], kpis: [], live: [], avgScore: null };
       people.set(m.userId, p);
     }
     if (!p.titles.includes(m.title)) p.titles.push(m.title);
@@ -421,11 +436,13 @@ export async function getKpiOverview() {
         unit: k.unit,
         period: k.period,
         score: kpiScore(k),
+        targetSet: k.targetSet,
         companySlug: m.company.slug,
       }))
     );
   }
-  for (const p of people.values()) p.avgScore = avg(p.kpis.map((k) => k.score));
+  await Promise.all(Array.from(people.values()).map(async (p) => { p.live = await liveRatesFor(p.userId); }));
+  for (const p of people.values()) p.avgScore = avgScores([...p.kpis.map((k) => k.score), ...p.live]);
 
   // Roll-up: each person's score is the average of their own KPIs, then the company score is the average
   // of its people and the overall score the average of everyone — so every person counts equally, however
@@ -433,7 +450,7 @@ export async function getKpiOverview() {
   const allKpis = Array.from(people.values()).flatMap((p) => p.kpis);
   const personScores = (slug?: string) =>
     Array.from(people.values())
-      .map((p) => avg(p.kpis.filter((k) => !slug || k.companySlug === slug).map((k) => k.score)))
+      .map((p) => avgScores([...p.kpis.filter((k) => !slug || k.companySlug === slug).map((k) => k.score), ...(!slug || p.companySlugs.includes(slug) ? p.live : [])]))
       .filter((x): x is number => x !== null);
   return {
     overall: { avgScore: avg(personScores()), kpiCount: allKpis.length, peopleCount: people.size },

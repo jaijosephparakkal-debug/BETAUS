@@ -8,6 +8,7 @@ import {
   getLatestDirectorMessage,
   getOrgTree,
   kpiScore,
+  kpiTargetText,
 } from "@/lib/queries";
 import { Card, ProgressBar, StatusBadge, CompanyTag, formatDate, isOverdue } from "@/components/ui";
 import { OrgChart } from "@/components/OrgChart";
@@ -140,13 +141,14 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
                   </span>
                   <span className="text-slate-500">
                     {kpi.current}
-                    {kpi.unit ?? ""} / {kpi.target}
-                    {kpi.unit ?? ""}
+                    {kpi.unit ?? ""}{kpiTargetText(kpi)}
                   </span>
                 </div>
-                <div className="mt-1">
-                  <ProgressBar value={kpiScore(kpi)} />
-                </div>
+                {kpiScore(kpi) !== null && (
+                  <div className="mt-1">
+                    <ProgressBar value={kpiScore(kpi) as number} />
+                  </div>
+                )}
               </div>
             ))}
             {kpis.length === 0 && (

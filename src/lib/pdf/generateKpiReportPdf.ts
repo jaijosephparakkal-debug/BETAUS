@@ -236,10 +236,11 @@ export function generateKpiReportPdf(report: ActivityReport): Promise<Buffer> {
         doc
           .fontSize(9)
           .fillColor("#64748b")
-          .text(`${k.current}${k.unit ?? ""} / ${k.target}${k.unit ?? ""} (${score}%)`, pageLeft, rowY, {
+          .text(`${k.current}${k.unit ?? ""}${(k as { targetSet?: boolean }).targetSet ? ` / ${k.target}${k.unit ?? ""}` : ""}${score !== null ? ` (${score}%)` : ""}`, pageLeft, rowY, {
             width: pageWidth,
             align: "right",
           });
+        if (score === null) { doc.y = rowY + 18; continue; }
         const barY = rowY + 14;
         const barWidth = pageWidth;
         doc.roundedRect(pageLeft, barY, barWidth, 6, 3).fillColor("#f1f5f9").fill();

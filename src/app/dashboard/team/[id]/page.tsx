@@ -9,6 +9,7 @@ import {
   getTimelineFor,
   getCompletionsFor,
   kpiScore,
+  kpiTargetText,
   getProjectOptions,
 } from "@/lib/queries";
 import { buildCompletionRollup } from "@/lib/completions";
@@ -113,13 +114,14 @@ export default async function TeamMemberPage({
                   <span className="text-[21px] font-medium text-slate-900">{kpi.name}</span>
                   <span className="text-slate-500">
                     {kpi.current}
-                    {kpi.unit ?? ""} / {kpi.target}
-                    {kpi.unit ?? ""}
+                    {kpi.unit ?? ""}{kpiTargetText(kpi)}
                   </span>
                 </div>
-                <div className="mt-1">
-                  <ProgressBar value={kpiScore(kpi)} />
-                </div>
+                {kpiScore(kpi) !== null && (
+                  <div className="mt-1">
+                    <ProgressBar value={kpiScore(kpi) as number} />
+                  </div>
+                )}
               </div>
             ))}
             {kpis.length === 0 && (

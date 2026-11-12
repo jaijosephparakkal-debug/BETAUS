@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentMembership, canManageAllStaff } from "@/lib/auth";
-import { getKpiOverview } from "@/lib/queries";
+import { getKpiOverview, avgScores } from "@/lib/queries";
 import { getCompanyTheme } from "@/lib/theme";
 import { Card, CompanyTag, ProgressBar } from "@/components/ui";
 
@@ -36,7 +36,7 @@ export default async function DirectorKpiPage({
     .filter((p) => !company || p.companySlugs.includes(company.slug))
     .map((p) => {
       const kpis = company ? p.kpis.filter((k) => k.companySlug === company.slug) : p.kpis;
-      const avgScore = kpis.length ? Math.round(kpis.reduce((s, k) => s + k.score, 0) / kpis.length) : null;
+      const avgScore = avgScores([...kpis.map((k) => k.score), ...(!company || p.companySlugs.includes(company.slug) ? p.live : [])]);
       return { ...p, kpis, avgScore };
     })
     .sort((a, b) => {
@@ -171,11 +171,11 @@ export default async function DirectorKpiPage({
                           </span>
                           <span className="shrink-0 text-slate-500">
                             {k.current}
-                            {k.unit ?? ""} / {k.target}
-                            {k.unit ?? ""} · <span className={scoreColor(k.score)}>{k.score}%</span>
+                            {k.unit ?? ""}{k.targetSet ? ` / ${k.target}${k.unit ?? ""}` : ""}
+                            {k.score !== null && <> · <span className={scoreColor(k.score)}>{k.score}%</span></>}
                           </span>
                         </div>
-                        <ProgressBar value={k.score} />
+                        {k.score !== null && <ProgressBar value={k.score} />}
                       </div>
                     ))}
                   </div>

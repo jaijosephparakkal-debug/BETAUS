@@ -22,7 +22,7 @@ export type Deck = {
   people: { name: string; count: number }[];
   parties: { name: string; count: number }[];
   deliveries: { date: string; title: string; who: string }[];
-  kpis: { name: string; current: number; target: number; unit: string | null; score: number }[];
+  kpis: { name: string; current: number; target: number | null; unit: string | null; score: number | null }[];
   open: { due: string; title: string; overdue: boolean }[];
   handedOpen: number;
   fortnights?: { label: string; entries: number; onTime: number | null; passed: number }[];
@@ -340,7 +340,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   // ---- 8. KPI snapshot ----
   slides.push((s, n, total) => {
     bg(s, 0.3);
-    chrome(s, "KPI snapshot", "Your KPIs right now (provisional)", n, total);
+    chrome(s, "KPI snapshot", "Your KPIs right now (actual figures)", n, total);
     s.panel(44, 110, 872, 380);
     s.text("KPI", 64, 126, { size: 8.5, bold: true, color: th.ice, op: 0.7 });
     s.text("ACTUAL", 560, 126, { size: 8.5, bold: true, color: th.ice, op: 0.7, align: "right" });
@@ -350,14 +350,16 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
       const y = 150 + i * 37;
       s.text(k.name, 64, y, { size: 11.5, max: 440 });
       s.text(`${k.current}${k.unit ? ` ${k.unit}` : ""}`, 560, y, { size: 11.5, bold: true, align: "right" });
-      s.text(`${k.target}${k.unit ? ` ${k.unit}` : ""}`, 650, y, { size: 11.5, color: th.ice, op: 0.8, align: "right" });
-      s.rrect(690, y + 4, 150, 7, 3.5, { fill: th.ice, fillOp: 0.15 });
-      s.rrect(690, y + 4, Math.max(5, (Math.min(100, k.score) / 100) * 150), 7, 3.5, { fill: th.accent });
-      s.text(`${k.score}`, 896, y, { size: 12, bold: true, align: "right" });
+      if (k.target !== null) s.text(`${k.target}${k.unit ? ` ${k.unit}` : ""}`, 650, y, { size: 11.5, color: th.ice, op: 0.8, align: "right" });
+      if (k.score !== null) {
+        s.rrect(690, y + 4, 150, 7, 3.5, { fill: th.ice, fillOp: 0.15 });
+        s.rrect(690, y + 4, Math.max(5, (Math.min(100, k.score) / 100) * 150), 7, 3.5, { fill: th.accent });
+        s.text(`${k.score}`, 896, y, { size: 12, bold: true, align: "right" });
+      }
       s.line(64, y + 24, 896, y + 24, th.ice, 0.5, 0.13);
     });
     if (deck.kpis.length === 0) s.text("No KPIs are set up for you yet.", 64, 154, { size: 12, color: th.ice, op: 0.7 });
-    s.text("Targets are not fixed yet. Until January these show what you actually do; scores are for reference only.", 64, 470, { size: 9, color: th.hi });
+    s.text("No targets are set yet. Until January these show what you actually do; only percentage rates (such as on-time updates) carry a score.", 64, 470, { size: 9, color: th.hi });
   });
 
   // ---- month only: fortnight comparison ----

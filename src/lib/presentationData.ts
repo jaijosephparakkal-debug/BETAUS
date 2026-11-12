@@ -196,7 +196,7 @@ export async function buildDeckData(userId: string, themeSlug: string, range: Pe
   const kpis = (await prisma.kpi.findMany({ where: { membershipId: { in: ids } }, orderBy: { createdAt: "asc" } })).map((k) => ({
     name: k.name.includes(" — ") ? k.name.split(" — ")[1] : k.name,
     current: k.current,
-    target: k.target,
+    target: k.targetSet ? k.target : null,
     unit: k.unit,
     score: kpiScore(k),
   }));

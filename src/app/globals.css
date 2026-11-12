@@ -295,7 +295,7 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink a.hover\:text-white:hover { color: #D30A0A !important; }
 .theme-light .panel-ink .hover\:bg-white\/10:hover { background-color: rgba(211, 10, 10, 0.08) !important; }
 /* Active tab in the header: Racing Red with white text. */
-.theme-light .panel-ink .bg-\[\#DFE5EB\] { background-color: #EF233C !important; color: #fff !important; }
+.theme-light .panel-ink a.bg-\[\#DFE5EB\] { background-color: #EF233C !important; color: #fff !important; }
 .theme-light .card-themed .bg-white,
 .theme-light .card-themed .bg-surface,
 .theme-light .card-themed input, .theme-light .card-themed select, .theme-light .card-themed textarea,

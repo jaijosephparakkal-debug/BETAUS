@@ -12,6 +12,7 @@ import {
 } from "@/lib/queries";
 import { Card, SegmentedDonut, StatusBadge, CompanyTag, formatDate } from "@/components/ui";
 import { MergedOrgChart } from "@/components/OrgChart";
+import { staffPhoto } from "@/lib/staffPhotos";
 import { getCompanyTheme } from "@/lib/theme";
 import { dubaiDayRange, formatDubaiTime } from "@/lib/attendance";
 
@@ -395,6 +396,7 @@ export default async function DirectorPage() {
           staffLinks={canManageAllStaff(membership)}
           directorName={directorName}
           directorTitle={directorTitle}
+          directorPhoto={staffPhoto("abraham@flaretechnical.com")}
           branches={perCompany.map((b) => ({
             label: b.company.name,
             color: b.company.slug === "gasneeds" ? "#d30a0a" : "#007ec8",

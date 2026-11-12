@@ -163,11 +163,14 @@ function Drop({ color = "#94a3b8" }: { color?: string }) {
 export function MergedOrgChart({
   directorName,
   directorTitle,
+  directorPhoto,
   branches,
   staffLinks = false,
 }: {
   directorName: string;
   directorTitle: string;
+  /** The Managing Director's photo, shown at the top of the chart. */
+  directorPhoto?: string | null;
   branches: { label: string; color: string; tree: OrgNode | null }[];
   /** Each person opens their Manage My Staff profile. */
   staffLinks?: boolean;
@@ -175,6 +178,7 @@ export function MergedOrgChart({
   return (
     <div>
       <div className="mx-auto w-fit rounded-xl border border-slate-800 bg-slate-900 px-6 py-3 text-center shadow-md">
+        {directorPhoto && <Avatar name={directorName} photo={directorPhoto} size={64} className="mx-auto mb-2 ring-2 ring-accent" />}
         <div className="text-[19px] font-semibold text-white">{directorName}</div>
         <div className="text-[15px] text-slate-300">{directorTitle}</div>
       </div>

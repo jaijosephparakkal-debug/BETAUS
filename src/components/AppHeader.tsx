@@ -62,7 +62,7 @@ export function AppHeader({
     ...(membership.isDirector
       ? [
           ...(canManageAllStaff(membership) ? [{ href: "/director/staff", label: "Manage My Staff" }] : []),
-          ...(isManagingDirector(membership) ? [] : [{ href: "/director/kpi-percentage", label: "KPI Percentage" }]),
+          ...(isManagingDirector(membership) ? [] : [{ href: "/director/kpi", label: "Staff KPIs" }, { href: "/director/kpi-percentage", label: "KPI Percentage" }]),
           { href: "/director/calendar", label: "Attendance" },
         ]
       : []),
@@ -101,7 +101,7 @@ export function AppHeader({
             )}
             <Avatar name={membership.user.name} email={membership.user.email} size={36} className="ring-2 ring-accent" />
           </div>
-          <nav className="order-last flex w-full min-w-0 gap-1 overflow-x-auto pb-1 [&>*]:shrink-0">
+          <nav className="order-last flex w-full min-w-0 flex-wrap gap-1 pb-1 [&>*]:shrink-0">
             <NavLinks items={navItems} />
           </nav>
         </div>

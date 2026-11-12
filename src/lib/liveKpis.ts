@@ -31,6 +31,7 @@ const avg = (xs: number[]) => (xs.length ? Math.round((xs.reduce((s, x) => s + x
 const dateOnly = (d: Date) => new Date(d.getTime() + 4 * 3600 * 1000).toISOString().slice(0, 10);
 
 export const LIVE_KPI_EMAILS = [
+  "jai@gasneeds.com",
   "sales@gasneeds.com",
   "business@gasneeds.com",
   "accounts@gasneeds.com",
@@ -248,6 +249,31 @@ async function computeRole(email: string, ids: string[], r: Range): Promise<Live
         { label: "Payment follow-ups", value: pay.length, hint: "Payment and invoice entries" },
         { label: "Payments received", value: pay.filter((t) => str(det(t.details).action) === "Payment received").reduce((s, t) => s + num(det(t.details).amount), 0), unit: "AED", private: true, hint: "Amounts logged as payment received" },
         { label: "Calls, emails and messages", value: count(l, "PROJECT_COMMUNICATION"), hint: "Calls, emails and messages logged" },
+      ];
+    }
+    case "jai@gasneeds.com": {
+      const l = await logs(ids, ["MKT_DESIGN", "MKT_VIDEO", "MKT_PHOTO", "MKT_COPY", "MKT_SOCIAL", "MKT_WEBSITE", "MKT_EMAIL", "MKT_GBP", "MKT_KEYWORDS", "MKT_ONPAGE", "MKT_CONTENT", "MKT_BACKLINKS", "MKT_AUDIT", "MKT_RANKING", "MKT_CAMPAIGN", "MKT_PAID_AD", "MKT_RESULT", "MKT_REPORT", "MKT_ANALYTICS", "MKT_BRAND", "MKT_PRINT", "MKT_ASSETS", "MKT_SYSTEMS", "MKT_CONFIDENTIAL", "MKT_OTHER"], r);
+      const state = (t: { details: unknown }) => str(det(t.details).state);
+      const creative = l.filter((t) => ["MKT_DESIGN", "MKT_VIDEO", "MKT_CONFIDENTIAL"].includes(t.logKind ?? "") && state(t));
+      const good = creative.filter((t) => ["Approved", "Delivered"].includes(state(t))).length;
+      const revisions = creative.filter((t) => state(t) === "Revision").length;
+      const designs = l.filter((t) => t.logKind === "MKT_DESIGN" && ["Approved", "Delivered"].includes(state(t))).length;
+      const videos = l.filter((t) => t.logKind === "MKT_VIDEO" && str(det(t.details).type) === "Final delivery / upload").length;
+      const published = l.filter((t) => t.logKind === "MKT_CONTENT" || (t.logKind === "MKT_COPY" && state(t) === "Published") || (t.logKind === "MKT_SOCIAL" && state(t) === "Published")).length;
+      const seo = l.filter((t) => ["MKT_KEYWORDS", "MKT_ONPAGE", "MKT_BACKLINKS", "MKT_AUDIT", "MKT_ANALYTICS"].includes(t.logKind ?? "")).length;
+      const launched = l.filter((t) => t.logKind === "MKT_CAMPAIGN" && str(det(t.details).type) === "Launched").length;
+      const live = l.filter((t) => t.logKind === "MKT_WEBSITE" && state(t) === "Live").length;
+      const sent = l.filter((t) => t.logKind === "MKT_EMAIL" && state(t) === "Sent").length;
+      return [
+        { label: "Designs approved or delivered", value: designs, hint: "Design entries that reached Approved or Delivered" },
+        { label: "Videos delivered", value: videos, hint: "Videos taken to final delivery" },
+        { label: "Content published", value: published, hint: "Blog, landing pages, published copy and published social posts" },
+        { label: "Campaigns launched", value: launched, hint: "Campaigns moved to Launched" },
+        { label: "SEO and analytics work", value: seo, hint: "Keyword, on-page, backlink, audit and analytics entries" },
+        { label: "Website changes live", value: live, hint: "Website entries marked Live" },
+        { label: "Email campaigns sent", value: sent, hint: "Email campaigns marked Sent" },
+        { label: "Approved or delivered first time", value: pct(good, good + revisions), unit: "%", hint: "Approved or delivered ÷ (those + sent back for revision)" },
+        { label: "Marketing entries logged", value: l.length, hint: "All marketing work logged this month" },
       ];
     }
     case "jiyad.m@flaretechnical.com": {

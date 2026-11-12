@@ -7,7 +7,7 @@ import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
   PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
-  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, LEAD_SOURCES, GENERIC, UNIT_TYPES } from "@/lib/logOptions";
+  PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, LEAD_SOURCES, GENERIC, UNIT_TYPES, PRO_VISITS } from "@/lib/logOptions";
 
 export type LogData = {
   companies: { id: string; slug: string; name: string }[];
@@ -67,6 +67,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "n
 
 export function LogForm({ data }: { data: LogData }) {
   const [state, formAction] = useFormState(createLogEntryAction, {});
+  const [proService, setProService] = useState(PRO_SERVICES[0]);
   const [open, setOpen] = useState(!!(data.prefill?.quotationId || data.prefill?.kind));
   const [key, setKey] = useState(0);
   const KINDS = data.profile.kinds;
@@ -317,9 +318,9 @@ export function LogForm({ data }: { data: LogData }) {
             </select>
             {agencyId === "__new__" && <input name="newAgency" required placeholder="Agency name" className={`${sel} mt-1`} />}
           </Field>
-          <Field label="Service" tag="pick"><select name="proService" className={sel}>{PRO_SERVICES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+          <Field label="Service" tag="pick"><select name="proService" value={proService} onChange={(e) => setProService(e.target.value)} className={sel}>{PRO_SERVICES.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <EmployeePick employees={employees} value={employeeId} onChange={setEmployeeId} label="For" />
-          <Field label="Transaction no." tag="type"><input name="txnNo" required placeholder="From the agency" className={sel} /></Field>
+          <Field label="Transaction no." tag="type"><input name="txnNo" required={!PRO_VISITS.includes(proService)} placeholder={PRO_VISITS.includes(proService) ? "Not needed for a visit" : "From the agency"} className={sel} /></Field>
           <Field label="Fees (AED)" tag="type"><input name="fees" inputMode="decimal" placeholder="650" className={sel} /></Field>
           <Field label="Stage" tag="pick"><select name="proStage" className={sel}>{PRO_STAGES.map((c) => <option key={c}>{c}</option>)}</select></Field>
         </div>

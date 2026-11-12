@@ -159,13 +159,14 @@ async function computeRole(email: string, ids: string[], r: Range): Promise<Live
         select: { status: true, completedAt: true, followUpAt: true },
       });
       const onTime = due.filter((t) => t.status === "COMPLETED" && t.completedAt && t.completedAt.getTime() <= t.followUpAt!.getTime() + DAY).length;
-      const l = await logs(ids, ["VISIT", "PRO"], r);
+      const l = await logs(ids, ["VISIT", "PRO", "VISIT_MEETING"], r);
       return [
         { label: "Quotations sent", value: sent, hint: "Quotations made in the form this month" },
         { label: "Orders won", value: won, hint: "Quotations moved to order received, delivered or paid" },
         { label: "Win rate", value: pct(won, decided.length), unit: "%", hint: "Orders won ÷ quotations decided (won or not awarded) this month" },
         { label: "Follow-ups on time", value: pct(onTime, due.length), unit: "%", hint: "Follow-ups done by their due date (one day's grace)" },
         { label: "Customer visits", value: count(l, "VISIT"), hint: "Customer visits logged" },
+        { label: "Other visits and meetings", value: count(l, "VISIT_MEETING"), hint: "Vendor, partner, official, exhibition, yard, printer and office visits logged" },
         { label: "PRO jobs", value: count(l, "PRO"), hint: "PRO and government work logged" },
       ];
     }

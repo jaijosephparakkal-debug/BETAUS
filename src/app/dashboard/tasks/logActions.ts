@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { cleanLink } from "@/lib/links";
-import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC } from "@/lib/logOptions";
+import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC, PRO_VISITS } from "@/lib/logOptions";
 import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS, nextRunning, createMaintenanceHandOver, createFinanceHandOver, MONTHS } from "@/lib/quotations";
 
 export type LogState = { error?: string; needsConfirm?: boolean; ok?: string };
@@ -312,10 +312,11 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     if (!agencyRow) return { error: "Choose the PRO agency." };
     const who = await resolveEmployee(s, company.id);
     if ("error" in who) return { error: who.error };
-    if (!s("txnNo")) return { error: "Type the transaction or application number." };
+    const isVisit = PRO_VISITS.includes(s("proService"));
+    if (!isVisit && !s("txnNo")) return { error: "Type the transaction or application number." };
     title = s("proService") || "PRO work";
     forPerson = `${agencyRow.name} · ${who.name}`;
-    summary = `${agencyRow.name} · ${title} · ${who.name} · ${s("txnNo")}${s("fees") ? ` · AED ${s("fees")}` : ""} · ${s("proStage")}`;
+    summary = `${agencyRow.name} · ${title} · ${who.name}${s("txnNo") ? ` · ${s("txnNo")}` : ""}${s("fees") ? ` · AED ${s("fees")}` : ""} · ${s("proStage")}`;
     Object.assign(details, { agency: agencyRow.name, service: title, employee: who.name, transaction: s("txnNo"), fees: s("fees") || null, stage: s("proStage") });
   } else if (kind === "hr") {
     const who = await resolveEmployee(s, company.id);

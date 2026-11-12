@@ -20,9 +20,9 @@ const NS_SELF = { v: "followup", l: "Follow up myself" };
 /** Who gets the structured work-log form, and what it offers them. */
 export const PROFILES: Record<string, Profile> = {
   "sales@gasneeds.com": {
-    kinds: [{ v: "q", l: "Quotation" }, { v: "f", l: "Follow-up" }, { v: "v", l: "Customer visit" }, { v: "pro", l: "PRO" }, { v: "hr", l: "HR" }],
+    kinds: [{ v: "q", l: "Quotation" }, { v: "f", l: "Follow-up" }, { v: "v", l: "Customer visit" }, { v: "pro", l: "PRO" }, { v: "hr", l: "HR" }, { v: "av", l: "Visit or meeting" }],
     companies: ["gasneeds", "flaretechnical"],
-    parent: { q: "Sales — Quotations", f: "Sales — Follow-ups", v: "Sales — Customer Visits", pro: "PRO — Government & Admin", hr: "HR — Staff & Insurance" },
+    parent: { q: "Sales — Quotations", f: "Sales — Follow-ups", v: "Sales — Customer Visits", pro: "PRO — Government & Admin", hr: "HR — Staff & Insurance", av: "Sales — Customer Visits" },
     next: [NS_NONE, NS_SELF, { v: "manu", l: "Hand over to Manu — purchase follow-up" }, { v: "jintu", l: "Hand over to Jintu — payment follow-up" }],
   },
   "business@gasneeds.com": {
@@ -143,7 +143,12 @@ export const DISCUSS: { key: string; label: string; heading: string; options: st
 ];
 export const HR_TOPICS = ["Leave", "Visa and ID", "Insurance", "Contract", "Payroll query", "Exit and settlement"];
 export const HR_ACTIONS = ["Request received", "Approved", "Rejected", "Document issued"];
-export const PRO_SERVICES = ["Visa — renewal", "Visa — new", "Emirates ID", "Medical test", "Labour card", "Trade licence", "RTA"];
+/** Government visits and meetings that belong to PRO work: they have no transaction number. */
+export const PRO_VISITS = ["Visit to a government office", "Meeting with a government official", "Inspection or audit visit"];
+export const PRO_SERVICES = ["Visa — renewal", "Visa — new", "Emirates ID", "Medical test", "Labour card", "Trade licence", "RTA", ...PRO_VISITS];
+export const VISIT_WHO = ["Customer", "Vendor or supplier", "Partner or distributor", "Government official", "Exhibition or event", "Yard or storage", "Printer", "Office space", "Bank", "Other"];
+export const VISIT_HOW = ["In person — at their place", "In person — at our office", "Site visit", "Exhibition or event", "Video call", "Phone call"];
+export const VISIT_PURPOSE = ["Introduction or relationship", "Quotation or price discussion", "Order or delivery", "Payment", "Inspection or check", "Registration or approval", "Product demo", "Other"];
 export const PRO_STAGES = ["Documents sent", "Submitted", "In process", "Approved", "Collected", "Rejected"];
 export const BACKDATE_REASONS = ["Forgot to log it", "Was away from the office", "No network at the time", "Other"];
 export const BACKDATE_DAYS = 7;
@@ -177,6 +182,7 @@ const sm = (n = "readMonth", l = "For the month"): GField => ({ n, l, t: "month"
 const JAI_CATS = ["Analytics & Reports", "Apps & Systems", "Brand & Assets", "Campaigns & SEO", "Confidential", "Design", "Digital Marketing", "Other work", "Video", "Other work"];
 const OTHER_CATS = ["Audit & Control", "Banking & Cash", "Meetings & Admin", "Other work", "Payables & Suppliers", "Payroll & Staff Payments", "Receivables & Collections", "Reports & Adjustments", "Tax, VAT & Compliance"];
 export const GENERIC: Record<string, GKind> = {
+  av: { code: "VISIT_MEETING", dept: "Operation", title: (v) => `${v.who || "Visit"} — ${v.name || ""}`, fields: [{ n: "who", l: "Who or what", t: "pick", o: VISIT_WHO }, { n: "name", l: "Name of the person, company or place", t: "type", req: true, ph: "e.g. Dubai Municipality, Al Ain Printers" }, { n: "how", l: "How", t: "pick", o: VISIT_HOW }, { n: "timeOfDay", l: "When", t: "pick", o: ["Morning", "Afternoon", "Evening", "Full day"] }, { n: "purpose", l: "Why", t: "pick", o: VISIT_PURPOSE }, { n: "outcome", l: "What came of it", t: "pick", o: ["Done, nothing more", "Follow-up needed", "Quotation to send", "Waiting for their reply"] }, { n: "notes", l: "Notes", t: "type", ph: "Only if useful" }] },
   rd: { code: "METER_READING", dept: "Maintenance", building: "req", title: () => "Meter reading", fields: [sm(), { n: "prevReading", l: "Previous reading (m³)", t: "type", ph: "e.g. 412.5" }, { n: "currReading", l: "Current reading (m³)", t: "type", ph: "e.g. 431.0" }] },
   gi: { code: "GAS_INVOICE", dept: "Maintenance", building: "req", title: () => "Gas invoice", fields: [sm(), { n: "amount", l: "Invoice amount (AED)", t: "type", req: true, ph: "e.g. 780" }, { n: "reference", l: "Invoice no.", t: "type", ph: "Only if you have it" }] },
   co: { code: "COLLECTION", dept: "Accounts", building: "opt", title: (v) => (v.collectType === "Full payment" ? "Collection — in full" : "Collection — part"), fields: [{ n: "amount", l: "Amount collected (AED)", t: "type", req: true }, { n: "method", l: "Paid by", t: "pick", o: PAY_METHODS }, { n: "reference", l: "Reference or payment link", t: "type", ph: "Only if you have it" }, { n: "collectType", l: "This payment is", t: "pick", o: ["Part payment", "Full payment"] }] },

@@ -20,6 +20,11 @@ export async function GET(req: Request) {
 
   const built = await buildDeckData(userId, m.company.slug, range);
   if (!built) return new NextResponse("No such person.", { status: 404 });
+  // ?format=json shows the numbers a deck is built from, so a blank or short deck can be explained.
+  if (url.searchParams.get("format") === "json") {
+    const d = built.deck;
+    return NextResponse.json({ period: d.periodLabel, entries: d.entries, previous: d.prevEntries, mix: d.mix.length, people: d.people.length, parties: d.parties.length, deliveries: d.deliveries.length, kpis: d.kpis.length, open: d.open.length, attendanceDaysEdited: d.attendanceEdits?.days ?? 0 });
+  }
   const get = async (path: string) => {
     const r = await fetch(new URL(path, url.origin), { cache: "no-store" });
     if (!r.ok) throw new Error(`asset ${path} ${r.status}`);

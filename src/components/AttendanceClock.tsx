@@ -93,9 +93,9 @@ export function AttendanceClock({ clockInIso, autoClockedOut = false }: { clockI
         Sign out
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-10 mt-2 w-72 rounded-lg border border-brand-200 bg-surface p-3 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-white/20 bg-ink p-3 text-white shadow-2xl">
           <form action={formAction} className="space-y-2">
-            <label className="block text-[17px] font-medium text-slate-700">
+            <label className="block text-[17px] font-medium text-[#DFE5EB]">
               Why are you signing out?
             </label>
             <select
@@ -111,13 +111,13 @@ export function AttendanceClock({ clockInIso, autoClockedOut = false }: { clockI
               <option value="SICKNESS">Leaving due to sickness</option>
               <option value="SHIFT_ENDED">Shift ended</option>
             </select>
-            {state.error && <p className="text-[17px] text-red-600">{state.error}</p>}
+            {state.error && <p className="text-[17px] text-highlight">{state.error}</p>}
             <div className="flex gap-2">
               <SubmitButton />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-[17px] text-slate-500 hover:text-slate-700"
+                className="text-[17px] text-[#c9d2da] hover:text-white"
               >
                 Cancel
               </button>

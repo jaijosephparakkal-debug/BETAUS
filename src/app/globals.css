@@ -193,6 +193,9 @@ input[type="range"]::-moz-range-track {
 .panel-ink.art-left::before { transform: scaleX(-1); }
 .panel-ink.art-flip::before { transform: scale(-1, -1); }
 .panel-ink.art-soft::before { opacity: 0.5; }
+/* The header must not clip the sign-out box that drops below it. */
+.panel-ink.art-header { overflow: visible; }
+.panel-ink.art-header::before { border-radius: inherit; }
 .panel-ink.art-header::before {
   opacity: 0.4;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 55%, #000 100%);

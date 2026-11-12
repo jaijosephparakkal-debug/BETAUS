@@ -308,7 +308,7 @@ export async function buildDeckPdf(deck: Deck, assets: DeckAssets): Promise<Uint
   });
 
   // ---- 6. people ----
-  if (!noWork) slides.push((s, n, total) => {
+  if (!noWork && (deck.people.length > 0 || deck.parties.length > 0)) slides.push((s, n, total) => {
     bg(s, 0.3);
     chrome(s, "People and partners", "Who you worked with", n, total);
     const col = (x: number, title: string, rows: { name: string; count: number }[], empty: string) => {

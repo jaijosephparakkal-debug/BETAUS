@@ -267,3 +267,7 @@ input[type="range"]::-moz-range-track {
   border-color: rgba(223, 229, 235, 0.22) !important;
 }
 .card-themed .hover\:bg-slate-50:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
+
+/* Ring and donut charts on dark cards: readable centre text, soft track. */
+.card-themed text.fill-slate-900 { fill: #fff !important; }
+.card-themed circle[stroke="#e2e8f0"] { stroke: rgba(223, 229, 235, 0.18) !important; }

@@ -31,7 +31,7 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="min-h-screen"
+      className={`min-h-screen ${membership.user.email.toLowerCase() === "sales@gasneeds.com" ? "theme-light" : ""}`}
       style={{ ...theme.vars, background: theme.pageBackground }}
     >
       <AppHeader

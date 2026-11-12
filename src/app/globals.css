@@ -274,3 +274,51 @@ input[type="range"]::-moz-range-track {
 /* Ring and donut charts on dark cards: readable centre text, soft track. */
 .card-themed text.fill-slate-900 { fill: #fff !important; }
 .card-themed circle[stroke="#e2e8f0"] { stroke: rgba(223, 229, 235, 0.18) !important; }
+
+/* ---- Light variant (Antony): white panels, Obsidian text, Racing Red accents — the dark look turned inside out. ---- */
+.theme-light .card-themed {
+  background-color: #fff !important;
+  --card-text: 17 18 23;
+  color: #111217;
+  color-scheme: light;
+  border-color: rgba(17, 18, 23, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(17, 18, 23, 0.08);
+}
+.theme-light .card-themed::before { background-image: var(--art-light); opacity: 0.5; mix-blend-mode: multiply; }
+.theme-light .panel-ink { background-color: #fff; color: #111217; box-shadow: 0 8px 24px rgba(17, 18, 23, 0.1); }
+.theme-light .panel-ink::before { background-image: var(--art-light); opacity: 0.6; mix-blend-mode: multiply; }
+.theme-light .panel-ink.art-header::before { opacity: 0.45; }
+.theme-light .panel-ink .text-white:not(.bg-brand-600):not(.bg-accent),
+.theme-light .panel-ink .text-slate-200,
+.theme-light .panel-ink .text-slate-300,
+.theme-light .card-themed .text-white:not(.bg-brand-600):not(.bg-accent) { color: #111217 !important; }
+.theme-light .panel-ink a.hover\:text-white:hover { color: #D30A0A !important; }
+.theme-light .panel-ink .hover\:bg-white\/10:hover { background-color: rgba(211, 10, 10, 0.08) !important; }
+/* Active tab in the header: Racing Red with white text. */
+.theme-light .panel-ink .bg-\[\#DFE5EB\] { background-color: #EF233C !important; color: #fff !important; }
+.theme-light .card-themed .bg-white,
+.theme-light .card-themed .bg-surface,
+.theme-light .card-themed input, .theme-light .card-themed select, .theme-light .card-themed textarea,
+.theme-light .panel-ink input, .theme-light .panel-ink select, .theme-light .panel-ink textarea {
+  background-color: rgba(17, 18, 23, 0.04) !important;
+  color: #111217;
+  border-color: rgba(17, 18, 23, 0.25) !important;
+}
+.theme-light .card-themed input::placeholder, .theme-light .card-themed textarea::placeholder,
+.theme-light .panel-ink input::placeholder, .theme-light .panel-ink textarea::placeholder { color: rgba(17, 18, 23, 0.45); }
+.theme-light .card-themed option, .theme-light .panel-ink option { background-color: #fff; color: #111217; }
+.theme-light .card-themed .bg-slate-50, .theme-light .card-themed .bg-gray-50 { background-color: rgba(17, 18, 23, 0.04) !important; }
+.theme-light .card-themed .bg-brand-50 { background-color: rgba(211, 10, 10, 0.05) !important; }
+.theme-light .card-themed .bg-brand-100 { background-color: rgba(211, 10, 10, 0.1) !important; }
+.theme-light .card-themed .border-slate-100, .theme-light .card-themed .border-slate-200, .theme-light .card-themed .border-slate-300,
+.theme-light .card-themed .border-gray-100, .theme-light .card-themed .border-gray-200,
+.theme-light .card-themed .border-brand-100, .theme-light .card-themed .border-brand-200, .theme-light .card-themed .border-brand-300 { border-color: rgba(17, 18, 23, 0.14) !important; }
+.theme-light .card-themed .text-brand-600, .theme-light .card-themed .text-brand-700, .theme-light .card-themed .text-brand-800 { color: #D30A0A !important; }
+.theme-light .card-themed .text-brand-900 { color: #111217 !important; }
+.theme-light .card-themed .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.theme-light .card-themed .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(17, 18, 23, 0.12) !important; }
+.theme-light .card-themed img[alt$="LLC"] { background: none; padding: 0; }
+.theme-light .card-themed .bg-surface { background-color: rgba(17, 18, 23, 0.03) !important; border-color: rgba(17, 18, 23, 0.12) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.theme-light .card-themed .hover\:bg-slate-50:hover { background-color: rgba(211, 10, 10, 0.06) !important; }
+.theme-light .card-themed text.fill-slate-900 { fill: #111217 !important; }
+.theme-light .card-themed circle[stroke="#e2e8f0"] { stroke: rgba(17, 18, 23, 0.12) !important; }

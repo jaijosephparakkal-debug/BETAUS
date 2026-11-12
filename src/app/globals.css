@@ -332,4 +332,4 @@ input[type="range"]::-moz-range-track {
 .theme-light .panel-ink .text-red-300, .theme-light .card-themed .text-red-300 { color: #b91c1c !important; }
 .theme-light .panel-ink .text-highlight, .theme-light .card-themed .text-highlight { color: #D30A0A !important; }
 .theme-light .panel-ink [class*="border-white/"], .theme-light .card-themed [class*="border-white/"] { border-color: rgba(17, 18, 23, 0.25) !important; }
-.theme-light .panel-ink [class*="bg-white/"]:not(button), .theme-light .card-themed [class*="bg-white/"]:not(button) { background-color: rgba(17, 18, 23, 0.05) !important; }
+.theme-light .panel-ink [class~="bg-white/5"], .theme-light .card-themed [class~="bg-white/5"], .theme-light .panel-ink [class~="bg-white/10"], .theme-light .card-themed [class~="bg-white/10"] { background-color: rgba(17, 18, 23, 0.05) !important; }

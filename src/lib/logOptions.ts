@@ -46,10 +46,10 @@ export const PROFILES: Record<string, Profile> = {
     next: [NS_NONE, NS_SELF, { v: "flexie", l: "Hand over to Flexie — first bill" }],
   },
   "accounts@flaretechnical.com": {
-    kinds: [{ v: "amc", l: "AMC contract" }, { v: "ppm", l: "PPM report" }, { v: "dcd", l: "DCD attestation" }, { v: "rp", l: "Gas reading report" }, { v: "co", l: "Collection" }, { v: "ac", l: "Accounts entry" }],
+    kinds: [{ v: "amc", l: "AMC contract" }, { v: "ppm", l: "PPM report" }, { v: "dcd", l: "DCD attestation" }, { v: "rp", l: "Gas reading report" }, { v: "co", l: "Collection" }, { v: "hsd", l: "Security deposit refund" }, { v: "ac", l: "Accounts entry" }],
     companies: ["flaretechnical"],
-    tabs: [{ l: "Maintenance", kinds: ["amc", "ppm", "dcd", "rp"] }, { l: "Accounts", kinds: ["co", "ac"] }],
-    parent: { amc: "Maintenance — AMC, Contracts & Portals", ppm: "Maintenance — Gas Reading & Reports", dcd: "Maintenance — AMC, Contracts & Portals", rp: "Maintenance — Gas Reading & Reports", co: "Accounts — Collections & Follow-ups", ac: "Accounts — Vouchers & Reconciliation" },
+    tabs: [{ l: "Maintenance", kinds: ["amc", "ppm", "dcd", "rp"] }, { l: "Accounts", kinds: ["co", "hsd", "ac"] }],
+    parent: { amc: "Maintenance — AMC, Contracts & Portals", ppm: "Maintenance — Gas Reading & Reports", dcd: "Maintenance — AMC, Contracts & Portals", rp: "Maintenance — Gas Reading & Reports", co: "Accounts — Collections & Follow-ups", hsd: "Accounts — Collections & Follow-ups", ac: "Accounts — Vouchers & Reconciliation" },
     next: [NS_NONE, NS_SELF, { v: "f_shafeek", l: "Pass to Shafeek" }, { v: "f_jintu", l: "Pass to Jintu" }],
   },
   "finance@flaretechnical.com": {
@@ -184,6 +184,7 @@ const sm = (n = "readMonth", l = "For the month"): GField => ({ n, l, t: "month"
 const JAI_CATS = ["Analytics & Reports", "Apps & Systems", "Brand & Assets", "Campaigns & SEO", "Confidential", "Design", "Digital Marketing", "Other work", "Video", "Other work"];
 const OTHER_CATS = ["Audit & Control", "Banking & Cash", "Meetings & Admin", "Other work", "Payables & Suppliers", "Payroll & Staff Payments", "Receivables & Collections", "Reports & Adjustments", "Tax, VAT & Compliance"];
 export const GENERIC: Record<string, GKind> = {
+  hsd: { code: "SECURITY_DEPOSIT_REFUND", dept: "Accounts", building: "req", noUnit: true, title: (v) => `Security deposit refund — ${v.stage || ""}`, fields: [{ n: "stage", l: "Where it stands", t: "pick", o: ["Verified", "Posted", "Submitted to Shafeek sir", "Refund paid", "On hold"] }, { n: "tenants", l: "Number of tenants", t: "type", ph: "e.g. 18" }, { n: "amount", l: "Amount (AED)", t: "type", ph: "Only when known" }, { n: "notes", l: "Notes", t: "type", ph: "Only if useful" }] },
   av: { code: "VISIT_MEETING", dept: "Operation", title: (v) => `${v.who || "Visit"} — ${v.name || ""}`, fields: [{ n: "who", l: "Who or what", t: "pick", o: VISIT_WHO }, { n: "name", l: "Name of the person, company or place", t: "type", req: true, ph: "e.g. Dubai Municipality, Al Ain Printers" }, { n: "how", l: "How", t: "pick", o: VISIT_HOW }, { n: "timeOfDay", l: "When", t: "pick", o: ["Morning", "Afternoon", "Evening", "Full day"] }, { n: "purpose", l: "Why", t: "pick", o: VISIT_PURPOSE }, { n: "outcome", l: "What came of it", t: "pick", o: ["Done, nothing more", "Follow-up needed", "Quotation to send", "Waiting for their reply"] }, { n: "notes", l: "Notes", t: "type", ph: "Only if useful" }] },
   rd: { code: "METER_READING", dept: "Maintenance", building: "req", title: () => "Meter reading", fields: [sm(), { n: "prevReading", l: "Previous reading (m³)", t: "type", ph: "e.g. 412.5" }, { n: "currReading", l: "Current reading (m³)", t: "type", ph: "e.g. 431.0" }] },
   gi: { code: "GAS_INVOICE", dept: "Maintenance", building: "req", title: () => "Gas invoice", fields: [sm(), { n: "amount", l: "Invoice amount (AED)", t: "type", req: true, ph: "e.g. 780" }, { n: "reference", l: "Invoice no.", t: "type", ph: "Only if you have it" }] },

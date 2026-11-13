@@ -82,6 +82,7 @@ async function computeRole(email: string, ids: string[], r: Range): Promise<Live
         { label: "Buildings read", value: pct(read.size, totalB), unit: "%", hint: "Buildings with a reading this month ÷ all buildings" },
         { label: "Gas invoices issued", value: count(l, "GAS_INVOICE"), hint: "Gas invoice entries" },
         { label: "Collections logged", value: count(l, "COLLECTION"), hint: "Collection entries" },
+        { label: "Security deposit refunds", value: count(l, "SECURITY_DEPOSIT_REFUND"), hint: "Security deposit refund entries (verified, posted, submitted or paid)" },
         { label: "Days from disconnection to refund", value: avg(cycle), unit: "days", lowerIsBetter: true, hint: "Average days from the disconnection request to the refund being paid (refunds paid this month)" },
         { label: "Outstanding reports", value: count(l, "OUTSTANDING_REPORT"), hint: "Outstanding report entries" },
       ];
@@ -117,7 +118,7 @@ async function computeRole(email: string, ids: string[], r: Range): Promise<Live
     }
     case "accounts@flaretechnical.com": {
       // Hashim: AMC, PPM and DCD (maintenance) plus collections and accounts entries.
-      const l = await logs(ids, ["AMC_RENEWAL", "PPM_REPORT", "DCD_ATTESTATION", "REPORT", "COLLECTION", "ACCOUNTS_ENTRY"], r);
+      const l = await logs(ids, ["AMC_RENEWAL", "PPM_REPORT", "DCD_ATTESTATION", "REPORT", "COLLECTION", "ACCOUNTS_ENTRY", "SECURITY_DEPOSIT_REFUND"], r);
       const agreed = l.filter((t) => t.logKind === "AMC_RENEWAL" && ["Renewal agreed", "Contract signed"].includes(stageOf(t, "amcStage")));
       const before = agreed.filter((t) => { const exp = stageOf(t, "renewalOn"); return exp && dateOnly(when(t)) <= exp; });
       return [

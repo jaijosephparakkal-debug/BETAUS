@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentMembership } from "@/lib/auth";
 import { cleanLink } from "@/lib/links";
-import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC, PRO_VISITS } from "@/lib/logOptions";
+import { PROFILES, BACKDATE_DAYS, QUOTE_STATUS, statusLabel, GENERIC, PRO_VISITS, FOR_GROUPS } from "@/lib/logOptions";
 import { dubaiInputToDate, createQuotationNumbered, createHandOver, DUBAI_MS, nextRunning, createMaintenanceHandOver, createFinanceHandOver, MONTHS } from "@/lib/quotations";
 
 export type LogState = { error?: string; needsConfirm?: boolean; ok?: string };
@@ -322,14 +322,14 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     title = s("proService") || "PRO work";
     forPerson = `${agencyRow.name} · ${who.name}`;
     summary = `${agencyRow.name} · ${title} · ${who.name}${s("txnNo") ? ` · ${s("txnNo")}` : ""}${s("fees") ? ` · AED ${s("fees")}` : ""} · ${s("proStage")}`;
-    Object.assign(details, { agency: agencyRow.name, service: title, employee: who.name, transaction: s("txnNo"), fees: s("fees") || null, stage: s("proStage") });
+    Object.assign(details, { agency: agencyRow.name, service: title, forGroup: s("forGroup") || null, employee: who.name, transaction: s("txnNo"), fees: s("fees") || null, stage: s("proStage") });
   } else if (kind === "hr") {
     const who = await resolveEmployee(s, company.id);
     if ("error" in who) return { error: who.error };
     title = s("hrTopic") || "HR work";
     forPerson = who.name;
     summary = `${who.name} · ${title} · ${s("hrAction")}`;
-    Object.assign(details, { employee: who.name, topic: title, action: s("hrAction"), confidential: s("confidential") === "yes" });
+    Object.assign(details, { forGroup: s("forGroup") || null, employee: who.name, topic: title, action: s("hrAction"), confidential: s("confidential") === "yes" });
   } else if (kind === "enq") {
     const category = s("productCategory");
     let product = s("product");
@@ -542,6 +542,8 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
 }
 
 async function resolveEmployee(s: Fd, companyId: string): Promise<{ name: string } | { error: string }> {
+  // A whole group of staff instead of one person.
+  if (FOR_GROUPS.includes(s("forGroup"))) return { name: s("forGroup") };
   const eid = s("employeeId");
   if (eid === "__new__") {
     const name = s("newEmployee");

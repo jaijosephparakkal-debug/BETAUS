@@ -143,6 +143,8 @@ export const DISCUSS: { key: string; label: string; heading: string; options: st
   { key: "complaint", label: "Complaint", heading: "Complaint — about", options: ["Damaged item", "Wrong item", "Late delivery", "Quality problem", "Billing error"], placeholder: "What happened" },
   { key: "other", label: "Something else", heading: "What else", options: [], placeholder: "Describe it" },
 ];
+/** HR and PRO work can be for one person or for a whole group of staff. */
+export const FOR_GROUPS = ["All employees", "All site staff", "All office staff", "All maintenance staff"];
 export const HR_TOPICS = ["Leave", "Visa and ID", "Insurance", "Contract", "Payroll query", "Exit and settlement"];
 export const HR_ACTIONS = ["Request received", "Approved", "Rejected", "Document issued"];
 /** Government visits and meetings that belong to PRO work: they have no transaction number. */

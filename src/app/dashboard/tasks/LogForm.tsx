@@ -6,7 +6,7 @@ import { createLogEntryAction } from "./logActions";
 import { PRODUCTS } from "@/lib/products";
 import {
   FORM_STATUS, CHANNELS, RESPONSES, PURPOSES, OUTCOMES, DISCUSS, HR_TOPICS, HR_ACTIONS,
-  PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES,
+  PRO_SERVICES, PRO_STAGES, BACKDATE_REASONS, BACKDATE_DAYS, ENQ_STATUS, PO_STATUS, IMPORT_STAGES, FOR_GROUPS,
   PAY_METHODS, PAY_RESPONSES, CC_TYPES, AC_TYPES, FOLLOW_TOPICS, FOLLOW_WITH, BANKS, PAY_FOR, LEAD_SOURCES, GENERIC, UNIT_TYPES, PRO_VISITS } from "@/lib/logOptions";
 
 export type LogData = {
@@ -93,6 +93,7 @@ export function LogForm({ data }: { data: LogData }) {
   const [picked, setPicked] = useState<Record<string, { option: string; detail: string }>>({});
   const [agencyId, setAgencyId] = useState("");
   const [employeeId, setEmployeeId] = useState("");
+  const [forGroup, setForGroup] = useState("");
   const [reason, setReason] = useState("");
   const [saved, setSaved] = useState("");
 
@@ -319,7 +320,7 @@ export function LogForm({ data }: { data: LogData }) {
             {agencyId === "__new__" && <input name="newAgency" required placeholder="Agency name" className={`${sel} mt-1`} />}
           </Field>
           <Field label="Service" tag="pick"><select name="proService" value={proService} onChange={(e) => setProService(e.target.value)} className={sel}>{PRO_SERVICES.map((c) => <option key={c}>{c}</option>)}</select></Field>
-          <EmployeePick employees={employees} value={employeeId} onChange={setEmployeeId} label="For" />
+          <ForWhom employees={employees} value={employeeId} onChange={setEmployeeId} group={forGroup} setGroup={setForGroup} />
           <Field label="Transaction no." tag="type"><input name="txnNo" required={!PRO_VISITS.includes(proService)} placeholder={PRO_VISITS.includes(proService) ? "Not needed for a visit" : "From the agency"} className={sel} /></Field>
           <Field label="Fees (AED)" tag="type"><input name="fees" inputMode="decimal" placeholder="650" className={sel} /></Field>
           <Field label="Stage" tag="pick"><select name="proStage" className={sel}>{PRO_STAGES.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -328,7 +329,7 @@ export function LogForm({ data }: { data: LogData }) {
 
       {kind === "hr" && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <EmployeePick employees={employees} value={employeeId} onChange={setEmployeeId} label="Employee" />
+          <ForWhom employees={employees} value={employeeId} onChange={setEmployeeId} group={forGroup} setGroup={setForGroup} />
           <Field label="Topic" tag="pick"><select name="hrTopic" className={sel}>{HR_TOPICS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Action" tag="pick"><select name="hrAction" className={sel}>{HR_ACTIONS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Confidential" tag="pick">
@@ -635,6 +636,21 @@ function BankPick() {
       {v && v !== "Other bank" && <input type="hidden" name="bank" value={v} />}
       {v === "Other bank" && <input name="bank" required placeholder="Bank name" className={`${sel} mt-1`} />}
     </Field>
+  );
+}
+
+/** "Who is it for": one employee from the directory, or a whole group of staff. */
+function ForWhom({ employees, value, onChange, group, setGroup }: { employees: { id: string; name: string }[]; value: string; onChange: (v: string) => void; group: string; setGroup: (v: string) => void }) {
+  return (
+    <>
+      <Field label="Who is it for" tag="pick">
+        <select name="forGroup" value={group} onChange={(e) => setGroup(e.target.value)} className={sel}>
+          <option value="">One employee</option>
+          {FOR_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+        </select>
+      </Field>
+      {!group && <EmployeePick employees={employees} value={value} onChange={onChange} label="Employee" />}
+    </>
   );
 }
 

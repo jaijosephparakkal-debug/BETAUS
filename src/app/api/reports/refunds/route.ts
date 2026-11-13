@@ -25,6 +25,7 @@ export async function GET(req: Request) {
     },
     select: {
       id: true, parentTaskId: true, title: true, description: true, status: true, forPerson: true, logKind: true, eventAt: true, createdAt: true, completedAt: true, details: true,
+      parentTask: { select: { title: true } },
       assignedTo: { select: { user: { select: { name: true } } } },
       comments: { orderBy: { createdAt: "asc" }, take: 6, select: { body: true } },
     },
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
   return NextResponse.json(
     rows.map((t) => ({
       id: t.id,
-      parent: t.parentTaskId ? "daily" : "bucket",
+      parent: t.parentTask?.title ?? "(top level)",
       who: t.assignedTo.user.name,
       date: day(t.eventAt ?? t.completedAt ?? t.createdAt),
       title: t.title,

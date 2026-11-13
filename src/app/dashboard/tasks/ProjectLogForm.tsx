@@ -75,6 +75,7 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
 
   const project = data.projects.find((p) => p.id === projectId) ?? null;
   const potentialMode = kind.project === "potential";
+  const isPot = projectId === "__newpot__" || projectId.startsWith("pot:");
   const allowed = kind.stages ?? [];
   // Stages offered: the kind's stages that this project actually has tasks in, in the kind's order.
   const stages = useMemo(() => {
@@ -102,7 +103,6 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
   useEffect(() => {
     const isPot = projectId === "__newpot__" || projectId.startsWith("pot:");
     if (potentialMode && !isPot) setProjectId(data.potentials[0] ? `pot:${data.potentials[0]}` : "__newpot__");
-    if (!potentialMode && isPot) setProjectId(data.projects[0]?.id ?? "none");
   }, [kindV]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (kind.site === "optional") setStage("");
@@ -185,10 +185,25 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
           </Field>
         ) : (
         <Field label="2. Project">
+          <div className="mb-1 flex flex-wrap gap-2">
+            <Chip on={!isPot} onClick={() => setProjectId(data.projects[0]?.id ?? "none")}>Projects</Chip>
+            <Chip on={isPot} onClick={() => setProjectId(data.potentials[0] ? `pot:${data.potentials[0]}` : "__newpot__")}>Potential projects (not approved yet)</Chip>
+          </div>
+          {isPot ? (
+            <>
+              <select name="projectId" value={projectId} onChange={(e) => setProjectId(e.target.value)} className={sel}>
+                {data.potentials.map((n) => <option key={n} value={`pot:${n}`}>{n}</option>)}
+                <option value="__newpot__">+ Add potential project</option>
+              </select>
+              {projectId === "__newpot__" && <input name="newPotential" required maxLength={120} value={newPot} onChange={(e) => setNewPot(e.target.value)} placeholder="Name of the potential project, e.g. Al Barsha Villas" className={`${sel} mt-1`} />}
+              <p className="mt-1 text-[14px] text-slate-500">Not a project yet. Once it is approved, management makes it a real project.</p>
+            </>
+          ) : (
           <select name="projectId" value={projectId} onChange={(e) => setProjectId(e.target.value)} className={sel}>
             {!needsProject && <option value="none">Not a project yet (tender or enquiry)</option>}
             {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.number ? ` · ${p.number}` : ""}{p.status && p.status !== "ACTIVE" ? ` (${p.status === "COMPLETED" ? "completed" : "on hold"})` : ""}</option>)}
           </select>
+          )}
         </Field>
         )}
         {!project && !needsProject && !potentialMode && (
@@ -227,7 +242,7 @@ export function ProjectLogForm({ data }: { data: ProjectLogData }) {
           </Field>
         </div>
       )}
-      {kind.site === "required" && !project && <p className="text-[15px] text-amber-700">Choose a project to see its site tasks.</p>}
+      {kind.site === "required" && !project && !isPot && <p className="text-[15px] text-amber-700">Choose a project to see its site tasks.</p>}
 
       {(kind.site === "none" || site || kind.site === "optional") && (
         <div className="grid gap-3 sm:grid-cols-2">

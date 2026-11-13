@@ -181,8 +181,9 @@ export default async function MyTasksPage({ searchParams }: { searchParams: { qu
           return { number: String(d.estimateNumber), label: t.project?.name ?? t.forPerson ?? String(d.for ?? "") };
         });
         projectLogData.nextEstimate = await nextEstimateNumber(ft.id, new Date());
-        projectLogData.potentials = (await getPotentialProjects(ft.id)).filter((x) => !x.closed).map((x) => x.name);
       }
+      // Every project-team member can pick or add a potential project (not approved yet).
+      projectLogData.potentials = (await getPotentialProjects(ft.id)).filter((x) => !x.closed).map((x) => x.name);
       // Names the team has logged before (who they met, emailed, who inspected), newest first.
       const past = await prisma.task.findMany({
         where: { companyId: ft.id, workedForCompany: "flaretechnical", details: { not: Prisma.DbNull }, eventAt: { not: null } },

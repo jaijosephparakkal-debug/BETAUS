@@ -32,7 +32,7 @@ export async function createProjectLogAction(_prev: ProjectLogState | undefined,
   let clientName = "";
   let potential = "";
   const pid = s("projectId");
-  if (kind.project === "potential" && (pid === "__newpot__" || pid.startsWith("pot:"))) {
+  if (pid === "__newpot__" || pid.startsWith("pot:")) {
     // A tender being estimated that is not a project yet: picked from the list, or added by name once.
     potential = (pid === "__newpot__" ? s("newPotential") : pid.slice(4)).replace(/\s+/g, " ").trim().slice(0, 120);
     if (!potential) return { error: "Type the name of the potential project." };
@@ -61,7 +61,7 @@ export async function createProjectLogAction(_prev: ProjectLogState | undefined,
     site = await prisma.projectSiteTask.findFirst({ where: { id: sid, projectId: project.id }, select: { id: true, title: true, progress: true } });
     if (!site) return { error: "Choose the site task." };
   }
-  if (kind.site === "required" && !site) return { error: "Choose the site task." };
+  if (kind.site === "required" && !site && !potential) return { error: "Choose the site task." };
 
   // When it happened (Dubai time).
   const eventAt = dubaiInputToDate(s("eventAt"));

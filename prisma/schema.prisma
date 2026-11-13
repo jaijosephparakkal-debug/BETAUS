@@ -409,6 +409,7 @@ model Quotation {
   productCategory String
   product         String
   quantity        String?
+  items           Json? // every product on the quotation: [{ category, name, qty }]
   value           Float?
   status          String   @default("SENT") // SENT | REVISED | REVIEWING | NEGOTIATING | ORDER_RECEIVED | DELIVERED | PAID | NOT_AWARDED | ON_HOLD
   docUrl          String?

@@ -220,19 +220,7 @@ export function LogForm({ data }: { data: LogData }) {
           </Field>
           <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />
           <ContactInput list={contactList} />
-          <Field label="Product category" tag="pick">
-            <select name="productCategory" value={pcat} onChange={(e) => setPcat(e.target.value)} className={sel}>
-              {Object.keys(PRODUCTS).map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Product" tag="pick">
-            {pcat === "Other product" ? (
-              <input name="productOther" required placeholder="Type the product name" className={sel} />
-            ) : (
-              <select name="product" className={sel}>{PRODUCTS[pcat].map((p) => <option key={p}>{p}</option>)}</select>
-            )}
-          </Field>
-          <Field label="Quantity" tag="type"><input name="quantity" placeholder="e.g. 10" className={sel} /></Field>
+          <div className="sm:col-span-2"><ProductLines /></div>
           <Field label="Value (AED)" tag="type"><input name="value" required inputMode="decimal" placeholder="18500" className={sel} /></Field>
           <Field label="Where it stands" tag="pick">
             <select name="status" className={sel}>{FORM_STATUS.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}</select>
@@ -342,19 +330,7 @@ export function LogForm({ data }: { data: LogData }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <CustomerPick customers={customers} value={customerId} onChange={setCustomerId} />
           <ContactInput list={contactList} />
-          <Field label="Product category" tag="pick">
-            <select name="productCategory" value={pcat} onChange={(e) => setPcat(e.target.value)} className={sel}>
-              {Object.keys(PRODUCTS).map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Product" tag="pick">
-            {pcat === "Other product" ? (
-              <input name="productOther" required placeholder="Type the product name" className={sel} />
-            ) : (
-              <select name="product" className={sel}>{PRODUCTS[pcat].map((p) => <option key={p}>{p}</option>)}</select>
-            )}
-          </Field>
-          <Field label="Quantity" tag="type"><input name="quantity" placeholder="e.g. 10" className={sel} /></Field>
+          <div className="sm:col-span-2"><ProductLines /></div>
           <Field label="How it came in" tag="pick"><select name="channel" className={sel}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Lead source" tag="pick"><select name="leadSource" className={sel}>{LEAD_SOURCES.map((c) => <option key={c}>{c}</option>)}</select></Field>
           <Field label="Where it stands" tag="pick"><select name="enqStatus" className={sel}>{ENQ_STATUS.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -636,6 +612,67 @@ function BankPick() {
       {v && v !== "Other bank" && <input type="hidden" name="bank" value={v} />}
       {v === "Other bank" && <input name="bank" required placeholder="Bank name" className={`${sel} mt-1`} />}
     </Field>
+  );
+}
+
+type ProductLine = { cat: string; name: string; qty: string };
+let catalogLoad: Promise<[string, string][]> | null = null;
+const loadCatalog = () => (catalogLoad ??= fetch("/api/catalog").then((r) => (r.ok ? r.json() : [])).catch(() => []));
+
+/** One or more products: pick a category, then type the product name; matching names appear only once you type. */
+function ProductLines() {
+  const cats = Object.keys(PRODUCTS);
+  const [lines, setLines] = useState<ProductLine[]>([{ cat: cats[0], name: "", qty: "" }]);
+  const [catalog, setCatalog] = useState<[string, string][]>([]);
+  const [openRow, setOpenRow] = useState<number | null>(null);
+  useEffect(() => { loadCatalog().then(setCatalog); }, []);
+  const upd = (i: number, patch: Partial<ProductLine>) => setLines((l) => l.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const suggestions = (l: ProductLine) => {
+    const words = l.name.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (l.name.trim().length < 2 || l.cat === "Other product") return [];
+    return catalog.filter(([c, t]) => c === l.cat && words.every((w) => t.toLowerCase().includes(w))).slice(0, 8).map(([, t]) => t);
+  };
+  return (
+    <div className="space-y-2">
+      <input type="hidden" name="items" value={JSON.stringify(lines)} />
+      <div className="text-[15px] font-medium text-slate-700">Products <span className="text-[12px] font-normal text-slate-500">(pick the category, then type the product name)</span></div>
+      {lines.map((l, i) => {
+        const sug = openRow === i ? suggestions(l) : [];
+        return (
+          <div key={i} className="grid gap-2 sm:grid-cols-[210px_1fr_110px_auto]">
+            <select value={l.cat} onChange={(e) => upd(i, { cat: e.target.value })} className={sel} aria-label="Product category">
+              {cats.map((c) => <option key={c}>{c}</option>)}
+            </select>
+            <div className="relative">
+              <input
+                value={l.name}
+                required={i === 0}
+                onChange={(e) => { upd(i, { name: e.target.value }); setOpenRow(i); }}
+                onFocus={() => setOpenRow(i)}
+                onBlur={() => setTimeout(() => setOpenRow((r) => (r === i ? null : r)), 150)}
+                placeholder="Type the product name"
+                autoComplete="off"
+                className={sel}
+              />
+              {sug.length > 0 && (
+                <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-300 bg-white py-1 text-[15px] text-slate-900 shadow-lg">
+                  {sug.map((t) => (
+                    <li key={t}>
+                      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { upd(i, { name: t }); setOpenRow(null); }} className="block w-full px-3 py-1 text-left hover:bg-slate-100">{t}</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <input value={l.qty} onChange={(e) => upd(i, { qty: e.target.value })} placeholder="Qty" className={sel} aria-label="Quantity" />
+            {lines.length > 1 ? (
+              <button type="button" onClick={() => setLines((x) => x.filter((_, j) => j !== i))} className="px-2 text-[20px] text-slate-500 hover:text-red-600" aria-label="Remove product">×</button>
+            ) : <span />}
+          </div>
+        );
+      })}
+      <button type="button" onClick={() => setLines((x) => [...x, { cat: x[x.length - 1].cat, name: "", qty: "" }])} className="text-[16px] font-medium text-brand-600 hover:underline">+ Add another product</button>
+    </div>
   );
 }
 

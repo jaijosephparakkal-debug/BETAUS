@@ -243,10 +243,9 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     mdRef = srNo || where || vals.site || title;
     Object.assign(details, { ...vals, building: building?.name ?? null, unitType: unitType || null, unit: unitLabel || null, tenant: tenant || null });
   } else if (kind === "q") {
-    const category = s("productCategory");
-    let product = s("product");
-    if (category === "Other product") product = s("productOther");
-    if (!category || !product) return { error: "Choose the product." };
+    const pl = readProducts(s);
+    if ("error" in pl) return { error: pl.error };
+    const { category, product, quantity: qtyText, items: productItems } = pl;
     const value = amountOf("value");
     if (!value || value <= 0) return { error: "Enter the quotation value in AED." };
     const status = s("status") || "SENT";
@@ -271,7 +270,7 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     const dubaiWhen = new Date(eventAt.getTime() + DUBAI_MS);
     const year = dubaiWhen.getUTCFullYear();
     const month = dubaiWhen.getUTCMonth() + 1;
-    const base = { companyId: company.id, customerId: customer!.id, contactName: contactName || null, productCategory: category, product, quantity: s("quantity") || null, value, status, docUrl, createdById: m.id };
+    const base = { companyId: company.id, customerId: customer!.id, contactName: contactName || null, productCategory: category, product, quantity: qtyText, items: productItems, value, status, docUrl, createdById: m.id };
     if (existing) {
       if (await prisma.quotation.findUnique({ where: { number: existing } })) return { error: `${existing} is already in the system.` };
       quotation = await prisma.quotation.create({ data: { ...base, number: existing, year, month, seq: null, legacy: true } });
@@ -280,8 +279,8 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     }
     title = status === "SENT" ? "Product quotation sent" : status === "REVISED" ? "Quotation revised" : "Quotation update";
     forPerson = customer!.name;
-    summary = `${quotation.number} · ${customer!.name} · ${product}${s("quantity") ? ` × ${s("quantity")}` : ""} · ${aed(value)} · ${statusLabel(status)}`;
-    Object.assign(details, { quotationNumber: quotation.number, productCategory: category, product, quantity: s("quantity") || null, value, status });
+    summary = `${quotation.number} · ${customer!.name} · ${product}${qtyText ? ` × ${qtyText}` : ""} · ${aed(value)} · ${statusLabel(status)}`;
+    Object.assign(details, { quotationNumber: quotation.number, productCategory: category, product, quantity: qtyText, items: productItems, value, status });
   } else if (kind === "f" && followOther) {
     const topic = s("followTopic") === "Other" ? s("followTopicOther") : s("followTopic");
     if (!topic) return { error: "Choose what the follow-up is about." };
@@ -331,15 +330,14 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
     summary = `${who.name} · ${title} · ${s("hrAction")}`;
     Object.assign(details, { forGroup: s("forGroup") || null, employee: who.name, topic: title, action: s("hrAction"), confidential: s("confidential") === "yes" });
   } else if (kind === "enq") {
-    const category = s("productCategory");
-    let product = s("product");
-    if (category === "Other product") product = s("productOther");
-    if (!category || !product) return { error: "Choose the product." };
+    const pl = readProducts(s);
+    if ("error" in pl) return { error: pl.error };
+    const { category, product, quantity: qtyText, items: productItems } = pl;
     title = s("enqStatus") || "Enquiry received";
     forPerson = customer!.name;
     const leadSource = s("leadSource") || null;
-    summary = `${customer!.name} · ${product}${s("quantity") ? ` × ${s("quantity")}` : ""} · ${s("channel")}${leadSource ? ` · from ${leadSource}` : ""} · ${title}`;
-    Object.assign(details, { productCategory: category, product, quantity: s("quantity") || null, channel: s("channel"), status: title, leadSource });
+    summary = `${customer!.name} · ${product}${qtyText ? ` × ${qtyText}` : ""} · ${s("channel")}${leadSource ? ` · from ${leadSource}` : ""} · ${title}`;
+    Object.assign(details, { productCategory: category, product, quantity: qtyText, items: productItems, channel: s("channel"), status: title, leadSource });
   } else if (kind === "po") {
     const sup = await pickSupplier();
     if (typeof sup === "string") return { error: sup };
@@ -539,6 +537,34 @@ export async function createLogEntryAction(_prev: LogState | undefined, formData
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard/quotations");
   return { ok: quotation ? `Saved ${quotation.number}` : kind === "sr" && mdRef ? `Saved ${mdRef.split(" · ")[0]}` : "Saved" };
+}
+
+type ProductItem = { category: string; name: string; qty: string };
+/** The product list from the form (several products, several categories). Falls back to the old single-product fields. */
+function readProducts(s: Fd): { category: string; product: string; quantity: string | null; items: ProductItem[] } | { error: string } {
+  let items: ProductItem[] = [];
+  try {
+    const raw = JSON.parse(s("items") || "[]") as { cat?: string; name?: string; qty?: string }[];
+    items = raw
+      .map((x) => ({ category: String(x.cat ?? "").trim().slice(0, 80), name: String(x.name ?? "").replace(/\s+/g, " ").trim().slice(0, 200), qty: String(x.qty ?? "").trim().slice(0, 40) }))
+      .filter((x) => x.name)
+      .slice(0, 30);
+  } catch {
+    items = [];
+  }
+  if (items.length === 0) {
+    const category = s("productCategory");
+    const product = category === "Other product" ? s("productOther") : s("product");
+    if (!category || !product) return { error: "Type at least one product name." };
+    items = [{ category, name: product, qty: s("quantity") }];
+  }
+  const cats = Array.from(new Set(items.map((i) => i.category)));
+  return {
+    category: cats.length === 1 ? cats[0] : `Mixed (${cats.length} categories)`,
+    product: (items.length === 1 ? items[0].name : items.map((i) => i.name).join(" + ")).slice(0, 400),
+    quantity: items.some((i) => i.qty) ? items.map((i) => (i.qty ? `${i.qty} × ${i.name}` : i.name)).join("; ").slice(0, 400) : null,
+    items,
+  };
 }
 
 async function resolveEmployee(s: Fd, companyId: string): Promise<{ name: string } | { error: string }> {
